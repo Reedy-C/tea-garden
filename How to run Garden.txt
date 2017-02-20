@@ -1,0 +1,26 @@
+Requires: pygame, pycaffe
+
+Garden is a basic artificial life simulator. It is run from garden_experiment.py. Note: it may take a few seconds for the program to start up.
+garden.py defines the environment of the simulation.
+tako.py defines the creatures 'living' in the Garden environment.
+widget.py defines the objects that exist in the Garden environment (the creatures are a special type of object).
+garden_task.py defines the layer that goes between the simulation, environment, and the neural network of the creatures. It handles the process of the creatures taking input from the environment and taking an action within that environment.
+genetics.py defines how the genetics system works.
+
+The creatures (tako) are always doing some action, even if it looks like they are just sitting there. If they appear to be doing nothing, they are probably just doing something useless like trying to walk on a rock or eat a piece of dirt. The default genome shouldn't be too idiotic and will usually run around doing stuff, though.
+
+During each tick, the creatures are given an array of eight numbers as input. The first five numbers represent what the creature sees. The creatures can only see what is directly in front of them, and they are told by the simulation exactly what kind of object they are looking at. Each type of object corresponds to a position in the array - this is what the 'node' property of each Widget sub-class refers to. So, the Dirt objects, which have node set to 0, correspond to the first space of the input array. If a creature has dirt in front of it, the visual part of their input will be [1, 0, 0, 0, 0].
+
+The last three numbers are the creature's drives. These go down over time. In order, they are hunger, boredom, and pain. If a creature's hunger reaches 0, it will starve to death. The drives are changed by interaction with the objects, and the changes in the drives are used to calculate the reward for the neural network.
+
+The creature also takes its last action as input to its 'STM' (short-term memory) layer. As a creature repeats an action, that node in the STM layer gains a higher value. When the creature does a different action, the node decays towards zero.
+
+The output of the creature's neural network is an array of five numbers. The member of the array that is highest is taken as the creature's action. This list of actions can be seen at the bottom of garden.py. So, for example, if the output is [3.456, -1.135, 1.789, 0.597, 4.015], then the fifth action will be used, which is 'attempt to play with whatever is in front of me'.
+
+Parameters can be changed with run_experiment().
+
+When slowed down, the simulation runs at 10 ticks/second (this is a good speed for watching what is happening) but this can be changed by changing the number in 'self.clock.tick(10)' in the MainLoop function of garden_experiment.py. There is also a parameter that lets the simulation run as fast as it can (this is the default).
+
+The neural network of a creature is defined by its diploid genome. All creatures now start off with the same default genome (starting weights are the same also). They are able to mate and make further creatures, which may have mutations from their parents. As creatures are created, their network files are saved in the folder 'Gen files' and can be viewed with a text editor. In the future this can allow for tracking changes over time. After a creature has been created these files can be deleted at any time, including 'alife.gen' (this file shows the default structure and is used for testing purposes, but the program does not depend on it in any way to run).
+
+Creatures also track: their parents, their children, their generation number
