@@ -114,7 +114,7 @@ class garden_game:
             self.screen.blit(self.neur_background, (0, 0))
             # see if any are dead
             for tako in env.tako_list:
-                if tako.hunger <= 0:
+                if tako.dead == True:
                     #print weights for action
                     if print_dead_nets == "y":
                         print "Tako died. Net:"
@@ -229,7 +229,7 @@ def load_image(name, colorkey=None):
 #pop_max (int): the maximum population that will be allowed at any time
 #max_width (int): max horizontal resolution of window
 #max_height (int): max vertical resolution of window
-def run_experiment(x_loops=300, max_steps=20000, speedup=True,
+def run_experiment(x_loops=15, max_steps=0, speedup=True,
                    print_dead_nets="n", print_stats=True, rand_chance=20,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
                    max_height=900):
@@ -271,5 +271,4 @@ def run_experiment(x_loops=300, max_steps=20000, speedup=True,
                 print("std", numpy.std(childlist, ddof=1))
                 
 if __name__ == "__main__":
-    run_experiment(garden_size=15, tako_number=4, speedup=False, x_loops=15,
-                    max_steps=0)
+    run_experiment(garden_size=15, tako_number=4, speedup=False, x_loops=1)

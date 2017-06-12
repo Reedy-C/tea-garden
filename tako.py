@@ -41,6 +41,7 @@ class Tako(Widget):
         self.last_action = -1
         self.age = 0
         self.dez = 0
+        self.dead = False
         self.children = []
         self.parents = parents
         self.gen = gen
@@ -52,6 +53,7 @@ class Tako(Widget):
         #    self.solver.net.params[pr][0].data[...] = net.params[pr][0].data[...]
         #do not delete; keeps synchedmem error from occuring
         #for some reason
+        #TODO try putting a small pause in instead
         for key in self.solver.net.params:
             print key
             print self.solver.net.params[key][0].data
@@ -97,11 +99,15 @@ class Tako(Widget):
     #except for desire, which has a sine wave funtion
     def update(self):
         self.age += 1
+        if self.age % 1500 == 0:
+            self.check_death()
         self.last_hunger = self.hunger
         self.last_boredom = self.boredom
         self.last_pain = self.pain
         self.last_desire = self.desire
         self.hunger -= 0.5
+        if self.hunger <= 0:
+            self.dead = True
         self.boredom -= 0.5
         if self.pain > 0:
             self.pain = self.pain*.6
@@ -145,7 +151,7 @@ class Tako(Widget):
                 else:
                     modifier = result[x]
                     self.update_drives(drive, modifier)
-                    
+
     def make_solver(self):
         ident_file = os.path.join('Gen files', self.ident)
         ident_file = ident_file + '.gen'
@@ -184,7 +190,29 @@ class Tako(Widget):
                 return ("boredom", -1)
         else:
             return ("boredom", -1)
-        
+
+    #I didn't want to assign a death age at birth
+    #and wanted a skewed normal distribution (as humans have)
+    #(possibly other animals, but for some reason those stats are harder to find)
+    #average age at death should be somewhere near 100000 ticks
+    #this number was based on Tako starvation time
+    #by comparing ratios of starvation time/average lifespan
+    #across a few species
+    def check_death(self):
+        if self.age > 130000:
+            dead = True
+        else:
+            chance = self.skew_norm_pdf(self.age, 115000, 10000.0, -4)
+            r = random.random()
+            if r < chance:
+                dead = True
+                
+    #generates skew normal distribution
+    #adapted slightly from
+    #https://stackoverflow.com/questions/36200913/
+    def skew_norm_pdf(self, x, e=0, w=1, a=0):
+        t = (x-e) / w
+        return 2.0 * scipy.stats.norm.pdf(t) * scipy.stats.norm.cdf(a*t)
 
 class STMlayer(caffe.Layer):
 
