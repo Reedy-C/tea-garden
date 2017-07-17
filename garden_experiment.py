@@ -7,10 +7,10 @@ import os, sys
 import pygame
 import math
 from pygame.locals import *
-
-import caffe
-
 import numpy
+import caffe
+import dgeann
+
 
 #used when doing statistics on runs
 agelist = {}
@@ -237,6 +237,7 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True,
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
+    
     loop_limit = x_loops
     if loop_limit < 1:
         loop_limit = 1

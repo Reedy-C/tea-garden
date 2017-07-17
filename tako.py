@@ -6,7 +6,21 @@ import random
 from pygame import sprite, Color, Rect
 import os
 from textwrap import dedent
-import genetics
+import dgeann
+
+dele = False
+dgeann.layer_dict["STMlayer"] = '''\
+                                    layer {{
+                                      name: "{0.ident}"
+                                      type: "Python"
+                                      bottom: "{0.inputs[0]}"
+                                      top: "{0.ident}"
+                                      python_param {{
+                                        module: "tako"
+                                        layer: "STMlayer"
+                                      }}
+                                    }}
+                                    '''
 
 # a Tako is a creature and also a Widget
 # it has a neural net (agent)
@@ -18,7 +32,7 @@ class Tako(Widget):
     dir_map = {0: "north.png", 1: "east.png", 2: "south.png", 3: "west.png"}
 
     #gen is short for generation, not genome or the like
-    def __init__(self, dire, x, y, genome, ident, parents, gen=0):
+    def __init__(self, dire, x, y, genome, ident, solver=None, parents=[], gen=0):
         sprite.Sprite.__init__(self)
         self.direction = dire
         self.x = x
@@ -46,7 +60,11 @@ class Tako(Widget):
         self.parents = parents
         self.gen = gen
         #net = caffe.Net('alife.text', '1461257654.3.txt', caffe.TRAIN)
-        self.solver = self.make_solver()
+        #self.solver = self.make_solver()
+        if solver != None:
+            self.solver = solver
+        else:
+            self.solver = dgeann.build(self.genome)
         #self.solver = caffe.AdaDeltaSolver('solver.text')
         #uncomment to read in weights from saved network (specify under 'net' above)
         #for pr in net.params.keys():
@@ -60,19 +78,19 @@ class Tako(Widget):
                     
     @staticmethod
     def default_tako(direction, x, y):
-        data = genetics.layer_gene(5, False, False, 0, "data",
+        data = dgeann.layer_gene(5, False, False, 0, "data",
                                         [], 9, "input")
-        reward = genetics.layer_gene(5, False, False, 0, "reward",
+        reward = dgeann.layer_gene(5, False, False, 0, "reward",
                                          [], 6, "input")
-        stm_input = genetics.layer_gene(5, False, False, 0, "stm_input",
+        stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
                                              ["data", "reward"], 6, "input")
-        stm = genetics.layer_gene(5, False, False, 0, "STM",
+        stm = dgeann.layer_gene(5, False, False, 0, "STM",
                                        ["stm_input"], 6, "STMlayer")
-        concat = genetics.layer_gene(5, False, False, 0, "concat_0",
+        concat = dgeann.layer_gene(5, False, False, 0, "concat_0",
                                           ["data", "STM"], None, "concat")
-        action = genetics.layer_gene(5, False, False, 0, "action",
+        action = dgeann.layer_gene(5, False, False, 0, "action",
                                           ["concat_0"], 6, "IP")
-        loss = genetics.layer_gene(5, False, False, 0, "loss",
+        loss = dgeann.layer_gene(5, False, False, 0, "loss",
                                         ["action", "reward"], 6, "loss")
         layers = [data, reward, stm_input, stm, concat, action, loss]
         weights = []
@@ -88,11 +106,14 @@ class Tako(Widget):
                     else:
                         in_layer = "STM"
                         m_adj = m - 9
-                    w = genetics.weight_gene(5, True, False, 3, iden,
+                    w = dgeann.weight_gene(5, True, False, 0.01, iden,
                                              t, m_adj, n, in_layer, "action")
                     weights.append(w)
-        default_genome = genetics.genome(layers, layers, weights, weights)
-        return genetics.genome.build(default_genome, direction, x, y)
+        default_genome = dgeann.genome(layers, layers, weights, weights)
+        solver = default_genome.build(delete=dele)
+        tak = Tako(direction, x, y, default_genome, default_genome.ident,
+                   solver=solver)
+        return tak
             
             
     #drives go DOWN over time
