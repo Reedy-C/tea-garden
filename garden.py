@@ -1,6 +1,6 @@
 import random
 from widget import *
-import tako
+from tako import Tako
 from pygame import sprite
 
 class Garden:
@@ -63,7 +63,7 @@ class Garden:
             if isinstance(self.garden_map[y][x], Dirt):
                 break
         direction = random.randrange(0,3)
-        Tak = tako.Tako.default_tako(direction, x, y)
+        Tak = Tako.default_tako(direction, x, y)
         self.garden_map[y][x].kill()
         self.garden_map[y][x] = Tak
         self.tako_list.append(Tak)
@@ -155,7 +155,8 @@ class Garden:
                     if isinstance(self.garden_map[y][x], Dirt):
                         break
                 direction = random.randrange(0,3)
-                new_tak = result[3].build(direction, x, y, result[4], result[5])
+                new_tak = Tako(direction, x, y, result[3], None,
+                                    parents=result[4], gen=result[5])
                 tako.children.append(new_tak.ident)
                 v.children.append(new_tak.ident)
                 self.garden_map[y][x].kill()

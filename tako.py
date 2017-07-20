@@ -38,7 +38,8 @@ class Tako(Widget):
         self.x = x
         self.y = y
         self.genome = genome
-        self.ident = ident
+        if ident != None:
+            self.ident = ident
         #note to self: these three lines need to be disabled to run test suite
         self.image, self.rect = self.load_image(self.dir_map[dire],
                                                 Color('#FF00FF'))
@@ -64,7 +65,8 @@ class Tako(Widget):
         if solver != None:
             self.solver = solver
         else:
-            self.solver = dgeann.build(self.genome)
+            self.solver = self.genome.build()
+            self.ident = self.genome.ident
         #self.solver = caffe.AdaDeltaSolver('solver.text')
         #uncomment to read in weights from saved network (specify under 'net' above)
         #for pr in net.params.keys():
@@ -88,11 +90,13 @@ class Tako(Widget):
                                        ["stm_input"], 6, "STMlayer")
         concat = dgeann.layer_gene(5, False, False, 0, "concat_0",
                                           ["data", "STM"], None, "concat")
+        evo = dgeann.layer_gene(3, True, True, 0.01, "evo",
+                                ["concat_0"], 2, "IP")
         action = dgeann.layer_gene(5, False, False, 0, "action",
-                                          ["concat_0"], 6, "IP")
+                                          ["evo"], 6, "IP")
         loss = dgeann.layer_gene(5, False, False, 0, "loss",
                                         ["action", "reward"], 6, "loss")
-        layers = [data, reward, stm_input, stm, concat, action, loss]
+        layers = [data, reward, stm_input, stm, concat, evo, action, loss]
         weights = []
         with open("default weights.txt") as f:
             for n in range(6):
