@@ -106,7 +106,7 @@ class Tako(Widget):
                     else:
                         in_layer = "STM"
                         m_adj = m - 9
-                    w = dgeann.weight_gene(5, True, False, 0.01, iden,
+                    w = dgeann.weight_gene(3, True, False, 0.01, iden,
                                              t, m_adj, n, in_layer, "action")
                     weights.append(w)
         default_genome = dgeann.genome(layers, layers, weights, weights)
