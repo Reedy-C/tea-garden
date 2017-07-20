@@ -90,13 +90,16 @@ class Tako(Widget):
                                        ["stm_input"], 6, "STMlayer")
         concat = dgeann.layer_gene(5, False, False, 0, "concat_0",
                                           ["data", "STM"], None, "concat")
-        evo = dgeann.layer_gene(3, True, True, 0.01, "evo",
-                                ["concat_0"], 2, "IP")
+        #evo = dgeann.layer_gene(3, True, True, 0.01, "evo",
+        #                        ["concat_0"], 2, "IP")
+        #action = dgeann.layer_gene(5, False, False, 0, "action",
+        #                                  ["evo"], 6, "IP")
         action = dgeann.layer_gene(5, False, False, 0, "action",
-                                          ["evo"], 6, "IP")
+                                          ["concat_0"], 6, "IP")
         loss = dgeann.layer_gene(5, False, False, 0, "loss",
                                         ["action", "reward"], 6, "loss")
-        layers = [data, reward, stm_input, stm, concat, evo, action, loss]
+        layers = [data, reward, stm_input, stm, concat, action, loss]
+        #layers = [data, reward, stm_input, stm, concat, evo, action, loss]
         weights = []
         with open("default weights.txt") as f:
             for n in range(6):
