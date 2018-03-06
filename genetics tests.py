@@ -1,5 +1,5 @@
 import unittest
-import dgeann
+from dgeann import dgeann
 import tako
 from textwrap import dedent
 import os

@@ -6,7 +6,10 @@ import random
 from pygame import sprite, Color, Rect
 import os
 from textwrap import dedent
-import dgeann
+import sys
+sys.path.append('..')
+from dgeann import dgeann
+
 
 dele = False
 dgeann.layer_dict["STMlayer"] = '''\
@@ -75,8 +78,8 @@ class Tako(Widget):
         #for some reason
         #TODO try putting a small pause in instead
         for key in self.solver.net.params:
-            print key
-            print self.solver.net.params[key][0].data
+            print(key)
+            print(self.solver.net.params[key][0].data)
                     
     @staticmethod
     def default_tako(direction, x, y):

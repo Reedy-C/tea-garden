@@ -9,7 +9,8 @@ import math
 from pygame.locals import *
 import numpy
 import caffe
-import dgeann
+sys.path.append('..')
+from dgeann import dgeann
 
 
 #used when doing statistics on runs
@@ -69,12 +70,12 @@ class garden_game:
                         for tako in env.tako_list:
                             self.add_stats(tako, i)
                     if print_dead_nets == "c" or print_dead_nets == "y":
-                        print "Tako hit cap. Net(s):"
+                        print("Tako hit cap. Net(s):")
                         for tako in env.tako_list:
-                            print (len(tako.children))
+                            print(len(tako.children))
                             for key in tako.solver.net.params:
-                                print key
-                                print tako.solver.net.params[key][0].data
+                                print(key)
+                                print(tako.solver.net.params[key][0].data)
                     return
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -117,10 +118,10 @@ class garden_game:
                 if tako.dead == True:
                     #print weights for action
                     if print_dead_nets == "y":
-                        print "Tako died. Net:"
+                        print("Tako died. Net:")
                         for key in tako.solver.net.params:
-                            print key
-                            print tako.solver.net.params[key][0].data
+                            print(key)
+                            print(tako.solver.net.params[key][0].data)
                     env.garden_map[tako.y][tako.x] = Dirt(tako.x, tako.y)
                     env.tako_list.remove(tako)
                     if print_stats:
@@ -249,8 +250,8 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True,
         loop_limit -= 1
         i += 1
     if print_stats:
-        print agelist
-        print children_num
+        print(agelist)
+        print(children_num)
         for run in agelist:
             print("Run# " + str(run))
             for gen in agelist[run]:
@@ -272,4 +273,4 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True,
                 print("std", numpy.std(childlist, ddof=1))
                 
 if __name__ == "__main__":
-    run_experiment(garden_size=15, tako_number=4, speedup=False, x_loops=1)
+    run_experiment(garden_size=15, tako_number=4, speedup=True, x_loops=1)
