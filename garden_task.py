@@ -3,7 +3,7 @@ from numpy import floor
 from tako import Tako
 from widget import *
 import random
-import scipy
+import numpy
 
 class GardenTask:
     last_action = None
@@ -54,13 +54,13 @@ class GardenTask:
     def getObservation(self, tako):
         obs = self.env.getSensors(tako)
         nobs = self.transform_obs(obs)
-        hung = (5/(1+(scipy.exp(-tako.hunger + 75))))
+        hung = (5/(1+(numpy.exp(-tako.hunger + 75))))
         nobs.append(hung)
-        bore = (5/(1+(scipy.exp(-tako.boredom + 75))))
+        bore = (5/(1+(numpy.exp(-tako.boredom + 75))))
         nobs.append(bore)
-        pain = (5/(1+(scipy.exp(-tako.pain + 75))))
+        pain = (5/(1+(numpy.exp(-tako.pain + 75))))
         nobs.append(pain)
-        desire = (5/(1+scipy.exp(-tako.desire + 75)))
+        desire = (5/(1+numpy.exp(-tako.desire + 75)))
         nobs.append(desire)
         return nobs
     

@@ -139,7 +139,10 @@ class Tako(Widget):
         self.hunger -= 0.5
         if self.hunger <= 0:
             self.dead = True
-        self.boredom -= 0.5
+        if self.boredom > 0:
+            self.boredom -= 0.25
+        else:
+            self.boredom = 0
         if self.pain > 0:
             self.pain = self.pain*.6
             if self.pain < 1:
