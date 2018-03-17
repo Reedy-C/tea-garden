@@ -11,6 +11,7 @@ import numpy
 import caffe
 sys.path.append('..')
 from dgeann import dgeann
+import csv
 
 
 #used when doing statistics on runs
@@ -59,23 +60,13 @@ class garden_game:
 
         self.stepid = 0
 
-    def MainLoop(self, max_steps, speedup, print_stats, print_dead_nets, i):
+    def MainLoop(self, max_steps, speedup, collect_data, filename, i):
         self.load_sprites()
         pygame.display.flip()
         self.cam = [0,0]
         while 1:
             if max_steps > 0:
                 if self.stepid > max_steps:
-                    if print_stats:
-                        for tako in env.tako_list:
-                            self.add_stats(tako, i)
-                    if print_dead_nets == "c" or print_dead_nets == "y":
-                        print("Tako hit cap. Net(s):")
-                        for tako in env.tako_list:
-                            print(len(tako.children))
-                            for key in tako.solver.net.params:
-                                print(key)
-                                print(tako.solver.net.params[key][0].data)
                     return
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -116,16 +107,10 @@ class garden_game:
             # see if any are dead
             for tako in env.tako_list:
                 if tako.dead == True:
-                    #print weights for action
-                    if print_dead_nets == "y":
-                        print("Tako died. Net:")
-                        for key in tako.solver.net.params:
-                            print(key)
-                            print(tako.solver.net.params[key][0].data)
                     env.garden_map[tako.y][tako.x] = Dirt(tako.x, tako.y)
                     env.tako_list.remove(tako)
-                    if print_stats:
-                        self.add_stats(tako, i)
+                    if collect_data:
+                        write_csv(filename, tako)
                     tako.kill()
             #now, update sprites, then draw them
             if env.new_sprites != []:
@@ -194,20 +179,6 @@ class garden_game:
                 img, rect = load_image("dirt.png")
                 self.neur_background.blit(img, (x*50, y*50))
 
-    def add_stats(self, tako, i):
-        if i in agelist:
-            if tako.gen in agelist[i]:
-                agelist[i][tako.gen].append(tako.age)
-                children_num[i][tako.gen].append(len(tako.children))
-            else:
-                agelist[i][tako.gen] = [tako.age]
-                children_num[i][tako.gen] = [len(tako.children)]
-        else:
-            agelist[i] = {}
-            children_num[i] = {}
-            agelist[i][tako.gen] = [tako.age]
-            children_num[i][tako.gen] = [len(tako.children)]
-
 def load_image(name, colorkey=None):
     fullname = os.path.join('img', name)
     image = pygame.image.load(fullname)
@@ -218,26 +189,47 @@ def load_image(name, colorkey=None):
         image.set_colorkey(colorkey, RLEACCEL)
     return image, image.get_rect()
 
+def write_csv(filename, tako):
+    if tako.hunger <= 0:
+        cod = "hunger"
+    elif tako.age > 130000:
+        cod = "old age"
+    else:
+        cod = "natural"
+    if not os.path.exists(os.path.join("Data", filename)):
+        with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
+            writ = csv.writer(csvfile)
+            writ.writerow(['ID', 'parent1', 'parent2', 'age', 'generation', 'numchildren',
+                            'cause of death'])
+    #write above data
+    with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
+            writ = csv.writer(csvfile)
+            writ.writerow([tako.ident, tako.parents[0], tako.parents[1], tako.age,
+                           tako.gen, len(tako.children), cod])
     
 #x_loops (int): run x times (<1 interpreted as 1)
 #max_steps (int): limit to x timesteps (<= 0 interpreted as 'until all dead')
 #speedup (bool): run simulation quickly if true, slow to 10fps if false
-#print_dead_nets (str): options are y, n, and c - c prints those that hit cap
-#print_stats (bool): print lifespan stats after loops are done
 #rand_chance (int): make 1/x actions randomly different (<1 interpreted as no random)
 #garden_size (int): garden size in length/width in tiles
 #tako_number (int): number of creatures created in the garden
 #pop_max (int): the maximum population that will be allowed at any time
 #max_width (int): max horizontal resolution of window
 #max_height (int): max vertical resolution of window
-def run_experiment(x_loops=15, max_steps=0, speedup=True,
-                   print_dead_nets="n", print_stats=True, rand_chance=20,
+#collect_data (bool): creates csv file with various data on agents
+def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
-                   max_height=900):
+                   max_height=900, collect_data=True):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
+        
+    filename = ""
+    if collect_data:
+        filename = input("Filename for csv?")
+        if filename == "":
+            filename = str(int(time.time())) + ".csv"
     
     loop_limit = x_loops
     if loop_limit < 1:
@@ -246,31 +238,9 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True,
     while loop_limit > 0:
         MainWindow = garden_game(rand_chance, garden_size, tako_number, pop_max,
                                  max_width, max_height)
-        MainWindow.MainLoop(max_steps, speedup, print_stats, print_dead_nets, i)
+        MainWindow.MainLoop(max_steps, speedup, collect_data, filename, i)
         loop_limit -= 1
         i += 1
-    if print_stats:
-        print(agelist)
-        print(children_num)
-        for run in agelist:
-            print("Run# " + str(run))
-            for gen in agelist[run]:
-                print("Generation: " + str(gen))
-                print("Number: " + str(len(agelist[run][gen])))
-                print("Ages:")
-                numsteplist =  numpy.array(agelist[run][gen])
-                print("min", min(agelist[run][gen]))
-                print("max", max(agelist[run][gen]))
-                print("mean", numpy.mean(numsteplist))
-                print("median", numpy.median(numsteplist))
-                print("std", numpy.std(numsteplist, ddof=1))
-                print("# children:")
-                childlist = numpy.array(children_num[run][gen])
-                print("min", min(children_num[run][gen]))
-                print("max", max(children_num[run][gen]))
-                print("mean", numpy.mean(childlist))
-                print("median", numpy.median(childlist))
-                print("std", numpy.std(childlist, ddof=1))
                 
 if __name__ == "__main__":
     run_experiment(garden_size=15, tako_number=4, speedup=True, x_loops=1)

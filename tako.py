@@ -35,7 +35,8 @@ class Tako(Widget):
     dir_map = {0: "north.png", 1: "east.png", 2: "south.png", 3: "west.png"}
 
     #gen is short for generation, not genome or the like
-    def __init__(self, dire, x, y, genome, ident, solver=None, parents=[], gen=0):
+    def __init__(self, dire, x, y, genome, ident, solver=None,
+                 parents=[None, None], gen=0):
         sprite.Sprite.__init__(self)
         self.direction = dire
         self.x = x
@@ -250,6 +251,7 @@ class Tako(Widget):
 
 class STMlayer(caffe.Layer):
 
+    #TODO check this
     def setup(self, bottom, top):
         self.blobs.add_blob(6)
 
