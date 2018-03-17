@@ -196,6 +196,8 @@ def write_csv(filename, tako):
         cod = "old age"
     else:
         cod = "natural"
+    if not os.path.exists("Data"):
+        os.makedirs("Data")
     if not os.path.exists(os.path.join("Data", filename)):
         with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
