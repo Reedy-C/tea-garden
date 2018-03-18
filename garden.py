@@ -28,9 +28,14 @@ class Garden:
         self.garden_map = [[Dirt() for x in range(self.size)]
                            for x in range(self.size)]
         self.tako_list = []
-        self.add_item(Rock())
-        self.add_item(Ball())
-        self.add_item(Ball())
+        rock = 0
+        while rock < (0.02 * (self.size**2)):
+            self.add_item(Rock())
+            rock += 1
+        ball = 0
+        while ball < (0.04 * (self.size**2)):
+            self.add_item(Ball())
+            ball += 1
         gras = 0
         while (gras <= (.25 * (self.size**2))):
             self.add_item(Grass())
