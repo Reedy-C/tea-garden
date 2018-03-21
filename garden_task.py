@@ -8,9 +8,10 @@ import numpy
 class GardenTask:
     last_action = None
 
-    def __init__(self, environment, rand_percent):
+    def __init__(self, environment, rand_percent, learning_on):
         self.env = environment
         self.rand_percent = rand_percent
+        self.learning_on = learning_on
     
     def performAction(self, action, tako):
         self.last_action = action
@@ -94,11 +95,12 @@ class GardenTask:
             #print(action)
             #perform action and get reward
             self.performAction(action, tako)
-            reward = self.getReward(tako)
-            #feed it reward and backpropogate
-            tako.solver.net.blobs['stm_input'].data[...] = -1
-            for i in range(len(tako.solver.net.blobs['reward'].data[0][0][0])):
-                feedback = reward + act[0][i]
-                tako.solver.net.blobs['reward'].data[0][0][0][i] = feedback
-            tako.solver.step(1)
+            if self.learning_on:
+                reward = self.getReward(tako)
+                #feed it reward and backpropogate
+                tako.solver.net.blobs['stm_input'].data[...] = -1
+                for i in range(len(tako.solver.net.blobs['reward'].data[0][0][0])):
+                    feedback = reward + act[0][i]
+                    tako.solver.net.blobs['reward'].data[0][0][0][i] = feedback
+                tako.solver.step(1)
             

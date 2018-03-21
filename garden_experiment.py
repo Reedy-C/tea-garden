@@ -20,8 +20,8 @@ children_num = {}
 
 class garden_game:
 
-    def __init__(self, rand_chance, garden_size, tako_number, pop_max, max_width,
-                 max_height):
+    def __init__(self, rand_chance, garden_size, tako_number, pop_max,
+                 max_width, max_height, learning_on):
         pygame.init()
 
         global scroll
@@ -52,7 +52,7 @@ class garden_game:
         global env
         env = Garden(garden_size, tako_number, pop_max)
         global task
-        task = GardenTask(env, rand_chance)
+        task = GardenTask(env, rand_chance, learning_on)
 
         self.selected_Tako = None
         self.neur = None
@@ -212,7 +212,8 @@ def write_csv(filename, tako, i):
 #x_loops (int): run x times (<1 interpreted as 1)
 #max_steps (int): limit to x timesteps (<= 0 interpreted as 'until all dead')
 #speedup (bool): run simulation quickly if true, slow to 10fps if false
-#rand_chance (int): make 1/x actions randomly different (<1 interpreted as no random)
+#rand_chance (int): make 1/x actions randomly different
+#                   (<=1 interpreted as no random)
 #garden_size (int): garden size in length/width in tiles
 #tako_number (int): number of creatures created in the garden
 #pop_max (int): the maximum population that will be allowed at any time
@@ -228,11 +229,10 @@ def write_csv(filename, tako, i):
 #haploid_mode (bool): run with haploid rather than diploid genetics mode
 #TODO implement this!
 #learning_on (bool): turns learning on/off
-#TODO implement this!
 def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
                    max_height=900, collect_data=True, rand_nets=True,
-                   max_gen = 505):
+                   max_gen = 505, haploid_mode=False, learning_on=True):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -250,11 +250,10 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
     i = 0
     while loop_limit > 0:
         MainWindow = garden_game(rand_chance, garden_size, tako_number, pop_max,
-                                 max_width, max_height)
+                                 max_width, max_height, learning_on)
         MainWindow.MainLoop(max_steps, speedup, collect_data, filename, i)
         loop_limit -= 1
         i += 1
                 
 if __name__ == "__main__":
-    run_experiment(garden_size=15, tako_number=4, rand_chance=20,
-                   speedup=True, x_loops=1)
+    run_experiment(garden_size=15, tako_number=4, rand_chance=20, x_loops=1)
