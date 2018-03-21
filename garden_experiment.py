@@ -110,7 +110,7 @@ class garden_game:
                     env.garden_map[tako.y][tako.x] = Dirt(tako.x, tako.y)
                     env.tako_list.remove(tako)
                     if collect_data:
-                        write_csv(filename, tako)
+                        write_csv(filename, tako, i)
                     tako.kill()
             #now, update sprites, then draw them
             if env.new_sprites != []:
@@ -189,7 +189,7 @@ def load_image(name, colorkey=None):
         image.set_colorkey(colorkey, RLEACCEL)
     return image, image.get_rect()
 
-def write_csv(filename, tako):
+def write_csv(filename, tako, i):
     if tako.hunger <= 0:
         cod = "hunger"
     elif tako.age > 130000:
@@ -201,13 +201,13 @@ def write_csv(filename, tako):
     if not os.path.exists(os.path.join("Data", filename)):
         with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
-            writ.writerow(['ID', 'parent1', 'parent2', 'age', 'generation', 'numchildren',
-                            'cause of death'])
+            writ.writerow(['iteration', 'ID', 'parent1', 'parent2', 'age',
+                           'generation', '# children', 'cause of death'])
     #write above data
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
-            writ.writerow([tako.ident, tako.parents[0], tako.parents[1], tako.age,
-                           tako.gen, len(tako.children), cod])
+            writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
+                           tako.age, tako.gen, len(tako.children), cod])
     
 #x_loops (int): run x times (<1 interpreted as 1)
 #max_steps (int): limit to x timesteps (<= 0 interpreted as 'until all dead')
@@ -219,9 +219,20 @@ def write_csv(filename, tako):
 #max_width (int): max horizontal resolution of window
 #max_height (int): max vertical resolution of window
 #collect_data (bool): creates csv file with various data on agents
+#rand_nets (bool): use random weights to start first generation?
+#TODO note that this should not be set to false currently
+#TODO implement this!
+#max_gen (int): limit to x generations; stops when first x+1 is born
+#               (<=0 interpreted as 'until all dead')
+#TODO implement this!
+#haploid_mode (bool): run with haploid rather than diploid genetics mode
+#TODO implement this!
+#learning_on (bool): turns learning on/off
+#TODO implement this!
 def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
-                   max_height=900, collect_data=True):
+                   max_height=900, collect_data=True, rand_nets=True,
+                   max_gen = 505):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -245,4 +256,5 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
         i += 1
                 
 if __name__ == "__main__":
-    run_experiment(garden_size=15, tako_number=4, speedup=True, x_loops=1)
+    run_experiment(garden_size=15, tako_number=4, rand_chance=20,
+                   speedup=True, x_loops=1)

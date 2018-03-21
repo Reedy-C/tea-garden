@@ -86,11 +86,11 @@ class GardenTask:
             #1/rand_percent chance of rolling different random action
             if self.rand_percent > 1:
                 x = random.randint(0, self.rand_percent)
-            if x == 0:
-                newact = random.randint(0, 5)
-                while newact == action:
+                if x == 0:
                     newact = random.randint(0, 5)
-                action = newact
+                    while newact == action:
+                        newact = random.randint(0, 5)
+                    action = newact
             #print(action)
             #perform action and get reward
             self.performAction(action, tako)
