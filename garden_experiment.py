@@ -60,13 +60,17 @@ class garden_game:
 
         self.stepid = 0
 
-    def MainLoop(self, max_steps, speedup, collect_data, filename, i):
+    def MainLoop(self, max_steps, max_gen, speedup, collect_data, filename, i):
         self.load_sprites()
         pygame.display.flip()
         self.cam = [0,0]
         while 1:
             if max_steps > 0:
                 if self.stepid > max_steps:
+                    return
+            #probably not the most elegant way to do this, but it works
+            if max_gen > 0:
+                if env.highest_gen > max_gen:
                     return
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -220,12 +224,11 @@ def write_csv(filename, tako, i):
 #max_width (int): max horizontal resolution of window
 #max_height (int): max vertical resolution of window
 #collect_data (bool): creates csv file with various data on agents
-#rand_nets (bool): use random weights to start first generation?
+#rand_nets (bool): use random weights to start first generation
 #TODO note that this should not be set to false currently
 #TODO implement this!
 #max_gen (int): limit to x generations; stops when first x+1 is born
 #               (<=0 interpreted as 'until all dead')
-#TODO implement this!
 #haploid_mode (bool): run with haploid rather than diploid genetics mode
 #TODO implement this!
 #learning_on (bool): turns learning on/off
@@ -243,6 +246,8 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
         filename = input("Filename for csv?")
         if filename == "":
             filename = str(int(time.time())) + ".csv"
+        if filename[-4] != ".csv":
+            filename = filename + ".csv"
     
     loop_limit = x_loops
     if loop_limit < 1:
@@ -251,7 +256,8 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
     while loop_limit > 0:
         MainWindow = garden_game(rand_chance, garden_size, tako_number, pop_max,
                                  max_width, max_height, learning_on)
-        MainWindow.MainLoop(max_steps, speedup, collect_data, filename, i)
+        MainWindow.MainLoop(max_steps, max_gen, speedup, collect_data,
+                            filename, i)
         loop_limit -= 1
         i += 1
                 

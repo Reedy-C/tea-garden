@@ -22,6 +22,7 @@ class Garden:
         self.num_tako = num_tako
         self.pop_max = pop_max
         self.new_sprites = sprite.Group()
+        self.highest_gen = 0
         self.reset()
  
     def reset(self):
@@ -168,6 +169,8 @@ class Garden:
                 self.garden_map[y][x] = new_tak
                 self.tako_list.append(new_tak)
                 self.new_sprites.add(new_tak)
+                if result[5] > self.highest_gen:
+                    self.highest_gen = result[5]
             result = (result[0], result[1], result[2])
         return result
 
