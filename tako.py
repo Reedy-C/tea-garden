@@ -10,8 +10,8 @@ import sys
 sys.path.append('..')
 from dgeann import dgeann
 
-
-dele = False
+rand_nets = False
+dele = True
 dgeann.layer_dict["STMlayer"] = '''\
                                     layer {{
                                       name: "{0.ident}"
@@ -26,8 +26,8 @@ dgeann.layer_dict["STMlayer"] = '''\
                                     '''
 
 # a Tako is a creature and also a Widget
-# it has a neural net (agent)
-# it had a genetics-like system before pycaffe
+# it has a neural net
+# it has a genome
 # it has drives (boredom, hunger, etc)
 # it is meant to live in a Garden
 class Tako(Widget):
@@ -104,23 +104,26 @@ class Tako(Widget):
                                         ["action", "reward"], 6, "loss")
         layers = [data, reward, stm_input, stm, concat, action, loss]
         #layers = [data, reward, stm_input, stm, concat, evo, action, loss]
-        weights = []
-        with open("default weights.txt") as f:
-            for n in range(6):
-                for m in range(15):
-                    t = f.readline()
-                    t = float(t[0:-1])
-                    iden = str(n) + " " + str(m)
-                    if m < 9:
-                        in_layer = "data"
-                        m_adj = m
-                    else:
-                        in_layer = "STM"
-                        m_adj = m - 9
-                    w = dgeann.weight_gene(3, True, False, 0.01, iden,
-                                             t, m_adj, n, in_layer, "action")
-                    weights.append(w)
-        default_genome = dgeann.genome(layers, layers, weights, weights)
+        weightsa = []
+        weightsb = []
+        if not rand_nets:
+            with open("default weights.txt") as f:
+                for n in range(6):
+                    for m in range(15):
+                        t = f.readline()
+                        t = float(t[0:-1])
+                        iden = str(n) + " " + str(m)
+                        if m < 9:
+                            in_layer = "data"
+                            m_adj = m
+                        else:
+                            in_layer = "STM"
+                            m_adj = m - 9
+                        w = dgeann.weight_gene(3, True, False, 0.01, iden,
+                                                 t, m_adj, n, in_layer, "action")
+                        weightsa.append(w)
+                        weightsb.append(w)
+        default_genome = dgeann.genome(layers, layers, weightsa, weightsb)
         solver = default_genome.build(delete=dele)
         tak = Tako(direction, x, y, default_genome, default_genome.ident,
                    solver=solver)

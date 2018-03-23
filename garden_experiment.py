@@ -1,6 +1,6 @@
 from garden import Garden
 from garden_task import GardenTask
-from tako import Tako
+import tako
 from widget import *
 import time
 import os, sys
@@ -153,20 +153,20 @@ class garden_game:
         self.widget_sprites = pygame.sprite.Group()
         for x in range(env.size):
             for y in range(env.size):
-                if type(env.garden_map[y][x]) != Tako:
+                if type(env.garden_map[y][x]) != tako.Tako:
                     if type(env.garden_map[y][x]) != Dirt:
                         self.widget_sprites.add(env.garden_map[y][x])
         env.new_sprites = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
-        for tako in env.tako_list:
-            self.all_sprites.add(tako)
+        for tak in env.tako_list:
+            self.all_sprites.add(tak)
         for sprite in self.widget_sprites:
             self.all_sprites.add(sprite)
 
     def get_new(self):
         for sprite in env.new_sprites:
             if not isinstance(sprite, Dirt):
-                if not isinstance(sprite, Tako):
+                if not isinstance(sprite, tako.Tako):
                     self.widget_sprites.add(sprite)
                 self.all_sprites.add(sprite)
             env.new_sprites.remove(sprite)
@@ -226,7 +226,6 @@ def write_csv(filename, tako, i):
 #collect_data (bool): creates csv file with various data on agents
 #rand_nets (bool): use random weights to start first generation
 #TODO note that this should not be set to false currently
-#TODO implement this!
 #max_gen (int): limit to x generations; stops when first x+1 is born
 #               (<=0 interpreted as 'until all dead')
 #haploid_mode (bool): run with haploid rather than diploid genetics mode
@@ -240,14 +239,20 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
-        
+
+
     filename = ""
     if collect_data:
         filename = input("Filename for csv?")
         if filename == "":
             filename = str(int(time.time())) + ".csv"
-        if filename[-4] != ".csv":
+        if len(filename) < 4:
             filename = filename + ".csv"
+        elif filename[-3] != ".csv":
+            filename = filename + ".csv"
+
+    if rand_nets:
+        tako.rand_nets = True
     
     loop_limit = x_loops
     if loop_limit < 1:
