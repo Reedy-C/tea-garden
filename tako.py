@@ -7,6 +7,7 @@ from pygame import sprite, Color, Rect
 import os
 from textwrap import dedent
 import sys
+import csv
 sys.path.append('..')
 from dgeann import dgeann
 
@@ -64,69 +65,107 @@ class Tako(Widget):
         self.children = []
         self.parents = parents
         self.gen = gen
-        #net = caffe.Net('alife.text', '1461257654.3.txt', caffe.TRAIN)
-        #self.solver = self.make_solver()
+        self.mating_attempts = 0
+        self.cod = None
         if solver != None:
             self.solver = solver
         else:
             self.solver = self.genome.build()
             self.ident = self.genome.ident
-        #self.solver = caffe.AdaDeltaSolver('solver.text')
-        #uncomment to read in weights from saved network (specify under 'net' above)
         #for pr in net.params.keys():
         #    self.solver.net.params[pr][0].data[...] = net.params[pr][0].data[...]
         #do not delete; keeps synchedmem error from occuring
         #for some reason
         #TODO try putting a small pause in instead
-        for key in self.solver.net.params:
-            print(key)
-            print(self.solver.net.params[key][0].data)
-                    
+        
+    #gen_tye can be "Diverse", "Plain", or "Haploid"
+    #Diverse = two chromosomes are different
+    #Plain = two chromosomes are the same
+    #rand_net (bool) overrides this and creates a genome from a random starting
+    #   network in the 'plain' style (except for random dominance)
     @staticmethod
-    def default_tako(direction, x, y):
+    def default_tako(direction, x, y, gen_type, rand_net):
         data = dgeann.layer_gene(5, False, False, 0, "data",
-                                        [], 9, "input")
-        reward = dgeann.layer_gene(5, False, False, 0, "reward",
-                                         [], 6, "input")
+                                        [], 10, "input")
+        #reward = dgeann.layer_gene(5, False, False, 0, "reward",
+        #                                 [], 6, "input")
+        #stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
+        #                                     ["data", "reward"], 6, "input")
         stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
-                                             ["data", "reward"], 6, "input")
+                                             ["data"], 6, "input")
         stm = dgeann.layer_gene(5, False, False, 0, "STM",
                                        ["stm_input"], 6, "STMlayer")
         concat = dgeann.layer_gene(5, False, False, 0, "concat_0",
                                           ["data", "STM"], None, "concat")
-        #evo = dgeann.layer_gene(3, True, True, 0.01, "evo",
-        #                        ["concat_0"], 2, "IP")
-        #action = dgeann.layer_gene(5, False, False, 0, "action",
-        #                                  ["evo"], 6, "IP")
+        evo = dgeann.layer_gene(3, False, False, 0.01, "evo",
+                                ["concat_0"], 5, "IP")
         action = dgeann.layer_gene(5, False, False, 0, "action",
-                                          ["concat_0"], 6, "IP")
-        loss = dgeann.layer_gene(5, False, False, 0, "loss",
-                                        ["action", "reward"], 6, "loss")
-        layers = [data, reward, stm_input, stm, concat, action, loss]
-        #layers = [data, reward, stm_input, stm, concat, evo, action, loss]
+                                          ["evo"], 6, "IP")
+        #loss = dgeann.layer_gene(5, False, False, 0, "loss",
+        #                                ["action", "reward"], 6, "loss")
+        #layers = [data, reward, stm_input, stm, concat, action, loss]
+        layersa = [data, stm_input, stm, concat, evo, action]
+        layersb = [data, stm_input, stm, concat, evo, action]
         weightsa = []
         weightsb = []
-        if not rand_nets:
-            with open("default weights.txt") as f:
-                for n in range(6):
-                    for m in range(15):
-                        t = f.readline()
-                        t = float(t[0:-1])
-                        iden = str(n) + " " + str(m)
-                        if m < 9:
-                            in_layer = "data"
-                            m_adj = m
-                        else:
-                            in_layer = "STM"
-                            m_adj = m - 9
-                        w = dgeann.weight_gene(3, True, False, 0.01, iden,
-                                                 t, m_adj, n, in_layer, "action")
-                        weightsa.append(w)
+        if not rand_net:
+            fields = ['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
+                      'weight', 'in_node', 'out_node', 'in_layer', 'out_layer']
+            l = random.randint(1, 18)
+            m = random.randint(0, 1)
+            if m == 0:
+                filenamea = "Default Genetics/" + str(l) + "_a.csv"
+            else:
+                filenamea = "Default Genetics/" + str(l) + "_b.csv"
+            l = random.randint(1, 18)
+            m = random.randint(0, 1)
+            if m == 0:
+                filenameb = "Default Genetics/" + str(l) + "_a.csv"
+            else:
+                filenameb = "Default Genetics/" + str(l) + "_b.csv"
+            with open(filenamea, newline="") as file:
+                r = csv.DictReader(file, fieldnames = fields)
+                for row in r:
+                    in_node = int(row['in_node'])
+                    w = dgeann.weight_gene(int(row['dom']),
+                                           bool(row['can_mut']),
+                                           bool(row['can_dup']),
+                                           float(row['mut_rate']),
+                                           row['ident'], float(row['weight']),
+                                           in_node, int(row['out_node']),
+                                           row['in_layer'], row['out_layer'])
+                    weightsa.append(w)
+            if gen_type == "Diverse":
+                with open(filenameb, newline="") as file:
+                    r = csv.DictReader(file, fieldnames = fields)
+                    for row in r:
+                        in_node = int(row['in_node'])
+                        w = dgeann.weight_gene(int(row['dom']),
+                                               bool(row['can_mut']),
+                                               bool(row['can_dup']),
+                                               float(row['mut_rate']),
+                                               row['ident'], float(row['weight']),
+                                               in_node, int(row['out_node']),
+                                               row['in_layer'], row['out_layer'])
                         weightsb.append(w)
-        default_genome = dgeann.genome(layers, layers, weightsa, weightsb)
+            elif gen_type == "Plain":
+                weightsb = weightsa.copy()
+            if gen_type != "Haploid":
+                default_genome = dgeann.genome(layersa, layersb,
+                                               weightsa, weightsb)
+            else:
+                default_genome = dgeann.haploid_genome(layersa, weightsa)
+        else:
+            default_genome = dgeann.genome(layersa, layersb, [], [])
         solver = default_genome.build(delete=dele)
         tak = Tako(direction, x, y, default_genome, default_genome.ident,
                    solver=solver)
+        for key in tak.solver.net.params:
+            print(key)
+            #do not delete; keeps synchedmem error from occuring
+            #for some reason
+            #TODO try putting a small pause in instead
+            #print(tak.solver.net.params[key][0].data)
         return tak
             
             
@@ -136,33 +175,31 @@ class Tako(Widget):
         self.age += 1
         if self.age % 1500 == 0:
             self.check_death()
-        self.last_hunger = self.hunger
-        self.last_boredom = self.boredom
-        self.last_pain = self.pain
-        self.last_desire = self.desire
-        self.hunger -= 0.5
-        if self.hunger <= 0:
-            self.dead = True
-        if self.boredom > 0:
-            self.boredom -= 0.25
-        else:
-            self.boredom = 0
-        if self.pain > 0:
-            self.pain = self.pain*.6
-            if self.pain < 1:
-                self.pain = 0
-        self.dez += 1
-        if self.dez == 503.0:
-            self.dez = 0.0
-        #this makes a wave between 0 and 150 with a period of 502 ticks
-        self.desire = (math.sin((self.dez/80.0)+11.0)*75.0)+75.0
-        self.update_sprite()
+        if not self.dead:
+            self.last_hunger = self.hunger
+            self.last_boredom = self.boredom
+            self.last_pain = self.pain
+            self.last_desire = self.desire
+            self.hunger -= 0.5
+            if self.hunger <= 0:
+                self.cod = "hunger"
+                self.dead = True
+            if self.boredom > 0:
+                self.boredom -= 0.25
+            else:
+                self.boredom = 0
+            if self.pain > 0:
+                self.pain = self.pain*.6
+                if self.pain < 1:
+                    self.pain = 0
+            self.dez += 1
+            if self.dez == 503.0:
+                self.dez = 0.0
+            #this makes a wave between 0 and 150 with a period of 502 ticks
+            self.desire = (math.sin((self.dez/80.0)+11.0)*75.0)+75.0
+            self.update_sprite()
 
     def update_sprite(self):
-        #if we moved, moved the sprite
-        #if self.last_action == 0:
-        #    self.rect = Rect.((self.x * 50), (self.y * 50), 50, 50)
-        #if we turned, update the sprite
         if self.last_action == 1 or self.last_action == 2:
             self.image, temp = self.load_image(self.dir_map[self.direction], -1)
         
@@ -181,7 +218,6 @@ class Tako(Widget):
             self.desire += modifier
 
     def modify(self, result):
-        #print(result)
         if result is not None:
             for x in range(len(result)):
                 if x%2 == 0:
@@ -238,12 +274,14 @@ class Tako(Widget):
     #across a few species
     def check_death(self):
         if self.age > 130000:
-            dead = True
+            self.cod = "old age"
+            self.dead = True
         else:
             chance = self.skew_norm_pdf(self.age, 115000, 10000.0, -4)
             r = random.random()
             if r < chance:
-                dead = True
+                self.cod = "natural"
+                self.dead = True
                 
     #generates skew normal distribution
     #adapted slightly from

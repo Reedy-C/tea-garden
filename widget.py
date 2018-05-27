@@ -61,9 +61,17 @@ class Dirt(Widget):
 class Grass(Widget):
     node = 1
     display = "grass.png"
+
+    def __init__(self, x=0, y=0, poison=False):
+        super().__init__(x, y)
+        self.poison = poison
+        
     def eaten(self):
-        return ("hunger", 30)
-    
+        if self.poison:
+            return ("hunger", 10)
+        else:
+            return ("hunger", 30)
+
 
 class Rock(Widget):
     node = 3
@@ -82,5 +90,16 @@ class Ball(Widget):
     def played(self):
         return ("boredom", 30)
 
+class Grass2(Widget):
+    node = 5
+    display = "grass2.png"
 
+    def __init__(self, x=0, y=0, poison=True):
+        super().__init__(x, y)
+        self.poison = poison
 
+    def eaten(self):
+        if self.poison:
+            return ("hunger", 10)
+        else:
+            return ("hunger", 30)

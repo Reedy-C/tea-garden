@@ -1,9 +1,10 @@
 import unittest
-from dgeann import dgeann
 import tako
 from textwrap import dedent
-import os
+import os, sys
 import caffe
+sys.path.append('..')
+from dgeann import dgeann
 
 class testGenetics(unittest.TestCase):
 
@@ -71,8 +72,8 @@ class testGenetics(unittest.TestCase):
                 self.assertAlmostEqual(test_data[n][m], default_data[n][m])
 
     def test_mating(self):
-        tak_1 = tako.Tako.default_tako(0, 0, 0)
-        tak_2 = tako.Tako.default_tako(0, 0, 1)
+        tak_1 = tako.Tako.default_tako(0, 0, 0, "Plain", False)
+        tak_2 = tako.Tako.default_tako(0, 0, 1, "Plain", False)
         result = tak_1.mated(tak_2)
         self.assertEqual(result, ("boredom", -1))
         tak_1.desire = 150

@@ -55,18 +55,18 @@ class GardenTask:
     def getObservation(self, tako):
         obs = self.env.getSensors(tako)
         nobs = self.transform_obs(obs)
-        hung = (5/(1+(numpy.exp(-tako.hunger + 75))))
+        hung = 5/(1 + (0.38 * 2.71828)**(-tako.hunger + 75)) - 2.5
         nobs.append(hung)
-        bore = (5/(1+(numpy.exp(-tako.boredom + 75))))
+        bore = 5/(1 + (0.38 * 2.71828)**(-tako.boredom + 75)) - 2.5
         nobs.append(bore)
-        pain = (5/(1+(numpy.exp(-tako.pain + 75))))
+        pain = 5/(1 + (0.38 * 2.71828)**(-tako.pain + 75)) - 2.5
         nobs.append(pain)
-        desire = (5/(1+numpy.exp(-tako.desire + 75)))
+        desire = 5/(1 + (0.38 * 2.71828)**(-tako.desire + 75)) - 2.5
         nobs.append(desire)
         return nobs
     
     def transform_obs(self, obs):
-        normed = [0, 0, 0, 0, 0]
+        normed = [0, 0, 0, 0, 0, 0]
         normed[obs] = 1
         return normed
 
@@ -76,13 +76,12 @@ class GardenTask:
             observation = self.getObservation(tako)
             #feed it the observation
             tako.solver.net.blobs['data'].data[...] = observation
-            tako.solver.net.blobs['reward'].data[...] = 0
+            if self.learning_on:
+                tako.solver.net.blobs['reward'].data[...] = 0
             tako.solver.net.blobs['stm_input'].data[...] = tako.last_action
             #forward and get action
             tako.solver.net.forward()
-            #print "action"
             act = tako.solver.net.blobs['action'].data
-            #print(act)
             action = self.find_action(act)
             #1/rand_percent chance of rolling different random action
             if self.rand_percent > 1:
@@ -92,7 +91,6 @@ class GardenTask:
                     while newact == action:
                         newact = random.randint(0, 5)
                     action = newact
-            #print(action)
             #perform action and get reward
             self.performAction(action, tako)
             if self.learning_on:
