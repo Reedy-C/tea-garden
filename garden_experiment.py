@@ -116,8 +116,6 @@ class garden_game:
                     if collect_data:
                         write_csv(filename, tako, i, self.stepid)
                     tako.kill()
-                elif tako.age == 49998:
-                    export(tako)
             #now, update sprites, then draw them
             if env.new_sprites != []:
                 self.get_new()
@@ -206,7 +204,7 @@ def write_csv(filename, tako, i, step):
 
 #export the genome of a tako to a csv file
 def export(tako):
-    if not ospath.exists('Exported Genomes'):
+    if not os.path.exists('Exported Genomes'):
         os.makedirs('Exported Genomes')
     fa = tako.ident + "_a"
     fb = tako.ident + "_b"
