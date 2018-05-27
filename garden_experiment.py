@@ -114,7 +114,7 @@ class garden_game:
                     env.garden_map[tako.y][tako.x] = Dirt(tako.x, tako.y)
                     env.tako_list.remove(tako)
                     if collect_data:
-                        write_csv(filename, tako, i, self.step_id)
+                        write_csv(filename, tako, i, self.stepid)
                     tako.kill()
                 elif tako.age == 49998:
                     export(tako)
@@ -293,6 +293,5 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
         i += 1
                 
 if __name__ == "__main__":
-    run_experiment(garden_size=13, tako_number=5, x_loops=1,
-                   pop_max=40, max_gen = 100, max_steps = 50001,
-                   learning_on=False, collect_data=False)
+    run_experiment(garden_size=13, tako_number=20, x_loops=5,
+                   pop_max=40, max_gen = 100, learning_on=False)
