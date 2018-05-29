@@ -29,7 +29,7 @@ dgeann.layer_dict["STMlayer"] = '''\
 # a Tako is a creature and also a Widget
 # it has a neural net
 # it has a genome
-# it has drives (boredom, hunger, etc)
+# it has drives (amuse, fullness, etc)
 # it is meant to live in a Garden
 class Tako(Widget):
     node = 4
@@ -49,12 +49,12 @@ class Tako(Widget):
         self.image, self.rect = self.load_image(self.dir_map[dire],
                                                 Color('#FF00FF'))
         self.rect = Rect(x*50, y*50, 50, 50)
-        self.hunger = 150
-        self.boredom = 150
+        self.fullness = 150
+        self.amuse = 150
         self.pain = 0
         self.desire = 0.0
-        self.last_hunger = 150
-        self.last_boredom = 150
+        self.last_fullness = 150
+        self.last_amuse = 150
         self.last_pain = 0
         self.last_desire = 0
         self.last_obj = None
@@ -176,18 +176,18 @@ class Tako(Widget):
         if self.age % 1500 == 0:
             self.check_death()
         if not self.dead:
-            self.last_hunger = self.hunger
-            self.last_boredom = self.boredom
+            self.last_fullness = self.fullness
+            self.last_amuse = self.amuse
             self.last_pain = self.pain
             self.last_desire = self.desire
-            self.hunger -= 0.5
-            if self.hunger <= 0:
-                self.cod = "hunger"
+            self.fullness -= 0.5
+            if self.fullness <= 0:
+                self.cod = "fullness"
                 self.dead = True
-            if self.boredom > 0:
-                self.boredom -= 0.25
+            if self.amuse > 0:
+                self.amuse -= 0.25
             else:
-                self.boredom = 0
+                self.amuse = 0
             if self.pain > 0:
                 self.pain = self.pain*.6
                 if self.pain < 1:
@@ -204,14 +204,14 @@ class Tako(Widget):
             self.image, temp = self.load_image(self.dir_map[self.direction], -1)
         
     def update_drives(self, drive, modifier):
-        if drive == "hunger":
-            self.hunger += modifier
-            if self.hunger > 150:
-                self.hunger = 150
-        elif drive == "boredom":
-            self.boredom += modifier
-            if self.boredom > 150:
-                self.boredom = 150
+        if drive == "fullness":
+            self.fullness += modifier
+            if self.fullness > 150:
+                self.fullness = 150
+        elif drive == "amuse":
+            self.amuse += modifier
+            if self.amuse > 150:
+                self.amuse = 150
         elif drive == "pain":
             self.pain += modifier
         elif drive == "desire":
@@ -248,7 +248,7 @@ class Tako(Widget):
         return solver
 
     def played(self):
-        return ("boredom", 15)
+        return ("amuse", 15)
 
     def mated(self, tak):
         if tak.desire >= 100:
@@ -257,13 +257,13 @@ class Tako(Widget):
                 self.desire = 0
                 tak.dez = 0
                 tak.desire = 0
-                return [("boredom", 45), ("hunger", -10), ("desire", -150),
+                return [("amuse", 45), ("fullness", -10), ("desire", -150),
                 self.genome.recombine(tak.genome), [self.ident, tak.ident],
                         (max(self.gen, tak.gen) + 1)]
             else:
-                return ("boredom", -1)
+                return ("amuse", -1)
         else:
-            return ("boredom", -1)
+            return ("amuse", -1)
 
     #I didn't want to assign a death age at birth
     #and wanted a skewed normal distribution (as humans have)

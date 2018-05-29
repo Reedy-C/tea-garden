@@ -75,14 +75,14 @@ class testGenetics(unittest.TestCase):
         tak_1 = tako.Tako.default_tako(0, 0, 0, "Plain", False)
         tak_2 = tako.Tako.default_tako(0, 0, 1, "Plain", False)
         result = tak_1.mated(tak_2)
-        self.assertEqual(result, ("boredom", -1))
+        self.assertEqual(result, ("amuse", -1))
         tak_1.desire = 150
         result = tak_1.mated(tak_2)
-        self.assertEqual(result, ("boredom", -1))
+        self.assertEqual(result, ("amuse", -1))
         tak_1.desire = 0
         tak_2.desire = 150
         result = tak_1.mated(tak_2)
-        self.assertEqual(result, ("boredom", -1))
+        self.assertEqual(result, ("amuse", -1))
         tak_1.desire = 100
         result = tak_1.mated(tak_2)
         self.assertEqual(len(result), 6)

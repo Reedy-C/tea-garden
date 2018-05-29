@@ -21,14 +21,14 @@ class GardenTask:
 
     def getReward(self, tako):
         reward = 0
-        hung_diff = tako.hunger - tako.last_hunger
-        bor_diff = tako.boredom - tako.last_boredom
+        full_diff = tako.fullness - tako.last_fullness
+        bor_diff = tako.amuse - tako.last_amuse
         pain_diff = tako.pain - tako.last_pain
         if tako.pain != 0:
             if tako.last_pain == 0 and pain_diff == 0:
                 pain_diff += 1
         desire_diff = tako.desire - tako.last_desire
-        if hung_diff > 0:
+        if full_diff > 0:
             reward += 1
         elif bor_diff > 0:
             reward += 1
@@ -55,10 +55,10 @@ class GardenTask:
     def getObservation(self, tako):
         obs = self.env.getSensors(tako)
         nobs = self.transform_obs(obs)
-        hung = 5/(1 + (0.38 * 2.71828)**(-tako.hunger + 75)) - 2.5
-        nobs.append(hung)
-        bore = 5/(1 + (0.38 * 2.71828)**(-tako.boredom + 75)) - 2.5
-        nobs.append(bore)
+        full = 5/(1 + (0.38 * 2.71828)**(-tako.fullness + 75)) - 2.5
+        nobs.append(full)
+        amuse = 5/(1 + (0.38 * 2.71828)**(-tako.amuse + 75)) - 2.5
+        nobs.append(amuse)
         pain = 5/(1 + (0.38 * 2.71828)**(-tako.pain + 75)) - 2.5
         nobs.append(pain)
         desire = 5/(1 + (0.38 * 2.71828)**(-tako.desire + 75)) - 2.5

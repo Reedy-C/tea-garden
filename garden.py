@@ -173,7 +173,7 @@ class Garden:
         tako.last_obj = self.garden_map[target[1]][target[0]]
         v = tako.last_obj
         result = v.mated(tako)
-        if result != ("boredom", -1):
+        if result != ("amuse", -1):
             tako.mating_attempts += 1
             #then result[3] is a genome
             #result[4] is its parents

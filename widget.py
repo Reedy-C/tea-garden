@@ -20,17 +20,17 @@ class Widget(sprite.Sprite):
     # functions should be implemented in subclasses
     # if they are relevant to that widget type
     def eaten(self):
-        return ("boredom", -1)
+        return ("amuse", -1)
 
     def played(self):
-        return ("boredom", -1)
+        return ("amuse", -1)
 
     # if creature tries to walk into widget,
     def intersected(self):
-        return ("boredom", -1)
+        return ("amuse", -1)
 
     def mated(self, tako):
-        return ("boredom", -1)
+        return ("amuse", -1)
 
     def load_image(self, name, colorkey=None):
         fullname = os.path.join('img', name)
@@ -68,16 +68,16 @@ class Grass(Widget):
         
     def eaten(self):
         if self.poison:
-            return ("hunger", 10)
+            return ("fullness", 10)
         else:
-            return ("hunger", 30)
+            return ("fullness", 30)
 
 
 class Rock(Widget):
     node = 3
     display = "rock.png"
     def played(self):
-        return ("boredom", -10)
+        return ("amuse", -10)
 
     def eaten(self):
         return ("pain", 30)
@@ -88,7 +88,7 @@ class Ball(Widget):
     display = "toy.png"
     #should move eventually
     def played(self):
-        return ("boredom", 30)
+        return ("amuse", 30)
 
 class Grass2(Widget):
     node = 5
@@ -100,6 +100,6 @@ class Grass2(Widget):
 
     def eaten(self):
         if self.poison:
-            return ("hunger", 10)
+            return ("fullness", 10)
         else:
-            return ("hunger", 30)
+            return ("fullness", 30)
