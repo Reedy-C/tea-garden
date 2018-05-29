@@ -16,7 +16,6 @@ import csv
 
 
 class garden_game:
-
     def __init__(self, rand_chance, garden_size, tako_number, pop_max,
                  max_width, max_height, learning_on, genetic_mode, rand_nets,
                  seed=None):
@@ -107,7 +106,8 @@ class garden_game:
                 return
             #let experiment go a step
             task.interact_and_learn()
-            self.screen.blit(self.neur_background, (0, 0))
+            if not speedup:
+                self.screen.blit(self.neur_background, (0, 0))
             # see if any are dead
             for tako in env.tako_list:
                 if tako.dead == True:
@@ -122,10 +122,11 @@ class garden_game:
             self.widget_sprites.update()
             for tako in env.tako_list:
                 tako.update()
-            if not scroll:
-                self.all_sprites.draw(self.screen)
-            else:
-                self.draw_onscreen()
+            if not speedup:
+                if not scroll:
+                    self.all_sprites.draw(self.screen)
+                else:
+                    self.draw_onscreen()
             #oh, and display which step we're on
             if not speedup:
                 if pygame.font:
@@ -133,7 +134,8 @@ class garden_game:
                     textpos = text.get_rect(centerx=
                                             (self.screen.get_width() * 0.5))
                     self.screen.blit(text, textpos)
-            pygame.display.flip()
+            if not speedup:
+                pygame.display.flip()
             #cap at x fps
             if not speedup:
                 self.clock.tick(10)
@@ -259,7 +261,7 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
             filename = str(int(time.time())) + ".csv"
         elif len(filename) < 4:
             filename = filename + ".csv"
-        elif filename[-3] != ".csv":
+        elif filename[-4:] != ".csv":
             filename = filename + ".csv"
 
     if rand_nets:
@@ -289,7 +291,8 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
                             filename, i)
         loop_limit -= 1
         i += 1
-                
+       
 if __name__ == "__main__":
     run_experiment(garden_size=13, tako_number=20, x_loops=5,
-                   pop_max=40, max_gen = 100, learning_on=False)
+                   pop_max=40, max_gen=100, learning_on=False,
+                   collect_data=False)

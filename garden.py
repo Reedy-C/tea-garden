@@ -13,7 +13,6 @@ class Garden:
     as well as seeing what is directly in front of it
     """
 
-
     def __init__(self, size, num_tako, pop_max, genetic_type, rand_net, seed):
         #create the map and add toy, grass, rock, creature
         if size < 3:
