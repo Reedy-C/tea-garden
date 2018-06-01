@@ -208,20 +208,33 @@ def write_csv(filename, tako, i, step):
 def export(tako):
     if not os.path.exists('Exported Genomes'):
         os.makedirs('Exported Genomes')
-    fa = tako.ident + "_a"
-    fb = tako.ident + "_b"
-    with open(os.path.join("Exported Genomes", fa), "a", newline="") as file:
+    w = tako.ident + "_weights.csv"
+    lay = tako.ident + "_layers.csv"
+    with open(os.path.join("Exported Genomes", w), "a", newline="") as file:
         writ = csv.writer(file)
+        writ.writerow(['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
+                      'weight', 'in_node', 'out_node', 'in_layer', 'out_layer',
+                       'chromosome'])
         for gen in tako.genome.weightchr_a:
             writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
                            gen.ident, gen.weight, gen.in_node, gen.out_node,
-                           gen.in_layer, gen.out_layer])
-    with open(os.path.join("Exported Genomes", fb), "a", newline="") as file:
-        writ = csv.writer(file)
+                           gen.in_layer, gen.out_layer, "a"])
         for gen in tako.genome.weightchr_b:
             writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
                            gen.ident, gen.weight, gen.in_node, gen.out_node,
-                           gen.in_layer, gen.out_layer])
+                           gen.in_layer, gen.out_layer, "b"])
+    with open(os.path.join("Exported Genomes", lay), "a", newline="") as file:
+        writ = csv.writer(file)
+        writ.writerow(['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
+                       'inputs', 'nodes', 'layer_type', 'chromosome'])
+        for gen in tako.genome.layerchr_a:
+            writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
+                           gen.ident, gen.inputs, gen.nodes, gen.layer_type,
+                           "a"])
+        for gen in tako.genome.layerchr_a:
+            writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
+                           gen.ident, gen.inputs, gen.nodes, gen.layer_type,
+                           "b"])
     
 #x_loops (int): run x times (<1 interpreted as 1)
 #max_steps (int): limit to x timesteps (<= 0 interpreted as 'until all dead')
@@ -293,6 +306,6 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
         i += 1
        
 if __name__ == "__main__":
-    run_experiment(garden_size=13, tako_number=20, x_loops=5,
+    run_experiment(garden_size=13, tako_number=20, x_loops=1,
                    pop_max=40, max_gen=100, learning_on=False,
                    collect_data=False)
