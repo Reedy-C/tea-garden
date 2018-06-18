@@ -9,46 +9,46 @@ import math
 from pygame.locals import *
 import numpy
 import caffe
-sys.path.append('..')
-from dgeann import dgeann
 import csv
-
 
 
 class garden_game:
     def __init__(self, rand_chance, garden_size, tako_number, pop_max,
-                 max_width, max_height, learning_on, genetic_mode, rand_nets,
+                 max_width, max_height, display_off, learning_on, genetic_mode, rand_nets,
                  seed=None):
         pygame.init()
-
         global scroll
-        scroll = True
+        if not display_off:
+            scroll = True
 
-        self.width = (garden_size * 50)
-        self.height = (garden_size * 50)
-        if self.width <= max_width and self.height <= max_height:
-            self.screen = pygame.display.set_mode((self.width, self.height))
-            scroll = False
-        elif self.width > max_width and self.height <= max_height:
-            self.screen = pygame.display.set_mode((max_width, self.height))
-        elif self.width <= max_width and self.height > max_height:
-            self.screen = pygame.display.set_mode((self.width, max_height))
-        else:
-            self.screen = pygame.display.set_mode((max_width, max_height))
+            self.width = (garden_size * 50)
+            self.height = (garden_size * 50)
+            if self.width <= max_width and self.height <= max_height:
+                self.screen = pygame.display.set_mode((self.width, self.height))
+                scroll = False
+            elif self.width > max_width and self.height <= max_height:
+                self.screen = pygame.display.set_mode((max_width, self.height))
+            elif self.width <= max_width and self.height > max_height:
+                self.screen = pygame.display.set_mode((self.width, max_height))
+            else:
+                self.screen = pygame.display.set_mode((max_width, max_height))
 
-        global spr_height
-        spr_height = self.screen.get_size()[1] / 50
-        global spr_width
-        spr_width = self.screen.get_size()[0] / 50
+            global spr_height
+            spr_height = self.screen.get_size()[1] / 50
+            global spr_width
+            spr_width = self.screen.get_size()[0] / 50
         
-        pygame.display.set_caption('Garden')
+            pygame.display.set_caption('Garden')
+            self.neur_background = pygame.Surface(self.screen.get_size()).convert()
+        else:
+            scroll = False
+        
         self.clock = pygame.time.Clock()
 
-        self.neur_background = pygame.Surface(self.screen.get_size()).convert()
 
         global env
         env = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
-                     seed)
+                     seed, display_off)
         global task
         task = GardenTask(env, rand_chance, learning_on)
 
@@ -58,11 +58,14 @@ class garden_game:
 
         self.stepid = 0
 
-    def MainLoop(self, max_steps, max_gen, speedup, collect_data, filename, i):
+    def MainLoop(self, max_steps, max_gen, display_off, collect_data, filename, i):
+        if not display_off:
+            self.make_background()
         self.load_sprites()
-        pygame.display.flip()
-        self.cam = [0,0]
-        font = pygame.font.Font(None, 18)
+        if not display_off:
+            pygame.display.flip()
+            self.cam = [0,0]
+            font = pygame.font.Font(None, 18)
         while 1:
             if max_steps > 0:
                 if self.stepid > max_steps:
@@ -70,14 +73,13 @@ class garden_game:
             #probably not the most elegant way to do this, but it works
             if max_gen > 0:
                 if env.highest_gen > max_gen:
+                    if collect_data:
+                        for tako in env.tako_list:
+                            write_csv(filename, tako, i, self.stepid)
                     return
             for event in pygame.event.get():
                 if event.type == QUIT:
                     return
-                elif event.type == MOUSEBUTTONDOWN:
-                    # returns x,y with origin in upper left
-                    x = event.pos[0]
-                    y = event.pos[1]
                 elif event.type == KEYDOWN:
                     if scroll:
                         if event.key == K_LEFT:
@@ -106,44 +108,27 @@ class garden_game:
                 return
             #let experiment go a step
             task.interact_and_learn()
-            if not speedup:
-                self.screen.blit(self.neur_background, (0, 0))
             # see if any are dead
             for tako in env.tako_list:
                 if tako.dead == True:
-                    env.garden_map[tako.y][tako.x] = Dirt(tako.x, tako.y)
+                    env.garden_map[tako.y][tako.x] = Dirt(display_off,
+                                                          tako.x, tako.y)
                     env.tako_list.remove(tako)
                     if collect_data:
                         write_csv(filename, tako, i, self.stepid)
                     tako.kill()
-            #now, update sprites, then draw them
+            #now, update sprites, then draw them if using graphics
             if env.new_sprites != []:
                 self.get_new()
             self.widget_sprites.update()
             for tako in env.tako_list:
                 tako.update()
-            if not speedup:
-                if not scroll:
-                    self.all_sprites.draw(self.screen)
-                else:
-                    self.draw_onscreen()
-            #oh, and display which step we're on
-            if not speedup:
-                if pygame.font:
-                    text = font.render(str(self.stepid), 1, (255, 255, 255))
-                    textpos = text.get_rect(centerx=
-                                            (self.screen.get_width() * 0.5))
-                    self.screen.blit(text, textpos)
-            if not speedup:
-                pygame.display.flip()
-            #cap at x fps
-            if not speedup:
-                self.clock.tick(10)
+            if not display_off:
+                self.graphics_loop(scroll, font)
             self.stepid += 1
             
     
     def load_sprites(self):
-        self.make_background()
         self.widget_sprites = pygame.sprite.Group()
         for x in range(env.size):
             for y in range(env.size):
@@ -176,6 +161,22 @@ class garden_game:
             for y in range(env.size):
                 img, rect = load_image("dirt.png")
                 self.neur_background.blit(img, (x*50, y*50))
+                
+    def graphics_loop(self, scroll, font):
+        self.screen.blit(self.neur_background, (0, 0))
+        if not scroll:
+            self.all_sprites.draw(self.screen)
+        else:
+            self.draw_onscreen()
+        #oh, and display which step we're on
+        if pygame.font:
+            text = font.render(str(self.stepid), 1, (255, 255, 255))
+            textpos = text.get_rect(centerx=
+                                    (self.screen.get_width() * 0.5))
+            self.screen.blit(text, textpos)
+        pygame.display.flip()
+        #cap at x fps
+        self.clock.tick(10)
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('img', name)
@@ -196,13 +197,15 @@ def write_csv(filename, tako, i, step):
             writ = csv.writer(csvfile)
             writ.writerow(['iteration', 'ID', 'parent1', 'parent2', 'age',
                            'generation', '# children',
-                           'mating attempts', 'cause of death', 'timestep'])
+                           'mating attempts', 'cause of death', 'timestep',
+                           'mutations'])
     #write above data
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
             writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
                            tako.age, tako.gen, len(tako.children),
-                           tako.mating_attempts, tako.cod, step])
+                           tako.mating_attempts, tako.cod, step,
+                           tako.genome.mut_record])
 
 #export the genome of a tako to a csv file
 def export(tako):
@@ -238,7 +241,8 @@ def export(tako):
     
 #x_loops (int): run x times (<1 interpreted as 1)
 #max_steps (int): limit to x timesteps (<= 0 interpreted as 'until all dead')
-#speedup (bool): run simulation quickly if true, slow to 10fps if false
+#display_off (bool): if true, does not display anything; otherwise, runs
+#                   a pygame display capped at 10FPS
 #rand_chance (int): make 1/x actions randomly different
 #                   (<=1 interpreted as no random)
 #garden_size (int): garden size in length/width in tiles
@@ -256,7 +260,7 @@ def export(tako):
 #                   (two different copies); not used if rand_nets is on
 #learning_on (bool): turns learning on/off
 #seeds (bool): uses the list of random starting seeds to set starting condition
-def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
+def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=20,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
                    max_height=900, collect_data=True, rand_nets=False,
                    max_gen = 505, genetic_mode="Plain", learning_on=True,
@@ -292,16 +296,20 @@ def run_experiment(x_loops=15, max_steps=0, speedup=True, rand_chance=20,
     
     while loop_limit > 0:
         if seeds == True:
-            MainWindow = garden_game(rand_chance, garden_size, tako_number,
-                                     pop_max, max_width, max_height,
+            g = garden_game(rand_chance, garden_size, tako_number,
+                                     pop_max, max_width, max_height, display_off,
                                      learning_on, genetic_mode, rand_nets,
                                      seeds[i])
         else:
-            MainWindow = garden_game(rand_chance, garden_size, tako_number,
-                                     pop_max, max_width, max_height,
+            g = garden_game(rand_chance, garden_size, tako_number,
+                                     pop_max, max_width, max_height, display_off,
                                      learning_on, genetic_mode, rand_nets)
-        MainWindow.MainLoop(max_steps, max_gen, speedup, collect_data,
-                            filename, i)
+        if not display_off:
+            MainWindow = g
+            MainWindow.MainLoop(max_steps, max_gen, display_off, collect_data,
+                                filename, i)
+        else:
+            g.MainLoop(max_steps, max_gen, display_off, collect_data, filename, i)
         loop_limit -= 1
         i += 1
        

@@ -13,7 +13,8 @@ class Garden:
     as well as seeing what is directly in front of it
     """
 
-    def __init__(self, size, num_tako, pop_max, genetic_type, rand_net, seed):
+    def __init__(self, size, num_tako, pop_max, genetic_type, rand_net, seed,
+                 display_off):
         #create the map and add toy, grass, rock, creature
         if size < 3:
             raise ValueError
@@ -26,27 +27,28 @@ class Garden:
         self.rand_net = rand_net
         if seed is not None:
             random.seed(seed)
+        self.display_off = display_off
         self.reset()
  
     def reset(self):
-        self.garden_map = [[Dirt() for x in range(self.size)]
+        self.garden_map = [[Dirt(self.display_off) for x in range(self.size)]
                            for x in range(self.size)]
         self.tako_list = []
         rock = 0
         while rock < (0.02 * (self.size**2)):
-            self.add_item(Rock())
+            self.add_item(Rock(self.display_off))
             rock += 1
         ball = 0
         while ball < (0.04 * (self.size**2)):
-            self.add_item(Ball())
+            self.add_item(Ball(self.display_off))
             ball += 1
         gras = 0
         while (gras <= (.25 * (self.size**2))):
             l = random.randint(0, 1)
             if l == 1:
-                self.add_item(Grass())
+                self.add_item(Grass(self.display_off))
             else:
-                self.add_item(Grass2(poison=False))
+                self.add_item(Grass2(self.display_off, poison=False))
             gras += 1
         while (len(self.tako_list)) < self.num_tako:
             self.add_creature()
@@ -76,8 +78,8 @@ class Garden:
             if isinstance(self.garden_map[y][x], Dirt):
                 break
         direction = random.randrange(0,3)
-        Tak = Tako.default_tako(direction, x, y, self.genetic_type,
-                                self.rand_net)
+        Tak = Tako.default_tako(direction, self.display_off, x, y,
+                                self.genetic_type, self.rand_net)
         self.garden_map[y][x].kill()
         self.garden_map[y][x] = Tak
         self.tako_list.append(Tak)
@@ -112,7 +114,7 @@ class Garden:
         result = targ.intersected()
         #check if it's dirt
         if result is None:
-            new = Dirt(tako.x, tako.y)
+            new = Dirt(self.display_off, tako.x, tako.y)
             self.garden_map[tako.y][tako.x] = new
             self.new_sprites.add(new)
             self.garden_map[target[1]][target[0]].kill()
@@ -190,8 +192,8 @@ class Garden:
                                 if y > tako.y - 3 or y < tako.y + 3:
                                     break
                     direction = random.randrange(0,3)
-                    new_tak = Tako(direction, x, y, result[3], None,
-                                        parents=result[4], gen=result[5])
+                    new_tak = Tako(direction, self.display_off, x, y, result[3],
+                                   None, parents=result[4], gen=result[5])
                     tako.children.append(new_tak.ident)
                     v.children.append(new_tak.ident)
                     self.garden_map[y][x].kill()

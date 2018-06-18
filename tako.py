@@ -36,7 +36,7 @@ class Tako(Widget):
     dir_map = {0: "north.png", 1: "east.png", 2: "south.png", 3: "west.png"}
 
     #gen is short for generation, not genome or the like
-    def __init__(self, dire, x, y, genome, ident, solver=None,
+    def __init__(self, dire, display_off, x, y, genome, ident, solver=None,
                  parents=[None, None], gen=0):
         sprite.Sprite.__init__(self)
         self.direction = dire
@@ -84,28 +84,19 @@ class Tako(Widget):
     #rand_net (bool) overrides this and creates a genome from a random starting
     #   network in the 'plain' style (except for random dominance)
     @staticmethod
-    def default_tako(direction, x, y, gen_type, rand_net):
+    def default_tako(direction, display_off, x, y, gen_type, rand_net):
         data = dgeann.layer_gene(5, False, False, 0, "data",
                                         [], 10, "input")
-        #reward = dgeann.layer_gene(5, False, False, 0, "reward",
-        #                                 [], 6, "input")
-        #stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
-        #                                     ["data", "reward"], 6, "input")
         stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
                                              ["data"], 6, "input")
         stm = dgeann.layer_gene(5, False, False, 0, "STM",
                                        ["stm_input"], 6, "STMlayer")
-        concat = dgeann.layer_gene(5, False, False, 0, "concat_0",
-                                          ["data", "STM"], None, "concat")
-        evo = dgeann.layer_gene(3, False, False, 0.01, "evo",
-                                ["concat_0"], 5, "IP")
+        evo = dgeann.layer_gene(3, True, True, 0.01, "evo",
+                                ["data", "STM"], 5, "IP")
         action = dgeann.layer_gene(5, False, False, 0, "action",
                                           ["evo"], 6, "IP")
-        #loss = dgeann.layer_gene(5, False, False, 0, "loss",
-        #                                ["action", "reward"], 6, "loss")
-        #layers = [data, reward, stm_input, stm, concat, action, loss]
-        layersa = [data, stm_input, stm, concat, evo, action]
-        layersb = [data, stm_input, stm, concat, evo, action]
+        layersa = [data, stm_input, stm, evo, action]
+        layersb = [data, stm_input, stm, evo, action]
         weightsa = []
         weightsb = []
         if not rand_net:
@@ -149,7 +140,20 @@ class Tako(Widget):
                                                row['in_layer'], row['out_layer'])
                         weightsb.append(w)
             elif gen_type == "Plain":
-                weightsb = weightsa.copy()
+                #copy the first strand again
+                #slightly faster than a deepcopy
+                with open(filenamea, newline="") as file:
+                    r = csv.DictReader(file, fieldnames = fields)
+                    for row in r:
+                        in_node = int(row['in_node'])
+                        w = dgeann.weight_gene(int(row['dom']),
+                                           bool(row['can_mut']),
+                                           bool(row['can_dup']),
+                                           float(row['mut_rate']),
+                                           row['ident'], float(row['weight']),
+                                           in_node, int(row['out_node']),
+                                           row['in_layer'], row['out_layer'])
+                        weightsb.append(w)
             if gen_type != "Haploid":
                 default_genome = dgeann.genome(layersa, layersb,
                                                weightsa, weightsb)
@@ -158,12 +162,13 @@ class Tako(Widget):
         else:
             default_genome = dgeann.genome(layersa, layersb, [], [])
         solver = default_genome.build(delete=dele)
-        tak = Tako(direction, x, y, default_genome, default_genome.ident,
-                   solver=solver)
-        for key in tak.solver.net.params:
-            print(key)
+        tak = Tako(direction, display_off, x, y, default_genome,
+                   default_genome.ident, solver=solver)
+       #for key in tak.solver.net.params:
+        #    print(key)
             #do not delete; keeps synchedmem error from occuring
             #for some reason
+            #...or it did. Seems to be fixed now?
             #TODO try putting a small pause in instead
             #print(tak.solver.net.params[key][0].data)
         return tak
@@ -290,6 +295,7 @@ class Tako(Widget):
         t = (x-e) / w
         return 2.0 * scipy.stats.norm.pdf(t) * scipy.stats.norm.cdf(a*t)
 
+
 class STMlayer(caffe.Layer):
 
     #TODO check this
@@ -305,11 +311,11 @@ class STMlayer(caffe.Layer):
             for x in range(len(ftop)):
                 if x == action:
                     #means that this was the selected action
-                    top[0].data[0][0][0][x] += 1
+                    top[0].data[0][x] += 1
                 else:
                     #if not selected action, decay the memory
-                    if top[0].data[0][0][0][x] != 0:
-                        top[0].data[0][0][0][x] = self.decay(top[0].data[0][0][0][x])
+                    if top[0].data[0][x] != 0:
+                        top[0].data[0][x] = self.decay(top[0].data[0][x])
 
     def backward(self, top, propagate_down, bottom):
         pass

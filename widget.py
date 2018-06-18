@@ -7,9 +7,9 @@ import os
 
 class Widget(sprite.Sprite):
     #a widget has a position
-    def __init__(self, x=None, y=None):
+    def __init__(self, display_off, x=None, y=None):
         sprite.Sprite.__init__(self)
-        self.image, self.rect = self.load_image(self.display,
+        self.image, self.rect = self.load_image(self.display, display_off,
                                                 Color('#FF00FF'))
         self.x = x
         self.y = y
@@ -32,14 +32,16 @@ class Widget(sprite.Sprite):
     def mated(self, tako):
         return ("amuse", -1)
 
-    def load_image(self, name, colorkey=None):
+    #display (bool): whether images are being displayed
+    def load_image(self, name, display_off, colorkey=None):
         fullname = os.path.join('img', name)
         img = image.load(fullname)
-        img = img.convert()
-        if colorkey is not None:
-            if colorkey is -1:
-                colorkey = img.get_at((0,0))
-            img.set_colorkey(colorkey, RLEACCEL)
+        if not display_off:
+            img = img.convert()
+            if colorkey is not None:
+                if colorkey is -1:
+                    colorkey = img.get_at((0,0))
+                img.set_colorkey(colorkey, RLEACCEL)
         return img, img.get_rect()
 
     def update_rect(self):
@@ -62,8 +64,8 @@ class Grass(Widget):
     node = 1
     display = "grass.png"
 
-    def __init__(self, x=0, y=0, poison=False):
-        super().__init__(x, y)
+    def __init__(self, display_off, x=0, y=0, poison=False):
+        super().__init__(display_off, x, y)
         self.poison = poison
         
     def eaten(self):
@@ -94,8 +96,8 @@ class Grass2(Widget):
     node = 5
     display = "grass2.png"
 
-    def __init__(self, x=0, y=0, poison=True):
-        super().__init__(x, y)
+    def __init__(self, display_off, x=0, y=0, poison=True):
+        super().__init__(display_off, x, y)
         self.poison = poison
 
     def eaten(self):
