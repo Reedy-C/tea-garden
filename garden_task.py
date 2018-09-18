@@ -52,6 +52,9 @@ class GardenTask:
                 highest = i
         return highest
 
+    #drives are transformed to a sigmoid curve -2.5~2.5
+    #this decision was the result of an experiment that showed it produced
+    #better perfomance
     def getObservation(self, tako):
         obs = self.env.getSensors(tako)
         nobs = self.transform_obs(obs)
@@ -84,6 +87,7 @@ class GardenTask:
             act = tako.solver.net.blobs['action'].data
             action = self.find_action(act)
             #1/rand_percent chance of rolling different random action
+            #(old experimental code)
             if self.rand_percent > 1:
                 x = random.randint(0, self.rand_percent)
                 if x == 0:

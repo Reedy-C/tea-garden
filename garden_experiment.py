@@ -246,7 +246,7 @@ def export(tako):
 #rand_chance (int): make 1/x actions randomly different
 #                   (<=1 interpreted as no random)
 #garden_size (int): garden size in length/width in tiles
-#tako_number (int): number of creatures created in the garden
+#tako_number (int): number of creatures created in the garden at startup
 #pop_max (int): the maximum population that will be allowed at any time
 #max_width (int): max horizontal resolution of window
 #max_height (int): max vertical resolution of window
@@ -255,21 +255,19 @@ def export(tako):
 #                   rather than starting genomes ('plain' style, except for dom)
 #max_gen (int): limit to x generations; stops when first x+1 is born
 #               (<=0 interpreted as 'until all dead')
-#haploid_mode (bool): run with haploid rather than diploid genetics mode
 #genetic_mode (str): haploid, plain (two copies of same genome), diverse
 #                   (two different copies); not used if rand_nets is on
 #learning_on (bool): turns learning on/off
-#seeds (bool): uses the list of random starting seeds to set starting condition
-def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=20,
+#seeds (list): if not none, random seeds are used when starting a loop
+def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=0,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
                    max_height=900, collect_data=True, rand_nets=False,
                    max_gen = 505, genetic_mode="Plain", learning_on=True,
-                   seeds=False):
+                   seeds=None):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
-
 
     filename = ""
     if collect_data:
@@ -289,13 +287,13 @@ def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=20,
         loop_limit = 1
     i = 0
 
-    seeds = ["evo", "genome", "diploidy", "haploidy", "tako",
-             "selection", "ika", "mate", "mutation", "network",
-             "gene", "advantage", "children", "parents", "identity",
-             "input", "output", "hidden", "weights", "crossover"]
     
     while loop_limit > 0:
-        if seeds == True:
+        if seeds != None:
+            #check if seeds is long enough
+            if len(seeds) < loop_limit:
+                for i in range(loop_limit - len(seeds)):
+                    seeds.append(seeds[i])
             g = garden_game(rand_chance, garden_size, tako_number,
                                      pop_max, max_width, max_height, display_off,
                                      learning_on, genetic_mode, rand_nets,
@@ -314,6 +312,10 @@ def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=20,
         i += 1
        
 if __name__ == "__main__":
-    run_experiment(garden_size=13, tako_number=20, x_loops=1,
-                   pop_max=40, max_gen=100, learning_on=False,
-                   collect_data=False)
+    seeds = ["evo", "genome", "diploidy", "haploidy", "tako",
+             "selection", "ika", "mate", "mutation", "network",
+             "gene", "advantage", "children", "parents", "identity",
+             "input", "output", "hidden", "weights", "crossover"]
+    run_experiment(garden_size=13, tako_number=20, x_loops=20,
+                   pop_max=40, max_gen=10, learning_on=False,
+                   collect_data=False, seeds=seeds)

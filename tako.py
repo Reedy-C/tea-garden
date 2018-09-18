@@ -88,10 +88,10 @@ class Tako(Widget):
         data = dgeann.layer_gene(5, False, False, 0, "data",
                                         [], 10, "input")
         stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
-                                             ["data"], 6, "input")
+                                             [], 6, "input")
         stm = dgeann.layer_gene(5, False, False, 0, "STM",
                                        ["stm_input"], 6, "STMlayer")
-        evo = dgeann.layer_gene(3, True, True, 0.01, "evo",
+        evo = dgeann.layer_gene(3, True, True, 0.1, "evo",
                                 ["data", "STM"], 5, "IP")
         action = dgeann.layer_gene(5, False, False, 0, "action",
                                           ["evo"], 6, "IP")
@@ -164,13 +164,6 @@ class Tako(Widget):
         solver = default_genome.build(delete=dele)
         tak = Tako(direction, display_off, x, y, default_genome,
                    default_genome.ident, solver=solver)
-       #for key in tak.solver.net.params:
-        #    print(key)
-            #do not delete; keeps synchedmem error from occuring
-            #for some reason
-            #...or it did. Seems to be fixed now?
-            #TODO try putting a small pause in instead
-            #print(tak.solver.net.params[key][0].data)
         return tak
             
             

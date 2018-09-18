@@ -1,26 +1,42 @@
-Requires: pygame, pycaffe
+Requires: pygame, pycaffe, numpy, scipy
 
 Garden is a basic artificial life simulator. It is run from garden_experiment.py. Note: it may take a few seconds for the program to start up.
+
+The genetics system is run by the separate DGEANN module.
+
 garden.py defines the environment of the simulation.
 tako.py defines the creatures 'living' in the Garden environment.
 widget.py defines the objects that exist in the Garden environment (the creatures are a special type of object).
-garden_task.py defines the layer that goes between the simulation, environment, and the neural network of the creatures. It handles the process of the creatures taking input from the environment and taking an action within that environment.
-genetics.py defines how the genetics system works.
+garden_task.py defines the processing layer that goes between the simulation, environment, and the neural network of the creatures. It handles the process of the creatures taking input from the environment, deciding what action a creature takes, and sending actions to the environment to be performed. It also handles learning when learning is turned on.
+genetics_tests.py contains some genetics tests peculiar to this use of DGEANN. Currently not functioning after changes in the genetic system.
 
-The creatures (tako) are always doing some action, even if it looks like they are just sitting there. If they appear to be doing nothing, they are probably just doing something useless like trying to walk on a rock or eat a piece of dirt. The default genome shouldn't be too idiotic and will usually run around doing stuff, though.
+The creatures are always doing some action, even if it looks like they are sitting there. If they appear to be doing nothing, they are probably doing something useless like trying to walk on a rock or eat a piece of dirt.
 
-During each tick, the creatures are given an array of eight numbers as input. The first five numbers represent what the creature sees. The creatures can only see what is directly in front of them, and they are told by the simulation exactly what kind of object they are looking at. Each type of object corresponds to a position in the array - this is what the 'node' property of each Widget sub-class refers to. So, the Dirt objects, which have node set to 0, correspond to the first space of the input array. If a creature has dirt in front of it, the visual part of their input will be [1, 0, 0, 0, 0].
+During each tick, the creatures are given an array of ten numbers as input. The first five numbers represent what the creature sees. The creatures can only see what is directly in front of them, and they are told by the simulation exactly what kind of object they are looking at. Each type of object corresponds to a position in the array - this is what the 'node' property of each Widget sub-class refers to. So, the Dirt objects, which have node set to 0, correspond to the first space of the input array. If a creature has dirt in front of it, the visual part of their input will be [1, 0, 0, 0, 0, 0].
 
-The last three numbers are the creature's drives. These go down over time. In order, they are hunger, boredom, and pain. If a creature's hunger reaches 0, it will starve to death. The drives are changed by interaction with the objects, and the changes in the drives are used to calculate the reward for the neural network.
+The last four numbers are the creature's drives. These go down over time. In order, they are fullness, amusement, pain, and desire. If a creature's fullness reaches 0, it will starve to death. This happens in 300 ticks. Desire rises and falls on its own, with a period of 502 ticks. The drives are also changed by interaction with the objects, and the changes in the drives are used to calculate the reward for the neural network when learning is turned on.
 
 The creature also takes its last action as input to its 'STM' (short-term memory) layer. As a creature repeats an action, that node in the STM layer gains a higher value. When the creature does a different action, the node decays towards zero.
 
-The output of the creature's neural network is an array of five numbers. The member of the array that is highest is taken as the creature's action. This list of actions can be seen at the bottom of garden.py. So, for example, if the output is [3.456, -1.135, 1.789, 0.597, 4.015], then the fifth action will be used, which is 'attempt to play with whatever is in front of me'.
+The output of the creature's neural network is an array of five numbers. The member of the array that is highest is taken as the creature's action. This list of actions can be seen at the bottom of garden.py. So, for example, if the output is [3.456, -1.135, 1.789, 0.597, 4.015], then the fifth action will be used, which is 'attempt to play with whatever is in front of me'. Each object defines the outcome of that action on the creature's drives.
 
-Parameters can be changed with run_experiment().
+The neural network of a creature is defined by its genome. This can be haploid, or diploid with either identical or different starting chromosomes. By default, starting chromosomes are drawn from the 'Default Genetics' folder to make populations more successful, but random starting genetics can be used. Creatures are able to mate and make further creatures, which may have mutations from their parents. Creatures track their parents, children, generation number, and mutations. Genomes can be exported to a csv file listing all genes from the export function in garden_experiment.py, though currently there isn't a nice switch for this. Exported genomes show up in the 'Exported Genomes' folder.
 
-When slowed down, the simulation runs at 10 ticks/second (this is a good speed for watching what is happening) but this can be changed by changing the number in 'self.clock.tick(10)' in the MainLoop function of garden_experiment.py. There is also a parameter that lets the simulation run as fast as it can (this is the default).
+By default, Garden runs without a visualization. However, one can be turned on. In visual mode, the simulation runs at 10 ticks/second (as this is a good speed for watching what is happening) but this can be changed by changing the number in 'self.clock.tick(10)' in the MainLoop function of garden_experiment.py, or turned off to run as fast as possible by commenting that line.
 
-The neural network of a creature is defined by its diploid genome. All creatures now start off with the same default genome (starting weights are the same also). They are able to mate and make further creatures, which may have mutations from their parents. As creatures are created, their network files are saved in the folder 'Gen files' and can be viewed with a text editor. In the future this can allow for tracking changes over time. After a creature has been created these files can be deleted at any time, including 'alife.gen' (this file shows the default structure and is used for testing purposes, but the program does not depend on it in any way to run).
-
-Creatures also track: their parents, their children, their generation number
+Parameters for run_experiment in garden_experiment.py:
+x_loops (int): run experiments in a loop of x times (<1 interpreted as 1)
+max_steps (int): limit to x timesteps (<= 0 interpreted as 'until all dead')
+display_off (bool): if true, does not display anything; otherwise, runs a pygame display capped at 10FPS
+rand_chance (int): make 1/x actions randomly different (<=1 interpreted as no random) - note that this is an old experiemental setting, not recommended
+garden_size (int): garden size in length/width in tiles. Gardens are square.
+tako_number (int): number of creatures created in the garden at startup
+pop_max (int): the maximum population that will be allowed at any time
+max_width (int): max horizontal resolution of window when display_off is false
+max_height (int): max vertical resolution of window when display_off is false
+collect_data (bool): creates csv file with various data on agents - note that a filename must be given
+rand_nets (bool): use random genetics to start first generation, rather than starting genomes ('plain' style, except for dominance)
+max_gen (int): limit the run to x generations; stops when first x+1 is born (<=0 interpreted as 'until all dead')
+genetic_mode (str): haploid, plain (two copies of same genome), diverse (two different copies on either chromosome); not used if rand_nets is on
+learning_on (bool): turns learning on/off; NOTE - not sure if currently working properly
+seeds (list): if not None, list of random seeds are used when creating the environment; if too short for the number of iterations, the list is repeated from the beginning again
