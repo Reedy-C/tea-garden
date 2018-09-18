@@ -14,8 +14,8 @@ import csv
 
 class garden_game:
     def __init__(self, rand_chance, garden_size, tako_number, pop_max,
-                 max_width, max_height, display_off, learning_on, genetic_mode, rand_nets,
-                 seed=None):
+                 max_width, max_height, display_off, learning_on, genetic_mode,
+                 rand_nets, garden_mode, seed=None):
         pygame.init()
         global scroll
         if not display_off:
@@ -48,7 +48,7 @@ class garden_game:
 
         global env
         env = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
-                     seed, display_off)
+                     seed, display_off, garden_mode)
         global task
         task = GardenTask(env, rand_chance, learning_on)
 
@@ -58,7 +58,8 @@ class garden_game:
 
         self.stepid = 0
 
-    def MainLoop(self, max_steps, max_gen, display_off, collect_data, filename, i):
+    def MainLoop(self, max_steps, max_gen, display_off, collect_data, filename,
+                 garden_mode, i):
         if not display_off:
             self.make_background()
         self.load_sprites()
@@ -108,6 +109,12 @@ class garden_game:
                 return
             #let experiment go a step
             task.interact_and_learn()
+            if garden_mode == "Changing":
+                if self.stepid > 0 and self.stepid % 100000 == 0:
+                    env.switch_grasses()
+            elif garden_mode == "Nutrition":
+                if self.stepid > 0 and self.stepid % 40000 == 0:
+                    env.switch_nutrition()
             # see if any are dead
             for tako in env.tako_list:
                 if tako.dead == True:
@@ -259,11 +266,15 @@ def export(tako):
 #                   (two different copies); not used if rand_nets is on
 #learning_on (bool): turns learning on/off
 #seeds (list): if not none, random seeds are used when starting a loop
+#garden_mode (str): one of four values: "Diverse Static" (two grass types),
+#                   "Single Static" (one),
+#                   "Nutrition" (nutritive value changes),
+#                   "Changing" (grass type switches)
 def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=0,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
                    max_height=900, collect_data=True, rand_nets=False,
-                   max_gen = 505, genetic_mode="Plain", learning_on=True,
-                   seeds=None):
+                   max_gen = 505, genetic_mode="Plain", learning_on=False,
+                   seeds=None, garden_mode="Diverse Static"):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -297,17 +308,19 @@ def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=0,
             g = garden_game(rand_chance, garden_size, tako_number,
                                      pop_max, max_width, max_height, display_off,
                                      learning_on, genetic_mode, rand_nets,
-                                     seeds[i])
+                                     garden_mode, seeds[i])
         else:
             g = garden_game(rand_chance, garden_size, tako_number,
                                      pop_max, max_width, max_height, display_off,
-                                     learning_on, genetic_mode, rand_nets)
+                                     learning_on, genetic_mode, rand_nets,
+                                     garden_mode)
         if not display_off:
             MainWindow = g
             MainWindow.MainLoop(max_steps, max_gen, display_off, collect_data,
-                                filename, i)
+                                filename, garden_mode, i)
         else:
-            g.MainLoop(max_steps, max_gen, display_off, collect_data, filename, i)
+            g.MainLoop(max_steps, max_gen, display_off, collect_data, filename,
+                       garden_mode, i)
         loop_limit -= 1
         i += 1
        
@@ -316,6 +329,6 @@ if __name__ == "__main__":
              "selection", "ika", "mate", "mutation", "network",
              "gene", "advantage", "children", "parents", "identity",
              "input", "output", "hidden", "weights", "crossover"]
-    run_experiment(garden_size=13, tako_number=20, x_loops=20,
-                   pop_max=40, max_gen=10, learning_on=False,
-                   collect_data=False, seeds=seeds)
+    run_experiment(garden_size=13, tako_number=20, x_loops=1,
+                   pop_max=40, max_gen=10, collect_data=True, seeds=seeds,
+                   genetic_mode="Plain", garden_mode="Diverse Static")

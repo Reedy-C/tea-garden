@@ -4,17 +4,9 @@ from tako import Tako
 from pygame import sprite
 
 class Garden:
-    """ simulates a small environment containing
-    objects and a creature which can
-    go forward
-    turn left/right
-    eat
-    play
-    as well as seeing what is directly in front of it
-    """
 
     def __init__(self, size, num_tako, pop_max, genetic_type, rand_net, seed,
-                 display_off):
+                 display_off, garden_mode):
         #create the map and add toy, grass, rock, creature
         if size < 3:
             raise ValueError
@@ -28,6 +20,7 @@ class Garden:
         if seed is not None:
             random.seed(seed)
         self.display_off = display_off
+        self.garden_mode = garden_mode
         self.reset()
  
     def reset(self):
@@ -44,12 +37,22 @@ class Garden:
             ball += 1
         gras = 0
         while (gras <= (.25 * (self.size**2))):
-            l = random.randint(0, 1)
-            if l == 1:
-                self.add_item(Grass(self.display_off))
+            #two types of grass
+            if (self.garden_mode == "Diverse Static" or
+                self.garden_mode == "Nutrition"):
+                l = random.randint(0, 1)
+                if l == 1:
+                    self.add_item(Grass(self.display_off))
+                else:
+                    if self.garden_mode == "Nutrition":
+                        self.add_item(Grass2(self.display_off, poison=True))
+                    else:
+                        self.add_item(Grass2(self.display_off, poison=False))
+                gras += 1
+            #one type of grass
             else:
-                self.add_item(Grass2(self.display_off, poison=False))
-            gras += 1
+                self.add_item(Grass(self.display_off))
+                gras += 1
         while (len(self.tako_list)) < self.num_tako:
             self.add_creature()
         for y in range(self.size):
@@ -84,7 +87,7 @@ class Garden:
         self.garden_map[y][x] = Tak
         self.tako_list.append(Tak)
 
-    def switch_grass(self):
+    def switch_nutrition(self):
         for y in range(self.size):
             for x in range(self.size):
                 if isinstance(self.garden_map[y][x], Grass):
@@ -97,6 +100,20 @@ class Garden:
                         self.garden_map[y][x].poison = False
                     else:
                         self.garden_map[y][x].poison = True
+
+    def switch_grasses(self):
+        for y in range(self.size):
+            for x in range(self.size):
+                if isinstance(self.garden_map[y][x], Grass):
+                    self.garden_map[y][x].kill()
+                    g = Grass2(self.display_off, x, y, poison=False)
+                    self.garden_map[y][x] = g
+                    self.new_sprites.add(g)
+                elif isinstance(self.garden_map[y][x], Grass2):
+                    self.garden_map[y][x].kill()
+                    g = Grass(self.display_off, x, y)
+                    self.garden_map[y][x] = g
+                    self.new_sprites.add(g)
         
     def getSensors(self, tako):
         target = self.get_target(tako)

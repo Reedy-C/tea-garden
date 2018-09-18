@@ -40,3 +40,4 @@ max_gen (int): limit the run to x generations; stops when first x+1 is born (<=0
 genetic_mode (str): haploid, plain (two copies of same genome), diverse (two different copies on either chromosome); not used if rand_nets is on
 learning_on (bool): turns learning on/off; NOTE - not sure if currently working properly
 seeds (list): if not None, list of random seeds are used when creating the environment; if too short for the number of iterations, the list is repeated from the beginning again
+garden_mode (str): can be one of four values: default "Diverse Static" (two grass types randomly distributed in environment), "Single Static" (one),  "Nutrition" (nutritive value changes every 40k ticks - values are in object.py, tick number is in garden_experiment.py), "Changing" (grass type switches from wholly one or the other every 100k ticks - tick value is in garden_experiment.py)
