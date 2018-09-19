@@ -26,7 +26,7 @@ By default, Garden runs without a visualization. However, one can be turned on. 
 
 Parameters for run_experiment in garden_experiment.py:
 x_loops (int): run experiments in a loop of x times (<1 interpreted as 1)
-max_steps (int): limit to x timesteps (<= 0 interpreted as 'until all dead')
+max_ticks (int): limit each experiment run to x ticks (<= 0 interpreted as 'until all dead')
 display_off (bool): if true, does not display anything; otherwise, runs a pygame display capped at 10FPS
 rand_chance (int): make 1/x actions randomly different (<=1 interpreted as no random) - note that this is an old experiemental setting, not recommended
 garden_size (int): garden size in length/width in tiles. Gardens are square.

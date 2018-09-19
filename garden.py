@@ -115,12 +115,12 @@ class Garden:
                     self.garden_map[y][x] = g
                     self.new_sprites.add(g)
         
-    def getSensors(self, tako):
+    def get_sensors(self, tako):
         target = self.get_target(tako)
         obj = self.garden_map[target[1]][target[0]]
         return obj.node
     
-    def performAction(self, index, tako):
+    def perform_action(self, index, tako):
         result = function_array[index](self, tako, tako.last_obj)
         return result
 

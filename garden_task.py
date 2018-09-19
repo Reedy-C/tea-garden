@@ -5,7 +5,7 @@ from widget import *
 import random
 import numpy
 
-class GardenTask:
+class garden_task:
     last_action = None
 
     def __init__(self, environment, rand_percent, learning_on):
@@ -13,13 +13,13 @@ class GardenTask:
         self.rand_percent = rand_percent
         self.learning_on = learning_on
     
-    def performAction(self, action, tako):
+    def perform_action(self, action, tako):
         self.last_action = action
         tako.last_action = action
-        result = self.env.performAction(action, tako)
+        result = self.env.perform_action(action, tako)
         tako.modify(result)
 
-    def getReward(self, tako):
+    def get_reward(self, tako):
         reward = 0
         full_diff = tako.fullness - tako.last_fullness
         bor_diff = tako.amuse - tako.last_amuse
@@ -55,8 +55,8 @@ class GardenTask:
     #drives are transformed to a sigmoid curve -2.5~2.5
     #this decision was the result of an experiment that showed it produced
     #better perfomance
-    def getObservation(self, tako):
-        obs = self.env.getSensors(tako)
+    def get_observation(self, tako):
+        obs = self.env.get_sensors(tako)
         nobs = self.transform_obs(obs)
         full = 5/(1 + (0.38 * 2.71828)**(-tako.fullness + 75)) - 2.5
         nobs.append(full)
@@ -76,7 +76,7 @@ class GardenTask:
     def interact_and_learn(self):
         #for each tako in env, get its observation
         for tako in self.env.tako_list:
-            observation = self.getObservation(tako)
+            observation = self.get_observation(tako)
             #feed it the observation
             tako.solver.net.blobs['data'].data[...] = observation
             if self.learning_on:
@@ -96,9 +96,9 @@ class GardenTask:
                         newact = random.randint(0, 5)
                     action = newact
             #perform action and get reward
-            self.performAction(action, tako)
+            self.perform_action(action, tako)
             if self.learning_on:
-                reward = self.getReward(tako)
+                reward = self.get_reward(tako)
                 #feed it reward and backpropogate
                 tako.solver.net.blobs['stm_input'].data[...] = -1
                 for i in range(len(tako.solver.net.blobs['reward'].data[0][0][0])):

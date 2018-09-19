@@ -1,5 +1,5 @@
 from garden import Garden
-from garden_task import GardenTask
+from garden_task import garden_task
 import tako
 from widget import *
 import time
@@ -50,7 +50,7 @@ class garden_game:
         env = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
                      seed, display_off, garden_mode)
         global task
-        task = GardenTask(env, rand_chance, learning_on)
+        task = garden_task(env, rand_chance, learning_on)
 
         self.selected_Tako = None
         self.neur = None
@@ -58,7 +58,7 @@ class garden_game:
 
         self.stepid = 0
 
-    def MainLoop(self, max_steps, max_gen, display_off, collect_data, filename,
+    def main_loop(self, max_ticks, max_gen, display_off, collect_data, filename,
                  garden_mode, i):
         if not display_off:
             self.make_background()
@@ -68,8 +68,8 @@ class garden_game:
             self.cam = [0,0]
             font = pygame.font.Font(None, 18)
         while 1:
-            if max_steps > 0:
-                if self.stepid > max_steps:
+            if max_ticks > 0:
+                if self.stepid > max_ticks:
                     return
             #probably not the most elegant way to do this, but it works
             if max_gen > 0:
@@ -247,7 +247,7 @@ def export(tako):
                            "b"])
     
 #x_loops (int): run x times (<1 interpreted as 1)
-#max_steps (int): limit to x timesteps (<= 0 interpreted as 'until all dead')
+#max_ticks (int): limit to x ticks (<= 0 interpreted as 'until all dead')
 #display_off (bool): if true, does not display anything; otherwise, runs
 #                   a pygame display capped at 10FPS
 #rand_chance (int): make 1/x actions randomly different
@@ -270,7 +270,7 @@ def export(tako):
 #                   "Single Static" (one),
 #                   "Nutrition" (nutritive value changes),
 #                   "Changing" (grass type switches)
-def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=0,
+def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
                    max_height=900, collect_data=True, rand_nets=False,
                    max_gen = 505, genetic_mode="Plain", learning_on=False,
@@ -315,11 +315,11 @@ def run_experiment(x_loops=15, max_steps=0, display_off=True, rand_chance=0,
                                      learning_on, genetic_mode, rand_nets,
                                      garden_mode)
         if not display_off:
-            MainWindow = g
-            MainWindow.MainLoop(max_steps, max_gen, display_off, collect_data,
+            main_window = g
+            main_window.main_loop(max_ticks, max_gen, display_off, collect_data,
                                 filename, garden_mode, i)
         else:
-            g.MainLoop(max_steps, max_gen, display_off, collect_data, filename,
+            g.main_loop(max_ticks, max_gen, display_off, collect_data, filename,
                        garden_mode, i)
         loop_limit -= 1
         i += 1
