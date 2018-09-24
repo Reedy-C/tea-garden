@@ -1,4 +1,4 @@
-Requires: pygame, pycaffe, numpy, scipy
+﻿Requires: pygame, pycaffe, numpy, scipy, DGEANN
 
 Garden is a basic artificial life simulator. It is run from garden_experiment.py. Note: it may take a few seconds for the program to start up.
 
@@ -8,7 +8,7 @@ garden.py defines the environment of the simulation.
 tako.py defines the creatures 'living' in the Garden environment.
 widget.py defines the objects that exist in the Garden environment (the creatures are a special type of object).
 garden_task.py defines the processing layer that goes between the simulation, environment, and the neural network of the creatures. It handles the process of the creatures taking input from the environment, deciding what action a creature takes, and sending actions to the environment to be performed. It also handles learning when learning is turned on.
-genetics_tests.py contains some genetics tests peculiar to this use of DGEANN. Currently not functioning after changes in the genetic system.
+genetics_tests.py contains some genetics tests peculiar to this use of DGEANN.
 
 The creatures are always doing some action, even if it looks like they are sitting there. If they appear to be doing nothing, they are probably doing something useless like trying to walk on a rock or eat a piece of dirt.
 
@@ -20,9 +20,24 @@ The creature also takes its last action as input to its 'STM' (short-term memory
 
 The output of the creature's neural network is an array of five numbers. The member of the array that is highest is taken as the creature's action. This list of actions can be seen at the bottom of garden.py. So, for example, if the output is [3.456, -1.135, 1.789, 0.597, 4.015], then the fifth action will be used, which is 'attempt to play with whatever is in front of me'. Each object defines the outcome of that action on the creature's drives.
 
-The neural network of a creature is defined by its genome. This can be haploid, or diploid with either identical or different starting chromosomes. By default, starting chromosomes are drawn from the 'Default Genetics' folder to make populations more successful, but random starting genetics can be used. Creatures are able to mate and make further creatures, which may have mutations from their parents. Creatures track their parents, children, generation number, and mutations. Genomes can be exported to a csv file listing all genes from the export function in garden_experiment.py, though currently there isn't a nice switch for this. Exported genomes show up in the 'Exported Genomes' folder.
+The neural network of a creature is defined by its genome. This can be haploid, or diploid with either identical or different starting chromosomes. By default, starting chromosomes are drawn from the 'Default Genetics' folder to make populations more successful, but random starting genetics can be used. Creatures are able to mate and make further creatures, which may have mutations from their parents. Mating involves recombination and crossover, as well. Creatures track their parents, children, generation number, and mutations. Genomes can be exported to a csv file listing all genes (and the information for each gene) from the export function in garden_experiment.py, though currently there isn't a nice switch for this. Exported genomes show up in the 'Exported Genomes' folder.
+
+Creatures have an age-related chance of dying naturally.
 
 By default, Garden runs without a visualization. However, one can be turned on. In visual mode, the simulation runs at 10 ticks/second (as this is a good speed for watching what is happening) but this can be changed by changing the number in 'self.clock.tick(10)' in the MainLoop function of garden_experiment.py, or turned off to run as fast as possible by commenting that line.
+
+Data can be collected automatically and stored in a csv file. At the moment, data collected are, for each creature, at time of death OR at the last simulation tick when the simulation is ended:
+Iteration (loop/run number)
+Creature ID
+ID of parent 1
+ID of parent 2
+Age at death/end of simulation
+Generation #
+# of children
+# of mating attempts
+cause of death (currently left blank when data collected at simulation ending)
+simulation at timestep
+list of mutations (as a list of lists in the format: ['a' or 'b' (chromosome identifier), 'identity of gene', 'brief description of mutation'])
 
 Parameters for run_experiment in garden_experiment.py:
 x_loops (int): run experiments in a loop of x times (<1 interpreted as 1)
@@ -34,7 +49,7 @@ tako_number (int): number of creatures created in the garden at startup
 pop_max (int): the maximum population that will be allowed at any time
 max_width (int): max horizontal resolution of window when display_off is false
 max_height (int): max vertical resolution of window when display_off is false
-collect_data (bool): creates csv file with various data on agents - note that a filename must be given
+collect_data (bool): creates csv file with various data on agents - note that a filename must be given. These csv files show up in the 'Data' folder.
 rand_nets (bool): use random genetics to start first generation, rather than starting genomes ('plain' style, except for dominance)
 max_gen (int): limit the run to x generations; stops when first x+1 is born (<=0 interpreted as 'until all dead')
 genetic_mode (str): haploid, plain (two copies of same genome), diverse (two different copies on either chromosome); not used if rand_nets is on

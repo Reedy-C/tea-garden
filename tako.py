@@ -166,7 +166,6 @@ class Tako(Widget):
                    default_genome.ident, solver=solver)
         return tak
             
-            
     #drives go DOWN over time
     #except for desire, which has a sine wave funtion
     def update(self):

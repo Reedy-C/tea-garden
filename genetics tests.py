@@ -1,79 +1,70 @@
 import unittest
+import csv
 import tako
-from textwrap import dedent
-import os, sys
-import caffe
+import sys
 sys.path.append('..')
 from dgeann import dgeann
 
 class testGenetics(unittest.TestCase):
 
     def setUp(self):
-        self.data = dgeann.layer_gene(5, False, False, 0, "data",
-                                        [], 9, "input")
-        self.reward = dgeann.layer_gene(5, False, False, 0, "reward",
-                                         [], 6, "input")
-        self.stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
-                                             ["data", "reward"], 6, "input")
-        self.stm = dgeann.layer_gene(5, False, False, 0, "STM",
-                                       ["stm_input"], 6, "STMlayer")
-        self.concat = dgeann.layer_gene(5, False, False, 0, "concat_0",
-                                          ["data", "STM"], None, "concat")
-        self.action = dgeann.layer_gene(5, False, False, 0, "action",
-                                          ["concat_0"], 6, "IP")
-        self.loss = dgeann.layer_gene(5, False, False, 0, "loss",
-                                        ["action", "reward"], 5, "loss")
+        tako.random.seed("genetics")
+        self.fields = ['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
+                      'weight', 'in_node', 'out_node', 'in_layer', 'out_layer']
 
-    def test_read(self):
-        test_list  = {}
-        concat_dict = {}
-        test_list = self.data.read("testing alife.txt", test_list, concat_dict, None)
-        test_list = self.reward.read("testing alife.txt", test_list, concat_dict, None)
-        test_list = self.stm_input.read("testing alife.txt", test_list, concat_dict, None)
-        test_list = self.stm.read("testing alife.txt", test_list, concat_dict, None)
-        test_list = self.concat.read("testing alife.txt", test_list, concat_dict, None)
-        test_list = self.action.read("testing alife.txt", test_list, concat_dict, None)
-        test_list = self.loss.read("testing alife.txt", test_list, concat_dict, None)
-        with open('testing alife.txt', 'r') as test_file:
-            with open('alife.text', 'r') as orig_file:
-                for line1, line2 in zip(test_file, orig_file):
-                    self.assertEqual(line1, line2)
-        os.remove("testing alife.txt")
+    #'plain' diploid
+    def test_p_diploid(self):
+        tak = tako.Tako.default_tako(0, True, 0, 0, "Plain", False)
+        for i in range(len(tak.genome.layerchr_a)):
+            self.assertEqual(tak.genome.weightchr_a[i].ident,
+                             tak.genome.weightchr_b[i].ident)
+            self.assertEqual(tak.genome.weightchr_a[i].in_node,
+                             tak.genome.weightchr_b[i].in_node)
+            self.assertEqual(tak.genome.weightchr_a[i].out_node,
+                             tak.genome.weightchr_b[i].out_node)
+            self.assertEqual(tak.genome.weightchr_a[i].weight,
+                             tak.genome.weightchr_b[i].weight)
+            self.assertEqual(tak.genome.weightchr_a[i].mut_rate,
+                             tak.genome.weightchr_b[i].mut_rate)
 
-    def test_default(self):
-        #default genome; this needs to work!
-        layers = [self.data, self.reward, self.stm_input, self.stm,
-                  self.concat, self.action, self.loss]
-        weights = []
-        with open("default weights.txt") as f:
-            for n in range(6):
-                for m in range(15):
-                    x = f.readline()
-                    x = float(x[0:-1])
-                    iden = str(n) + " " + str(m)
-                    if m < 9:
-                        in_layer = "data"
-                        m_adj = m
-                    else:
-                        in_layer = "STM"
-                        m_adj = m - 9
-                    w = dgeann.weight_gene(5, False, False, 0, iden,
-                                             x, m_adj, n, in_layer, "action")
-                    weights.append(w)
-        default_genome = dgeann.genome(layers, layers, weights, weights)
-        test_default = caffe.Net('alife.text', 'test default genome.txt', caffe.TRAIN)
-        default_tak_solv = default_genome.build()
-        n = 0
-        m = 0
-        test_data = test_default.params['action'][0].data
-        default_data = default_tak_solv.net.params['action'][0].data
-        for n in range(6):
-            for m in range(15):
-                self.assertAlmostEqual(test_data[n][m], default_data[n][m])
+    #'diverse' diploid
+    def test_d_diploid(self):
+        tak = tako.Tako.default_tako(0, True, 0, 0, "Diverse", False)
+        for i in range(len(tak.genome.layerchr_a)):
+            self.assertNotEqual(tak.genome.weightchr_a[i].ident,
+                             tak.genome.weightchr_b[i].ident)
+            self.assertEqual(tak.genome.weightchr_a[i].in_node,
+                             tak.genome.weightchr_b[i].in_node)
+            self.assertEqual(tak.genome.weightchr_a[i].out_node,
+                             tak.genome.weightchr_b[i].out_node)
+            self.assertNotEqual(tak.genome.weightchr_a[i].weight,
+                             tak.genome.weightchr_b[i].weight)
+
+    def test_haploid(self):
+        tak = tako.Tako.default_tako(0, True, 0, 0, "Haploid", False)
+        with open("Default Genetics/15_a.csv") as file:
+            r = csv.DictReader(file, fieldnames=self.fields)
+            i = 0
+            for row in r:
+                self.assertEqual(tak.genome.weightchr_a[i].ident,
+                                 row['ident'])
+                self.assertEqual(tak.genome.weightchr_a[i].in_node,
+                                 int(row['in_node']))
+                self.assertEqual(tak.genome.weightchr_a[i].mut_rate,
+                                 float(row['mut_rate']))
+                self.assertEqual(tak.genome.weightchr_a[i].weight,
+                                 float(row['weight']))
+                i += 1
+
+    def test_randnet(self):
+        tak = tako.Tako.default_tako(0, True, 0, 0, "Haploid", True)
+        for i in range(len(tak.genome.weightchr_a)):
+            self.assertEqual(tak.genome.weightchr_a[i].weight,
+                             tak.genome.weightchr_b[i].weight)
 
     def test_mating(self):
-        tak_1 = tako.Tako.default_tako(0, 0, 0, "Plain", False)
-        tak_2 = tako.Tako.default_tako(0, 0, 1, "Plain", False)
+        tak_1 = tako.Tako.default_tako(0, True, 0, 0, "Plain", False)
+        tak_2 = tako.Tako.default_tako(0, True, 0, 1, "Plain", False)
         result = tak_1.mated(tak_2)
         self.assertEqual(result, ("amuse", -1))
         tak_1.desire = 150
@@ -81,12 +72,23 @@ class testGenetics(unittest.TestCase):
         self.assertEqual(result, ("amuse", -1))
         tak_1.desire = 0
         tak_2.desire = 150
+        tak_2.dez = 250
         result = tak_1.mated(tak_2)
         self.assertEqual(result, ("amuse", -1))
         tak_1.desire = 100
+        tak_1.dez = 150
         result = tak_1.mated(tak_2)
         self.assertEqual(len(result), 6)
-
+        self.assertEqual(tak_1.desire, 0)
+        self.assertEqual(tak_2.desire, 0)
+        self.assertEqual(tak_1.dez, 0)
+        self.assertEqual(tak_2.dez, 0)
+        tak_1.update()
+        tak_2.update()
+        self.assertAlmostEqual(tak_1.desire, 0.01, places=2)
+        self.assertAlmostEqual(tak_2.desire, 0.01, places=2)
+        self.assertEqual(tak_1.dez, 1)
+        self.assertEqual(tak_2.dez, 1)
 
 if __name__ == '__main__':
     unittest.main()
