@@ -101,7 +101,8 @@ class garden_task:
                 reward = self.get_reward(tako)
                 #feed it reward and backpropogate
                 tako.solver.net.blobs['stm_input'].data[...] = -1
-                for i in range(len(tako.solver.net.blobs['reward'].data[0][0][0])):
+                for i in range(len(
+                    tako.solver.net.blobs['reward'].data[0][0][0])):
                     feedback = reward + act[0][i]
                     tako.solver.net.blobs['reward'].data[0][0][0][i] = feedback
                 tako.solver.step(1)

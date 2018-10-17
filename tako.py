@@ -72,13 +72,8 @@ class Tako(Widget):
         else:
             self.solver = self.genome.build()
             self.ident = self.genome.ident
-        #for pr in net.params.keys():
-        #    self.solver.net.params[pr][0].data[...] = net.params[pr][0].data[...]
-        #do not delete; keeps synchedmem error from occuring
-        #for some reason
-        #TODO try putting a small pause in instead
         
-    #gen_tye can be "Diverse", "Plain", or "Haploid"
+    #gen_type can be "Diverse", "Plain", or "Haploid"
     #Diverse = two chromosomes are different
     #Plain = two chromosomes are the same
     #rand_net (bool) overrides this and creates a genome from a random starting
@@ -264,7 +259,8 @@ class Tako(Widget):
 
     #I didn't want to assign a death age at birth
     #and wanted a skewed normal distribution (as humans have)
-    #(possibly other animals, but for some reason those stats are harder to find)
+    #(possibly other animals, but for some reason
+    #those stats are harder to find)
     #average age at death should be somewhere near 100000 ticks
     #this number was based on Tako starvation time
     #by comparing ratios of starvation time/average lifespan

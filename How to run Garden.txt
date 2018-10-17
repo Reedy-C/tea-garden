@@ -49,10 +49,11 @@ tako_number (int): number of creatures created in the garden at startup
 pop_max (int): the maximum population that will be allowed at any time
 max_width (int): max horizontal resolution of window when display_off is false
 max_height (int): max vertical resolution of window when display_off is false
-collect_data (bool): creates csv file with various data on agents - note that a filename must be given. These csv files show up in the 'Data' folder.
+collect_data (bool): creates csv file with various data on agents - note that a filename must be given (uses the same name as export_all as a filename if both are true). These csv files show up in the 'Data' folder.
+export_all (bool): creates two csv files listing all genes and their information for each agent (one csv does weights, the other layers). These are placed in a sub-folder in the Exported Genomes sub-folder (uses the same name as collect_data as a folder name if both are true).
 rand_nets (bool): use random genetics to start first generation, rather than starting genomes ('plain' style, except for dominance)
 max_gen (int): limit the run to x generations; stops when first x+1 is born (<=0 interpreted as 'until all dead')
 genetic_mode (str): haploid, plain (two copies of same genome), diverse (two different copies on either chromosome); not used if rand_nets is on
-learning_on (bool): turns learning on/off; NOTE - not sure if currently working properly
+learning_on (bool): turns learning on/off; NOTE - not sure if currently working properly, needs a reward layer added to default genomes to function
 seeds (list): if not None, list of random seeds are used when creating the environment; if too short for the number of iterations, the list is repeated from the beginning again
 garden_mode (str): can be one of four values: default "Diverse Static" (two grass types randomly distributed in environment), "Single Static" (one),  "Nutrition" (nutritive value changes every 40k ticks - values are in object.py, tick number is in garden_experiment.py), "Changing" (grass type switches from wholly one or the other every 100k ticks - tick value is in garden_experiment.py)

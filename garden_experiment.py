@@ -15,7 +15,7 @@ import csv
 class garden_game:
     def __init__(self, rand_chance, garden_size, tako_number, pop_max,
                  max_width, max_height, display_off, learning_on, genetic_mode,
-                 rand_nets, garden_mode, seed=None):
+                 rand_nets, garden_mode, filename, export_all, seed=None):
         pygame.init()
         global scroll
         if not display_off:
@@ -39,7 +39,7 @@ class garden_game:
             spr_width = self.screen.get_size()[0] / 50
         
             pygame.display.set_caption('Garden')
-            self.neur_background = pygame.Surface(self.screen.get_size()).convert()
+            self.background = pygame.Surface(self.screen.get_size()).convert()
         else:
             scroll = False
         
@@ -49,8 +49,13 @@ class garden_game:
         global env
         env = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
                      seed, display_off, garden_mode)
+        if export_all:
+            for tako in env.tako_list:
+                export(tako, filename)
         global task
         task = garden_task(env, rand_chance, learning_on)
+        self.filename = filename
+        self.export_all = export_all
 
         self.selected_Tako = None
         self.neur = None
@@ -58,8 +63,8 @@ class garden_game:
 
         self.stepid = 0
 
-    def main_loop(self, max_ticks, max_gen, display_off, collect_data, filename,
-                 garden_mode, i):
+    def main_loop(self, max_ticks, max_gen, display_off, collect_data,
+                  garden_mode, i):
         if not display_off:
             self.make_background()
         self.load_sprites()
@@ -76,33 +81,34 @@ class garden_game:
                 if env.highest_gen > max_gen:
                     if collect_data:
                         for tako in env.tako_list:
-                            write_csv(filename, tako, i, self.stepid)
+                            write_csv(self.filename, tako, i, self.stepid)
                     return
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    return
-                elif event.type == KEYDOWN:
-                    if scroll:
-                        if event.key == K_LEFT:
-                            if self.cam[0] > 0:
-                                self.cam[0] -= 1
-                                for spr in self.all_sprites:
-                                    spr.move_rect(1, 0)
-                        elif event.key == K_RIGHT:
-                            if self.cam[0] < env.size - spr_width:
-                                self.cam[0] += 1
-                                for spr in self.all_sprites:
-                                    spr.move_rect(-1, 0)
-                        elif event.key == K_UP:
-                            if self.cam[1] > 0:
-                                self.cam[1] -= 1
-                                for spr in self.all_sprites:
-                                    spr.move_rect(0, 1)
-                        elif event.key == K_DOWN:
-                            if self.cam[1] < env.size - spr_height:
-                                self.cam[1] += 1
-                                for spr in self.all_sprites:
-                                    spr.move_rect(0, -1)
+            if not display_off:
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        return
+                    elif event.type == KEYDOWN:
+                        if scroll:
+                            if event.key == K_LEFT:
+                                if self.cam[0] > 0:
+                                    self.cam[0] -= 1
+                                    for spr in self.all_sprites:
+                                        spr.move_rect(1, 0)
+                            elif event.key == K_RIGHT:
+                                if self.cam[0] < env.size - spr_width:
+                                    self.cam[0] += 1
+                                    for spr in self.all_sprites:
+                                        spr.move_rect(-1, 0)
+                            elif event.key == K_UP:
+                                if self.cam[1] > 0:
+                                    self.cam[1] -= 1
+                                    for spr in self.all_sprites:
+                                        spr.move_rect(0, 1)
+                            elif event.key == K_DOWN:
+                                if self.cam[1] < env.size - spr_height:
+                                    self.cam[1] += 1
+                                    for spr in self.all_sprites:
+                                        spr.move_rect(0, -1)
             #see if all are dead
             if len(env.tako_list) == 0:
                 print("Tako are dead :(")
@@ -122,7 +128,7 @@ class garden_game:
                                                           tako.x, tako.y)
                     env.tako_list.remove(tako)
                     if collect_data:
-                        write_csv(filename, tako, i, self.stepid)
+                        write_csv(self.filename, tako, i, self.stepid)
                     tako.kill()
             #now, update sprites, then draw them if using graphics
             if env.new_sprites != []:
@@ -154,6 +160,9 @@ class garden_game:
             if not isinstance(sprite, Dirt):
                 if not isinstance(sprite, tako.Tako):
                     self.widget_sprites.add(sprite)
+                else:
+                    if self.export_all:
+                        export(sprite, self.filename)
                 self.all_sprites.add(sprite)
             env.new_sprites.remove(sprite)
 
@@ -167,10 +176,10 @@ class garden_game:
         for x in range(env.size):
             for y in range(env.size):
                 img, rect = load_image("dirt.png")
-                self.neur_background.blit(img, (x*50, y*50))
+                self.background.blit(img, (x*50, y*50))
                 
     def graphics_loop(self, scroll, font):
-        self.screen.blit(self.neur_background, (0, 0))
+        self.screen.blit(self.background, (0, 0))
         if not scroll:
             self.all_sprites.draw(self.screen)
         else:
@@ -215,12 +224,19 @@ def write_csv(filename, tako, i, step):
                            tako.genome.mut_record])
 
 #export the genome of a tako to a csv file
-def export(tako):
-    if not os.path.exists('Exported Genomes'):
-        os.makedirs('Exported Genomes')
+#will use the same filename as write_csv as a subfolder name at the moment
+def export(tako, filename):
+    #if not os.path.exists('Exported Genomes'):
+    #    os.makedirs('Exported Genomes')
+    path = "Exported Genomes"
+    if filename != "":
+        path = os.path.join(path, filename)
+        path = path[:-4]
+    if not os.path.exists(path):
+        os.makedirs(path)
     w = tako.ident + "_weights.csv"
     lay = tako.ident + "_layers.csv"
-    with open(os.path.join("Exported Genomes", w), "a", newline="") as file:
+    with open(os.path.join(path, w), "a", newline="") as file:
         writ = csv.writer(file)
         writ.writerow(['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
                       'weight', 'in_node', 'out_node', 'in_layer', 'out_layer',
@@ -233,7 +249,7 @@ def export(tako):
             writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
                            gen.ident, gen.weight, gen.in_node, gen.out_node,
                            gen.in_layer, gen.out_layer, "b"])
-    with open(os.path.join("Exported Genomes", lay), "a", newline="") as file:
+    with open(os.path.join(path, lay), "a", newline="") as file:
         writ = csv.writer(file)
         writ.writerow(['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
                        'inputs', 'nodes', 'layer_type', 'chromosome'])
@@ -258,6 +274,7 @@ def export(tako):
 #max_width (int): max horizontal resolution of window
 #max_height (int): max vertical resolution of window
 #collect_data (bool): creates csv file with various data on agents
+#export_all (bool): on creation, each agent's genome is exported to csv file
 #rand_nets (bool): use random weights to start first generation
 #                   rather than starting genomes ('plain' style, except for dom)
 #max_gen (int): limit to x generations; stops when first x+1 is born
@@ -272,17 +289,17 @@ def export(tako):
 #                   "Changing" (grass type switches)
 def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
-                   max_height=900, collect_data=True, rand_nets=False,
-                   max_gen = 505, genetic_mode="Plain", learning_on=False,
-                   seeds=None, garden_mode="Diverse Static"):
+                   max_height=900, collect_data=True, export_all=False,
+                   rand_nets=False, max_gen = 505, genetic_mode="Plain",
+                   learning_on=False, seeds=None, garden_mode="Diverse Static"):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
 
     filename = ""
-    if collect_data:
-        filename = input("Filename for csv?")
+    if collect_data or export_all:
+        filename = input("Filename for csv and export sub-folder?")
         if filename == "":
             filename = str(int(time.time())) + ".csv"
         elif len(filename) < 4:
@@ -306,21 +323,23 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
                 for i in range(loop_limit - len(seeds)):
                     seeds.append(seeds[i])
             g = garden_game(rand_chance, garden_size, tako_number,
-                                     pop_max, max_width, max_height, display_off,
-                                     learning_on, genetic_mode, rand_nets,
-                                     garden_mode, seeds[i])
+                                     pop_max, max_width, max_height,
+                                     display_off, learning_on, genetic_mode,
+                                     rand_nets, garden_mode, filename,
+                                     export_all, seeds[i])
         else:
             g = garden_game(rand_chance, garden_size, tako_number,
-                                     pop_max, max_width, max_height, display_off,
-                                     learning_on, genetic_mode, rand_nets,
-                                     garden_mode)
+                                     pop_max, max_width, max_height,
+                                     display_off, learning_on, genetic_mode,
+                                     rand_nets, garden_mode, filename,
+                                     export_all)
         if not display_off:
             main_window = g
-            main_window.main_loop(max_ticks, max_gen, display_off, collect_data,
-                                filename, garden_mode, i)
+            main_window.main_loop(max_ticks, max_gen, display_off,
+                                  collect_data, garden_mode, i)
         else:
-            g.main_loop(max_ticks, max_gen, display_off, collect_data, filename,
-                       garden_mode, i)
+            g.main_loop(max_ticks, max_gen, display_off, collect_data,
+                        garden_mode, i)
         loop_limit -= 1
         i += 1
        
@@ -330,5 +349,6 @@ if __name__ == "__main__":
              "gene", "advantage", "children", "parents", "identity",
              "input", "output", "hidden", "weights", "crossover"]
     run_experiment(garden_size=13, tako_number=20, x_loops=1,
-                   pop_max=40, max_gen=10, collect_data=True, seeds=seeds,
+                   pop_max=40, max_gen=2, collect_data=True, seeds=seeds,
                    genetic_mode="Plain", garden_mode="Diverse Static")
+    

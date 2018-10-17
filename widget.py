@@ -32,7 +32,7 @@ class Widget(sprite.Sprite):
     def mated(self, tako):
         return ("amuse", -1)
 
-    #display (bool): whether images are being displayed
+    #display_off (bool): whether images are being displayed
     def load_image(self, name, display_off, colorkey=None):
         fullname = os.path.join('img', name)
         img = image.load(fullname)
