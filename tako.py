@@ -25,6 +25,8 @@ dgeann.layer_dict["STMlayer"] = '''\
                                       }}
                                     }}
                                     '''
+family_mod = 1
+family_detection = "Genoverlap"
 
 # a Tako is a creature and also a Widget
 # it has a neural net
@@ -64,6 +66,7 @@ class Tako(Widget):
         self.dead = False
         self.children = []
         self.parents = parents
+        self.fam_dict = {}
         self.gen = gen
         self.mating_attempts = 0
         self.cod = None
@@ -243,19 +246,98 @@ class Tako(Widget):
         return ("amuse", 15)
 
     def mated(self, tak):
-        if tak.desire >= 100:
-            if self.desire >= 100:
-                self.dez = 0
-                self.desire = 0
-                tak.dez = 0
-                tak.desire = 0
-                return [("amuse", 45), ("fullness", -10), ("desire", -150),
-                self.genome.recombine(tak.genome), [self.ident, tak.ident],
-                        (max(self.gen, tak.gen) + 1)]
+        relation = self.check_relations(tak)
+        mate_chance = 1 - family_mod*relation
+        if mate_chance <= 0:
+            too_close = True
+        elif mate_chance == 1:
+            too_close = False
+        else:
+            too_close = random.random()
+            if too_close < mate_chance:
+                too_close = True
+            else:
+                too_close = False
+        #'disgust' reaction
+        if too_close:
+            self.dez = 0
+            self.desire = 0
+            return[("amuse", -30)]
+        else:
+            if tak.desire >= 100:
+                if self.desire >= 100:
+                    self.dez = 0
+                    self.desire = 0
+                    tak.dez = 0
+                    tak.desire = 0
+                    return [("amuse", 45), ("fullness", -10), ("desire", -150),
+                    self.genome.recombine(tak.genome), [self.ident, tak.ident],
+                            (max(self.gen, tak.gen) + 1)]
+                else:
+                    return ("amuse", -1)
             else:
                 return ("amuse", -1)
+
+    #helper function for mated
+    #returns a relatedness percentage dependent on detection mode
+    def check_relations(self, tak):
+        if tak.ident in self.fam_dict.keys():
+            return self.fam_dict[tak.ident]
         else:
-            return ("amuse", -1)
+            if family_detection == "Degree":
+                self.fam_dict[tak.ident] = self.degree_detection(tak)
+            if family_detection == "Genoverlap":
+                self.fam_dict[tak.ident] = self.genoverlap(tak)
+            return self.fam_dict[tak.ident]
+
+    #helper function for check_relationships
+    #simple first/second/third degree relatives
+    def degree_detection(self, tak):
+        #first degree: parents, siblings, children
+        if tak.ident in self.children or tak.ident in self.parents:
+            return 1
+        elif tak.parents == self.parents:
+            return 1
+        #second degree: half-siblings, auncles, niblings,
+        #grandparents/children, double cousins
+        #half-sibs
+        elif (tak.parents[0] in self.parents or
+              tak.parents[1] in self.parents):
+                return 0.5
+        #auncles
+        #niblings
+        #grandparents
+        elif self.parents[0] in tak.children or self.parents[1] in tak.children:
+            return 0.5
+        #grandchildren
+        elif tak.parents[0] in self.children or tak.parents[1] in self.children:
+            return 0.5
+        #double-cousins
+        #third degree: cousins, great-grandparents/children
+        #half auncles/niblings, great-auncles/niblings
+
+    #helper function for check_relationships
+    #finds percentage of genetic overlap
+    #TODO currently just doing weight genes b/c still working on layer genes
+    #+then they would all look a little related 
+    def genoverlap(self, tak):
+        overlap = 0
+        tot = 0
+        ident_list = []
+        for gen in tak.genome.weightchr_a:
+            ident_list.append(gen.ident)
+            tot += 1
+        for gen in tak.genome.weightchr_b:
+            ident_list.append(gen.ident)
+            tot += 1
+        for gen in self.genome.weightchr_a:
+            if gen.ident in ident_list:
+                overlap += 1
+                ident_list.remove(gen.ident)
+        for gen in self.genome.weightchr_b:
+            if gen.ident in ident_list:
+                overlap += 1
+        return (overlap/tot)
 
     #I didn't want to assign a death age at birth
     #and wanted a skewed normal distribution (as humans have)

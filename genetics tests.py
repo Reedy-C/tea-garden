@@ -2,6 +2,7 @@ import unittest
 import csv
 import tako
 import sys
+import copy
 sys.path.append('..')
 from dgeann import dgeann
 
@@ -89,6 +90,35 @@ class testGenetics(unittest.TestCase):
         self.assertAlmostEqual(tak_2.desire, 0.01, places=2)
         self.assertEqual(tak_1.dez, 1)
         self.assertEqual(tak_2.dez, 1)
+
+    def test_genoverlap(self):
+        tak_1 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", False)
+        tak_2 = copy.copy(tak_1)
+        self.assertEqual(tak_1.genoverlap(tak_2), 1.0)
+        self.assertEqual(tak_1.mated(tak_2), [("amuse", -30)])
+        tak_3 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", False)
+        self.assertEqual(tak_1.genoverlap(tak_3), 0.0)
+        tak_1.desire = 150
+        tak_3.desire = 150
+        gen_4 = tak_1.mated(tak_3)[3]
+        tak_4 = tako.Tako(0, True, 0, 0, gen_4, "tak_4", None,
+                          [tak_1.ident, tak_3.ident], 1)
+        self.assertEqual(tak_4.genoverlap(tak_1), 0.5)
+        self.assertEqual(tak_4.genoverlap(tak_3), 0.5)
+        tak_1.desire = 150
+        tak_3.desire = 150
+        gen_5 = tak_1.mated(tak_3)[3]
+        tak_5 = tako.Tako(0, True, 0, 0, gen_5, "tak_5", None,
+                          [tak_1.ident, tak_3.ident], 1)
+        self.assertAlmostEqual(tak_5.genoverlap(tak_4), 0.71, 2)
+        self.assertAlmostEqual(tak_4.genoverlap(tak_5), 0.71, 2)
+        tak_4.desire = 150
+        tak_5.desire = 150
+        tako.random.random()
+        gen_6 = tak_5.mated(tak_4)[3]
+        tak_6 = tako.Tako(0, True, 0, 0, gen_6, "tak_6", None,
+                          [tak_4.ident, tak_5.ident], 1)
+        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.83, 2)
 
 if __name__ == '__main__':
     unittest.main()
