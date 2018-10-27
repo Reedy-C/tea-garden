@@ -292,30 +292,101 @@ class Tako(Widget):
 
     #helper function for check_relationships
     #simple first/second/third degree relatives
-    def degree_detection(self, tak):
-        #first degree: parents, siblings, children
-        if tak.ident in self.children or tak.ident in self.parents:
-            return 1
-        elif tak.parents == self.parents:
-            return 1
-        #second degree: half-siblings, auncles, niblings,
+##    def degree_detection(self, tak):
+##        #first degree: parents, siblings, children
+##        if tak.ident in self.children or tak.ident in self.parents:
+##            return 1
+##        elif tak.parents == self.parents:
+##            return 1
+##        #second degree: half-siblings, auncles, niblings,
+##        #grandparents/children, double cousins
+##        #half-sibs
+##        elif (tak.parents[0] in self.parents or
+##              tak.parents[1] in self.parents):
+##                return 0.5
+##        #auncles
+##        #niblings
+##        #grandparents
+##        elif self.parents[0] in tak.children or self.parents[1] in tak.children:
+##            return 0.5
+##        #grandchildren
+##        elif tak.parents[0] in self.children or tak.parents[1] in self.children:
+##            return 0.5
+##        #double-cousins
+##        #third degree: cousins, great-grandparents/children
+##        #half auncles/niblings, great-auncles/niblings
+        
+    def degree_setting(self, other_parent, baby):
+        #first degree: parents and children already set
+        #siblings/half-siblings
+        for tak in self.children:
+            #excluding baby?
+            if tak.parents == [self, other_parent]:
+                tak.siblings.append(baby)
+                baby.siblings.append(tak)
+            else:
+                tak.half_siblings.append(baby)
+                baby.half_siblings.append(tak)
+            for tak in other_parent.children:
+                if tak.parents != [self, other_parent]:
+                    tak.half_siblings.append(baby)
+                    baby.half_siblings.append(tak)
+        #second degree: half-siblings (set), auncles, niblings,
         #grandparents/children, double cousins
-        #half-sibs
-        elif (tak.parents[0] in self.parents or
-              tak.parents[1] in self.parents):
-                return 0.5
-        #auncles
-        #niblings
-        #grandparents
-        elif self.parents[0] in tak.children or self.parents[1] in tak.children:
-            return 0.5
-        #grandchildren
-        elif tak.parents[0] in self.children or tak.parents[1] in self.children:
-            return 0.5
-        #double-cousins
-        #third degree: cousins, great-grandparents/children
-        #half auncles/niblings, great-auncles/niblings
-
+        for tak in self.siblings:
+            tak.niblings.append(baby)
+            baby.auncles.append(tak)
+            for cous in tak.children:
+                #second degree: double cousins
+                #TODO - is there a better way to do this?
+                #TODO - do I need to do this on both sides?
+                #seems like I shouldn't
+                for par in cous.parents:
+                    if par != tak:
+                        if par in other_parent.siblings:
+                            cous.double_cousins.append(baby)
+                            baby.double_cousins.append(cous)
+                        #third degree: cousins
+                        else:
+                        cous.cousins.append(baby)
+                        baby.cousins.append(tak)
+        for tak in other_parent.siblings:
+            tak.niblings.append(baby)
+            baby.auncles.append(tak)
+            #cousins
+            for cous in tak.children:
+                cous.cousins.append(baby)
+                baby.cousins.append(tak)
+        for tak in self.parents:
+            tak.grandchildren.append(baby)
+            baby.grandparents.append(tak)
+            #third degree: great-grandparents/children
+            for great in tak.parents:
+                great.great_grandchildren.append(baby)
+                tak.great_grandparents.append(tak)
+            #third degree: great-auncles/niblings
+            for aunc in tak.siblings:
+                aunc.great_niblings.append(baby)
+                baby.great_auncesl.append(aunc)
+        for tak in other_parent.parents:
+            tak.grandchildren.append(baby)
+            baby.grandparents.append(tak)
+            #great-grandparents/children
+            for great in tak.parents:
+                great.great_grandchildren.append(baby)
+                tak.great_grandparents.append(tak)
+            #great-auncles/niblings
+            for aunc in tak.siblings:
+                aunc.great_niblings.append(baby)
+                baby.great_auncesl.append(aunc)
+        #third degree: half auncles/niblings
+        for tak in self.half_siblings:
+            tak.half_niblings.append(baby)
+            baby.half_auncles.append(tak)
+        for tak in other_parent.half_siblings:
+            tak.half_niblings.append(baby)
+            baby.half_auncles.append(tak)
+            
     #helper function for check_relationships
     #finds percentage of genetic overlap
     #TODO currently just doing weight genes b/c still working on layer genes
