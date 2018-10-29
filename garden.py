@@ -211,8 +211,6 @@ class Garden:
                     direction = random.randrange(0,3)
                     new_tak = Tako(direction, self.display_off, x, y, result[3],
                                    None, parents=result[4], gen=result[5])
-                    tako.children.append(new_tak.ident)
-                    v.children.append(new_tak.ident)
                     self.garden_map[y][x].kill()
                     self.garden_map[y][x] = new_tak
                     self.tako_list.append(new_tak)

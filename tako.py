@@ -26,7 +26,7 @@ dgeann.layer_dict["STMlayer"] = '''\
                                     }}
                                     '''
 family_mod = 1
-family_detection = "Genoverlap"
+family_detection = "Degree"
 
 # a Tako is a creature and also a Widget
 # it has a neural net
@@ -94,7 +94,7 @@ class Tako(Widget):
             self.solver = solver
         else:
             self.solver = self.genome.build()
-            if self.ident == None:
+            if ident == None:
                 self.ident = self.genome.ident
         
     #gen_type can be "Diverse", "Plain", or "Haploid"
@@ -292,7 +292,7 @@ class Tako(Widget):
                     tak.dez = 0
                     tak.desire = 0
                     return [("amuse", 45), ("fullness", -10), ("desire", -150),
-                    self.genome.recombine(tak.genome), [self.ident, tak.ident],
+                    self.genome.recombine(tak.genome), [self, tak],
                             (max(self.gen, tak.gen) + 1)]
                 else:
                     return ("amuse", -1)
