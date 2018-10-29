@@ -39,7 +39,7 @@ class Tako(Widget):
 
     #gen is short for generation, not genome or the like
     def __init__(self, dire, display_off, x, y, genome, ident, solver=None,
-                 parents=[None, None], gen=0):
+                 parents=[], gen=0):
         sprite.Sprite.__init__(self)
         self.direction = dire
         self.x = x
@@ -64,9 +64,29 @@ class Tako(Widget):
         self.age = 0
         self.dez = 0
         self.dead = False
-        self.children = []
         self.parents = parents
+        #and all the other relatives
+        self.children = []
+        if family_detection == "Degree":
+            self.siblings = []
+            self.half_siblings = []
+            self.niblings = []
+            self.auncles = []
+            self.double_cousins = []
+            self.cousins = []
+            self.grandchildren = []
+            self.grandparents = []
+            self.half_niblings = []
+            self.half_auncles = []
+            self.great_grandchildren = []
+            self.great_grandparents = []
+            self.great_niblings = []
+            self.great_auncles = []
+            if parents != []:
+                parents[0].degree_setting(parents[1], self)
+
         self.fam_dict = {}
+        
         self.gen = gen
         self.mating_attempts = 0
         self.cod = None
@@ -74,7 +94,8 @@ class Tako(Widget):
             self.solver = solver
         else:
             self.solver = self.genome.build()
-            self.ident = self.genome.ident
+            if self.ident == None:
+                self.ident = self.genome.ident
         
     #gen_type can be "Diverse", "Plain", or "Haploid"
     #Diverse = two chromosomes are different
@@ -292,32 +313,34 @@ class Tako(Widget):
 
     #helper function for check_relationships
     #simple first/second/third degree relatives
-##    def degree_detection(self, tak):
-##        #first degree: parents, siblings, children
-##        if tak.ident in self.children or tak.ident in self.parents:
-##            return 1
-##        elif tak.parents == self.parents:
-##            return 1
-##        #second degree: half-siblings, auncles, niblings,
-##        #grandparents/children, double cousins
-##        #half-sibs
-##        elif (tak.parents[0] in self.parents or
-##              tak.parents[1] in self.parents):
-##                return 0.5
-##        #auncles
-##        #niblings
-##        #grandparents
-##        elif self.parents[0] in tak.children or self.parents[1] in tak.children:
-##            return 0.5
-##        #grandchildren
-##        elif tak.parents[0] in self.children or tak.parents[1] in self.children:
-##            return 0.5
-##        #double-cousins
-##        #third degree: cousins, great-grandparents/children
-##        #half auncles/niblings, great-auncles/niblings
+    def degree_detection(self, other_parent):
+        #first degree
+        if (other_parent in self.parents or
+            other_parent in self.children or
+            other_parent in self.siblings):
+            return 1.0
+        #second degree
+        elif (other_parent in self.half_siblings or
+              other_parent in self.auncles or
+              other_parent in self.niblings or
+              other_parent in self.grandparents or
+              other_parent in self.grandchildren or
+              other_parent in self.double_cousins):
+            return 0.5
+        #third degree
+        elif (other_parent in self.cousins or
+              other_parent in self.great_grandparents or
+              other_parent in self.great_grandchildren or
+              other_parent in self.half_auncles or
+              other_parent in self.half_niblings or
+              other_parent in self.great_niblings or
+              other_parent in self.great_auncles):
+            return 0.25
+        else:
+            return 0.0
         
     def degree_setting(self, other_parent, baby):
-        #first degree: parents and children already set
+        #first degree: parents already set
         #siblings/half-siblings
         for tak in self.children:
             #excluding baby?
@@ -348,37 +371,38 @@ class Tako(Widget):
                             baby.double_cousins.append(cous)
                         #third degree: cousins
                         else:
-                        cous.cousins.append(baby)
-                        baby.cousins.append(tak)
+                            cous.cousins.append(baby)
+                            baby.cousins.append(cous)
         for tak in other_parent.siblings:
             tak.niblings.append(baby)
             baby.auncles.append(tak)
             #cousins
             for cous in tak.children:
-                cous.cousins.append(baby)
-                baby.cousins.append(tak)
+                if cous not in baby.double_cousins:
+                    cous.cousins.append(baby)
+                    baby.cousins.append(cous)
         for tak in self.parents:
             tak.grandchildren.append(baby)
             baby.grandparents.append(tak)
             #third degree: great-grandparents/children
             for great in tak.parents:
                 great.great_grandchildren.append(baby)
-                tak.great_grandparents.append(tak)
+                baby.great_grandparents.append(great)
             #third degree: great-auncles/niblings
             for aunc in tak.siblings:
                 aunc.great_niblings.append(baby)
-                baby.great_auncesl.append(aunc)
+                baby.great_auncles.append(aunc)
         for tak in other_parent.parents:
             tak.grandchildren.append(baby)
             baby.grandparents.append(tak)
             #great-grandparents/children
             for great in tak.parents:
                 great.great_grandchildren.append(baby)
-                tak.great_grandparents.append(tak)
+                baby.great_grandparents.append(great)
             #great-auncles/niblings
             for aunc in tak.siblings:
                 aunc.great_niblings.append(baby)
-                baby.great_auncesl.append(aunc)
+                baby.great_auncles.append(aunc)
         #third degree: half auncles/niblings
         for tak in self.half_siblings:
             tak.half_niblings.append(baby)
@@ -386,6 +410,9 @@ class Tako(Widget):
         for tak in other_parent.half_siblings:
             tak.half_niblings.append(baby)
             baby.half_auncles.append(tak)
+        #first degree: children
+        self.children.append(baby)
+        other_parent.children.append(baby)
             
     #helper function for check_relationships
     #finds percentage of genetic overlap
