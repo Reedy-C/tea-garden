@@ -191,6 +191,7 @@ class Tako(Widget):
                 default_genome = dgeann.haploid_genome(layersa, weightsa)
         else:
             default_genome = dgeann.genome(layersa, layersb, [], [])
+            parents = ["random", "random"]
         solver = default_genome.build(delete=dele)
         tak = Tako(direction, display_off, x, y, default_genome,
                    default_genome.ident, solver=solver, parents=parents)

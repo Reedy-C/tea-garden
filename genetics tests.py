@@ -109,18 +109,19 @@ class testGenetics(unittest.TestCase):
         self.assertEqual(tak_4.genoverlap(tak_3), 0.5)
         tak_1.desire = 150
         tak_3.desire = 150
+        tako.random.random()
+        tako.random.random()
         gen_5 = tak_1.mated(tak_3)[3]
         tak_5 = tako.Tako(0, True, 0, 0, gen_5, "tak_5", None,
                           [tak_1.ident, tak_3.ident], 1)
-        self.assertAlmostEqual(tak_5.genoverlap(tak_4), 0.71, 2)
-        self.assertAlmostEqual(tak_4.genoverlap(tak_5), 0.71, 2)
+        self.assertAlmostEqual(tak_5.genoverlap(tak_4), 0.68, 2)
+        self.assertAlmostEqual(tak_4.genoverlap(tak_5), 0.68, 2)
         tak_4.desire = 150
         tak_5.desire = 150
-        tako.random.random()
         gen_6 = tak_5.mated(tak_4)[3]
         tak_6 = tako.Tako(0, True, 0, 0, gen_6, "tak_6", None,
                           [tak_4.ident, tak_5.ident], 1)
-        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.83, 2)
+        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.74, 2)
 
     def test_degree_setting(self):
         tako.family_detection = "Degree"
