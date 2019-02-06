@@ -15,7 +15,8 @@ import csv
 class garden_game:
     def __init__(self, rand_chance, garden_size, tako_number, pop_max,
                  max_width, max_height, display_off, learning_on, genetic_mode,
-                 rand_nets, garden_mode, filename, export_all, seed=None):
+                 rand_nets, garden_mode, filename, export_all, family_mod,
+                 family_detection, seed=None):
         pygame.init()
         global scroll
         if not display_off:
@@ -44,7 +45,6 @@ class garden_game:
             scroll = False
         
         self.clock = pygame.time.Clock()
-
 
         global env
         env = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
@@ -293,11 +293,18 @@ def export(tako, filename):
 #                   "Single Static" (one),
 #                   "Nutrition" (nutritive value changes),
 #                   "Changing" (grass type switches)
+#family_detection (str): one of three values, allowing agents to detect
+#                    genetic or familial relationships with other agents:
+#                    Degree (finds degree separation of relatives)
+#                    Genoverlap (how much do their weight genes overlap?)
+#                    None (disables)
+#family_mod (float): modulates the above kinship detection, values 0~1
 def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
                    max_height=900, collect_data=True, export_all=False,
                    rand_nets=False, max_gen = 505, genetic_mode="Plain",
-                   learning_on=False, seeds=None, garden_mode="Diverse Static"):
+                   learning_on=False, seeds=None, garden_mode="Diverse Static",
+                   family_detection=None, family_mod=0):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -315,6 +322,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
 
     if rand_nets:
         tako.rand_nets = True
+    tako.family_mod = family_mod
+    tako.family_detection = family_detection
     
     loop_limit = x_loops
     if loop_limit < 1:
@@ -329,16 +338,17 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
                 for i in range(loop_limit - len(seeds)):
                     seeds.append(seeds[i])
             g = garden_game(rand_chance, garden_size, tako_number,
-                                     pop_max, max_width, max_height,
-                                     display_off, learning_on, genetic_mode,
-                                     rand_nets, garden_mode, filename,
-                                     export_all, seeds[i])
+                            pop_max, max_width, max_height,
+                            display_off, learning_on, genetic_mode,
+                            rand_nets, garden_mode, filename,
+                            export_all, family_mod, family_detection,
+                            seeds[i])
         else:
             g = garden_game(rand_chance, garden_size, tako_number,
                                      pop_max, max_width, max_height,
                                      display_off, learning_on, genetic_mode,
                                      rand_nets, garden_mode, filename,
-                                     export_all)
+                                     export_all, family_mod, family_detection)
         if not display_off:
             main_window = g
             main_window.main_loop(max_ticks, max_gen, display_off,
@@ -355,5 +365,5 @@ if __name__ == "__main__":
              "gene", "advantage", "children", "parents", "identity",
              "input", "output", "hidden", "weights", "crossover"]
     run_experiment(garden_size=13, tako_number=20, x_loops=1,
-                   pop_max=40, max_gen=2, collect_data=True, seeds=seeds,
+                   pop_max=40, max_gen=2, collect_data=False, seeds=seeds,
                    genetic_mode="Plain", garden_mode="Diverse Static") 
