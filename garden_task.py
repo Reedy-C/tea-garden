@@ -1,6 +1,6 @@
 from garden import Garden
 from numpy import floor
-from tako import Tako
+from tako import Tako, family_detection
 from widget import *
 import random
 import numpy
@@ -52,10 +52,10 @@ class garden_task:
                 highest = i
         return highest
 
-    #drives are transformed to a sigmoid curve -2.5~2.5
-    #this decision was the result of an experiment that showed it produced
-    #better perfomance
     def get_observation(self, tako):
+        #drives are transformed to a sigmoid curve -2.5~2.5
+        #this decision was the result of an experiment that showed it produced
+        #better perfomance than not transforming it
         obs = self.env.get_sensors(tako)
         nobs = self.transform_obs(obs)
         full = 5/(1 + (0.38 * 2.71828)**(-tako.fullness + 75)) - 2.5
@@ -66,6 +66,23 @@ class garden_task:
         nobs.append(pain)
         desire = 5/(1 + (0.38 * 2.71828)**(-tako.desire + 75)) - 2.5
         nobs.append(desire)
+        #if tako is currently looking at another tako
+        if nobs[4] == 1:
+            #mateable?
+            targ = self.env.get_target(tako)
+            other_tako = self.env.garden_map[targ[1]][targ[0]]
+            if other_tako.desire >= 100:
+                nobs.append(1)
+            else:
+                nobs.append(-1)
+            #find how related they are if need be
+            if family_detection != None:
+                nobs.append(tako.check_relations(other_tako))
+            else:
+                nobs.append(0)
+        else:
+            nobs.append(-1)
+            nobs.append(0)
         return nobs
     
     def transform_obs(self, obs):

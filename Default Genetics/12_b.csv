@@ -1,3 +1,4 @@
+1,True,False,0.01,OTQPFW,0.409727841815655,11,4,data,evo
 1,True,True,0.01,GFAUGE,-0.175023,0,0,data,evo
 1,True,True,0.01,AASKJR,-0.0803362,0,1,data,evo
 4,True,True,0.01,SPMLZJ,0.303749,0,2,data,evo
@@ -11,7 +12,7 @@
 5,True,True,0.01,OZBDRL,0.276385,2,0,data,evo
 1,True,True,0.01,XDIATA,0.426648,2,1,data,evo
 5,True,True,0.01,KQGDHC,0.0990614,2,2,data,evo
-4,True,True,0.01,TPDLVW,0.3090508771574648,2,3,data,evo
+4,True,True,0.01,TPDLVW,0.309050877157465,2,3,data,evo
 5,True,True,0.01,HBHXHR,0.393325,2,4,data,evo
 3,True,True,0.01,BWYWHR,-0.345547,3,0,data,evo
 3,True,True,0.01,AMSDDZ,0.254659,3,1,data,evo
@@ -23,12 +24,12 @@
 3,True,True,0.01,RIIBGT,-0.116404,4,2,data,evo
 3,True,True,0.01,WZYGDQ,0.242584,4,3,data,evo
 1,True,True,0.01,NNVCIX,0.186694,4,4,data,evo
-2,True,False,0.01,CJGDQN,-0.3281271962135193,5,0,data,evo
-2,True,False,0.01,RZFVMI,0.1460224979837922,5,1,data,evo
-1,True,False,0.01,ILGGBN,-0.10817961168711182,5,2,data,evo
-3,True,False,0.01,CABUKQ,0.3097912303546928,5,3,data,evo
-4,True,False,0.01,YRCLKI,0.263037515188126,5,4,data,evo
-2,True,False,0.01,KWALQD,0.3137444812747531,5,5,data,evo
+2,True,True,0.01,CJGDQN,-0.328127196213519,5,0,data,evo
+2,True,True,0.01,RZFVMI,0.146022497983792,5,1,data,evo
+1,True,True,0.01,ILGGBN,-0.108179611687112,5,2,data,evo
+3,True,True,0.01,CABUKQ,0.309791230354693,5,3,data,evo
+4,True,True,0.01,YRCLKI,0.263037515188126,5,4,data,evo
+2,True,True,0.01,KWALQD,0.313744481274753,5,5,data,evo
 2,True,True,0.01,UHDPGT,0.0613568,6,0,data,evo
 2,True,True,0.01,QXYKXH,-0.0864102,6,1,data,evo
 5,True,True,0.01,XOVEJS,-0.142137,6,2,data,evo
@@ -49,6 +50,14 @@
 5,True,True,0.01,SAZHCW,-0.242368,9,2,data,evo
 4,True,True,0.01,BKWTKH,0.0746363,9,3,data,evo
 2,True,True,0.01,MQFWTW,0.303073,9,4,data,evo
+3,True,False,0.01,UQJVNT,-0.026267377061961,10,0,data,evo
+4,True,False,0.01,KZGSSE,0.007425242,10,1,data,evo
+5,True,False,0.01,YZWJLJ,0.212456381555401,10,4,data,evo
+5,True,False,0.01,OIENGP,-0.020790049529843,11,0,data,evo
+5,True,False,0.01,ELMWCP,0.112213017,11,1,data,evo
+4,True,False,0.01,SVXXMP,-0.152816752,11,2,data,evo
+2,True,False,0.01,PGEEIZ,0.17787237440353,11,3,data,evo
+2,True,False,0.01,RMYXZO,0.144592808638437,11,4,data,evo
 5,True,True,0.01,PDQJJQ,-0.32062,0,0,STM,evo
 5,True,True,0.01,LFWWHF,0.188547,0,1,STM,evo
 3,True,True,0.01,LJXWZH,0.025647,0,2,STM,evo
@@ -105,7 +114,7 @@
 4,True,True,0.01,NQFQEY,-0.522924,3,5,evo,action
 5,True,True,0.01,WHRCYU,-0.642617,4,0,evo,action
 5,True,True,0.01,VLSTVW,-0.113159,4,1,evo,action
-4,True,True,0.01,TTTVTP,0.2751477234412911,4,2,evo,action
+4,True,True,0.01,TTTVTP,0.275147723441291,4,2,evo,action
 5,True,True,0.01,BQRMQN,-0.431146,4,3,evo,action
 2,True,True,0.01,REMEMK,0.596367,4,4,evo,action
 2,True,True,0.01,HBXLBR,0.0993254,4,5,evo,action

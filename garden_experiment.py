@@ -218,13 +218,14 @@ def write_csv(filename, tako, i, step):
     #write above data
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
-            if tako.parents != []:
+            if type(tako.parents[0]) != str:
                 writ.writerow([i, tako.ident, tako.parents[0].ident,
                                tako.parents[1].ident, tako.age, tako.gen,
                                len(tako.children), tako.mating_attempts,
                                tako.cod, step, tako.genome.mut_record])
             else:
-                writ.writerow([i, tako.ident, "", "", tako.age, tako.gen,
+                writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
+                               tako.age, tako.gen,
                                len(tako.children), tako.mating_attempts,
                                tako.cod, step, tako.genome.mut_record])
 
@@ -355,4 +356,4 @@ if __name__ == "__main__":
              "input", "output", "hidden", "weights", "crossover"]
     run_experiment(garden_size=13, tako_number=20, x_loops=1,
                    pop_max=40, max_gen=2, collect_data=True, seeds=seeds,
-                   genetic_mode="Plain", garden_mode="Diverse Static")    
+                   genetic_mode="Plain", garden_mode="Diverse Static") 

@@ -25,8 +25,15 @@ dgeann.layer_dict["STMlayer"] = '''\
                                       }}
                                     }}
                                     '''
-family_mod = 1
-family_detection = "Degree"
+
+#used for family detection - moderates the chance of mating with relatives
+#should be between 0 and 1
+family_mod = 0
+#determines if or which family detection is used
+#possible values: Degree (finds degree separation of relatives)
+#Genoverlap (how much do their weight genes overlap?)
+#None (disables)
+family_detection = None
 
 # a Tako is a creature and also a Widget
 # it has a neural net
@@ -82,7 +89,7 @@ class Tako(Widget):
             self.great_grandparents = []
             self.great_niblings = []
             self.great_auncles = []
-            if parents != []:
+            if type(parents[0]) != str:
                 parents[0].degree_setting(parents[1], self)
 
         self.fam_dict = {}
@@ -104,13 +111,14 @@ class Tako(Widget):
     #   network in the 'plain' style (except for random dominance)
     @staticmethod
     def default_tako(direction, display_off, x, y, gen_type, rand_net):
+        parents = []
         data = dgeann.layer_gene(5, False, False, 0, "data",
-                                        [], 10, "input")
+                                        [], 12, "input")
         stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
                                              [], 6, "input")
         stm = dgeann.layer_gene(5, False, False, 0, "STM",
                                        ["stm_input"], 6, "STMlayer")
-        evo = dgeann.layer_gene(3, True, True, 0.1, "evo",
+        evo = dgeann.layer_gene(3, False, False, 0.1, "evo",
                                 ["data", "STM"], 5, "IP")
         action = dgeann.layer_gene(5, False, False, 0, "action",
                                           ["evo"], 6, "IP")
@@ -127,6 +135,7 @@ class Tako(Widget):
                 filenamea = "Default Genetics/" + str(l) + "_a.csv"
             else:
                 filenamea = "Default Genetics/" + str(l) + "_b.csv"
+            parents.append(filenamea[:-4])
             l = random.randint(1, 18)
             m = random.randint(0, 1)
             if m == 0:
@@ -146,6 +155,7 @@ class Tako(Widget):
                                            row['in_layer'], row['out_layer'])
                     weightsa.append(w)
             if gen_type == "Diverse":
+                parents.append(filenameb[:-4])
                 with open(filenameb, newline="") as file:
                     r = csv.DictReader(file, fieldnames = fields)
                     for row in r:
@@ -159,6 +169,7 @@ class Tako(Widget):
                                                row['in_layer'], row['out_layer'])
                         weightsb.append(w)
             elif gen_type == "Plain":
+                parents.append(filenamea)
                 #copy the first strand again
                 #slightly faster than a deepcopy
                 with open(filenamea, newline="") as file:
@@ -182,7 +193,7 @@ class Tako(Widget):
             default_genome = dgeann.genome(layersa, layersb, [], [])
         solver = default_genome.build(delete=dele)
         tak = Tako(direction, display_off, x, y, default_genome,
-                   default_genome.ident, solver=solver)
+                   default_genome.ident, solver=solver, parents=parents)
         return tak
             
     #drives go DOWN over time
@@ -267,39 +278,38 @@ class Tako(Widget):
         return ("amuse", 15)
 
     def mated(self, tak):
-        relation = self.check_relations(tak)
-        mate_chance = 1 - family_mod*relation
-        if mate_chance <= 0:
-            too_close = True
-        elif mate_chance == 1:
-            too_close = False
-        else:
-            too_close = random.random()
-            if too_close < mate_chance:
+        if family_detection != None:
+            relation = self.check_relations(tak)
+            mate_chance = 1 - family_mod*relation
+            if mate_chance <= 0:
                 too_close = True
-            else:
+            elif mate_chance == 1:
                 too_close = False
-        #'disgust' reaction
-        if too_close:
-            self.dez = 0
-            self.desire = 0
-            return[("amuse", -30)]
-        else:
-            if tak.desire >= 100:
-                if self.desire >= 100:
-                    self.dez = 0
-                    self.desire = 0
-                    tak.dez = 0
-                    tak.desire = 0
-                    return [("amuse", 45), ("fullness", -10), ("desire", -150),
-                    self.genome.recombine(tak.genome), [self, tak],
-                            (max(self.gen, tak.gen) + 1)]
+            else:
+                too_close = random.random()
+                if too_close < mate_chance:
+                    too_close = True
                 else:
-                    return ("amuse", -1)
+                    too_close = False
+            #'disgust' reaction
+            if too_close:
+                self.dez = 0
+                self.desire = 0
+                return[("amuse", -30)]
+        if tak.desire >= 100:
+            if self.desire >= 100:
+                self.dez = 0
+                self.desire = 0
+                tak.dez = 0
+                tak.desire = 0
+                return [("amuse", 45), ("fullness", -10), ("desire", -150),
+                self.genome.recombine(tak.genome), [self, tak],
+                        (max(self.gen, tak.gen) + 1)]
             else:
                 return ("amuse", -1)
+        else:
+            return ("amuse", -1)
 
-    #helper function for mated
     #returns a relatedness percentage dependent on detection mode
     def check_relations(self, tak):
         if tak.ident in self.fam_dict.keys():
@@ -382,27 +392,31 @@ class Tako(Widget):
                     cous.cousins.append(baby)
                     baby.cousins.append(cous)
         for tak in self.parents:
-            tak.grandchildren.append(baby)
-            baby.grandparents.append(tak)
-            #third degree: great-grandparents/children
-            for great in tak.parents:
-                great.great_grandchildren.append(baby)
-                baby.great_grandparents.append(great)
-            #third degree: great-auncles/niblings
-            for aunc in tak.siblings:
-                aunc.great_niblings.append(baby)
-                baby.great_auncles.append(aunc)
+            if type(tak) != str:
+                tak.grandchildren.append(baby)
+                baby.grandparents.append(tak)
+                #third degree: great-grandparents/children
+                for great in tak.parents:
+                    if type(great) != str:
+                        great.great_grandchildren.append(baby)
+                        baby.great_grandparents.append(great)
+                #third degree: great-auncles/niblings
+                for aunc in tak.siblings:
+                    aunc.great_niblings.append(baby)
+                    baby.great_auncles.append(aunc)
         for tak in other_parent.parents:
-            tak.grandchildren.append(baby)
-            baby.grandparents.append(tak)
-            #great-grandparents/children
-            for great in tak.parents:
-                great.great_grandchildren.append(baby)
-                baby.great_grandparents.append(great)
-            #great-auncles/niblings
-            for aunc in tak.siblings:
-                aunc.great_niblings.append(baby)
-                baby.great_auncles.append(aunc)
+            if type(tak) != str:
+                tak.grandchildren.append(baby)
+                baby.grandparents.append(tak)
+                #great-grandparents/children
+                for great in tak.parents:
+                    if type(great) != str:
+                        great.great_grandchildren.append(baby)
+                        baby.great_grandparents.append(great)
+                #great-auncles/niblings
+                for aunc in tak.siblings:
+                    aunc.great_niblings.append(baby)
+                    baby.great_auncles.append(aunc)
         #third degree: half auncles/niblings
         for tak in self.half_siblings:
             tak.half_niblings.append(baby)
