@@ -35,6 +35,10 @@ family_mod = 0
 #None (disables)
 family_detection = None
 
+def set_seed(seed):
+    random.seed(seed)
+    dgeann.random.seed(seed)
+
 # a Tako is a creature and also a Widget
 # it has a neural net
 # it has a genome
@@ -169,7 +173,7 @@ class Tako(Widget):
                                                row['in_layer'], row['out_layer'])
                         weightsb.append(w)
             elif gen_type == "Plain":
-                parents.append(filenamea)
+                parents.append(filenamea[:-4])
                 #copy the first strand again
                 #slightly faster than a deepcopy
                 with open(filenamea, newline="") as file:

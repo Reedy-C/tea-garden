@@ -1,4 +1,6 @@
 from garden import Garden
+import garden
+from dgeann import dgeann
 from garden_task import garden_task
 import tako
 from widget import *
@@ -10,7 +12,7 @@ from pygame.locals import *
 import numpy
 import caffe
 import csv
-
+from collections import deque
 
 class garden_game:
     def __init__(self, rand_chance, garden_size, tako_number, pop_max,
@@ -72,16 +74,32 @@ class garden_game:
             pygame.display.flip()
             self.cam = [0,0]
             font = pygame.font.Font(None, 18)
+        if collect_data:
+            if not os.path.exists("Data"):
+                os.makedirs("Data")
+            if not os.path.exists(os.path.join("Data", self.filename)):
+                with open(os.path.join("Data", self.filename), 'a', newline='') as csvfile:
+                    writ = csv.writer(csvfile)
+                    writ.writerow(['iteration', 'ID', 'parent1', 'parent2',
+                                   'age', 'generation', '# children',
+                                   'mating attempts', 'cause of death',
+                                   'timestep', 'mutations'])
+            dead_tako = deque()
         while 1:
             if max_ticks > 0:
                 if self.stepid > max_ticks:
+                    if collect_data:
+                        for tako in env.tako_list:
+                            dead_tako.append([tako, self.stepid])
+                        write_csv(self.filename, i, dead_tako)
                     return
             #probably not the most elegant way to do this, but it works
             if max_gen > 0:
                 if env.highest_gen > max_gen:
                     if collect_data:
                         for tako in env.tako_list:
-                            write_csv(self.filename, tako, i, self.stepid)
+                            dead_tako.append([tako, self.stepid])
+                        write_csv(self.filename, i, dead_tako)
                     return
             if not display_off:
                 for event in pygame.event.get():
@@ -111,6 +129,9 @@ class garden_game:
                                         spr.move_rect(0, -1)
             #see if all are dead
             if len(env.tako_list) == 0:
+                if collect_data:
+                    if len(dead_tako) > 0:
+                        write_csv(self.filename, i, dead_tako)
                 print("Tako are dead :(")
                 return
             #let experiment go a step
@@ -128,8 +149,12 @@ class garden_game:
                                                           tako.x, tako.y)
                     env.tako_list.remove(tako)
                     if collect_data:
-                        write_csv(self.filename, tako, i, self.stepid)
+                        dead_tako.append([tako, self.stepid])
                     tako.kill()
+            #check for data collection
+            if collect_data:
+                if self.stepid % 3000 == 0:
+                    write_csv(self.filename, i, dead_tako)
             #now, update sprites, then draw them if using graphics
             if env.new_sprites != []:
                 self.get_new()
@@ -205,29 +230,27 @@ def load_image(name, colorkey=None):
     return image, image.get_rect()
 
 #records data to a csv file on an agent's death
-def write_csv(filename, tako, i, step):
-    if not os.path.exists("Data"):
-        os.makedirs("Data")
-    if not os.path.exists(os.path.join("Data", filename)):
-        with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
-            writ = csv.writer(csvfile)
-            writ.writerow(['iteration', 'ID', 'parent1', 'parent2', 'age',
-                           'generation', '# children',
-                           'mating attempts', 'cause of death', 'timestep',
-                           'mutations'])
-    #write above data
+def write_csv(filename, i, q):  
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
-            if type(tako.parents[0]) != str:
-                writ.writerow([i, tako.ident, tako.parents[0].ident,
-                               tako.parents[1].ident, tako.age, tako.gen,
-                               len(tako.children), tako.mating_attempts,
-                               tako.cod, step, tako.genome.mut_record])
-            else:
-                writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
-                               tako.age, tako.gen,
-                               len(tako.children), tako.mating_attempts,
-                               tako.cod, step, tako.genome.mut_record])
+            j = 0
+            k = len(q)
+            while j < k:
+                l = q.popleft()
+                #l = tako, stepid
+                tako = l[0]
+                if type(tako.parents[0]) != str:
+                    writ.writerow([i, tako.ident, tako.parents[0].ident,
+                                   tako.parents[1].ident, tako.age, tako.gen,
+                                   len(tako.children), tako.mating_attempts,
+                                   tako.cod, l[1], tako.genome.mut_record])
+                else:
+                    writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
+                                   tako.age, tako.gen,
+                                   len(tako.children), tako.mating_attempts,
+                                   tako.cod, l[1], tako.genome.mut_record])
+                j += 1
+            
 
 #export the genome of a tako to a csv file
 #will use the same filename as write_csv as a subfolder name at the moment
@@ -337,6 +360,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
             if len(seeds) < loop_limit:
                 for i in range(loop_limit - len(seeds)):
                     seeds.append(seeds[i])
+            tako.set_seed(seeds[i])
             g = garden_game(rand_chance, garden_size, tako_number,
                             pop_max, max_width, max_height,
                             display_off, learning_on, genetic_mode,
