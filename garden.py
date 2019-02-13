@@ -194,30 +194,25 @@ class Garden:
         result = v.mated(tako)
         if len(result)>2:
             tako.mating_attempts += 1
-            #then result[3] is a genome
-            #result[4] is its parents
-            #result[5] is its generation
             if len(self.tako_list) < self.pop_max:
-                #chance = random.randint(0, 1)
-                chance = 0
-                if chance == 0:
-                    while True:
-                        x = random.randrange(0, (self.size))
-                        y = random.randrange(0, (self.size))
-                        if isinstance(self.garden_map[y][x], Dirt):
-                            if x > tako.x - 3 or x < tako.x + 3:
-                                if y > tako.y - 3 or y < tako.y + 3:
-                                    break
-                    direction = random.randrange(0,3)
-                    new_tak = Tako(direction, self.display_off, x, y, result[3],
-                                   None, parents=result[4], gen=result[5])
-                    self.garden_map[y][x].kill()
-                    self.garden_map[y][x] = new_tak
-                    self.tako_list.append(new_tak)
-                    self.new_sprites.add(new_tak)
-                    if result[5] > self.highest_gen:
-                        self.highest_gen = result[5]
-            result = (result[0], result[1], result[2])
+                while True:
+                    x = random.randrange(0, (self.size))
+                    y = random.randrange(0, (self.size))
+                    if isinstance(self.garden_map[y][x], Dirt):
+                        if x > tako.x - 3 or x < tako.x + 3:
+                            if y > tako.y - 3 or y < tako.y + 3:
+                                break
+                direction = random.randrange(0,3)
+                new_genome = tako.genome.recombine(v.genome)             
+                new_tak = Tako(direction, self.display_off, x, y, new_genome,
+                               None, None, [tako, v],
+                               max(tako.gen, v.gen))
+                self.garden_map[y][x].kill()
+                self.garden_map[y][x] = new_tak
+                self.tako_list.append(new_tak)
+                self.new_sprites.add(new_tak)
+                if new_tak.gen > self.highest_gen:
+                    self.highest_gen = new_tak.gen
         return result
 
     def get_target(self, tako):

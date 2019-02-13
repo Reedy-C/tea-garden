@@ -79,7 +79,7 @@ class testGenetics(unittest.TestCase):
         tak_1.desire = 100
         tak_1.dez = 150
         result = tak_1.mated(tak_2)
-        self.assertEqual(len(result), 6)
+        self.assertEqual(len(result), 3)
         self.assertEqual(tak_1.desire, 0)
         self.assertEqual(tak_2.desire, 0)
         self.assertEqual(tak_1.dez, 0)
@@ -100,9 +100,7 @@ class testGenetics(unittest.TestCase):
         self.assertEqual(tak_1.mated(tak_2), [("amuse", -30)])
         tak_3 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", False)
         self.assertEqual(tak_1.genoverlap(tak_3), 0.0)
-        tak_1.desire = 150
-        tak_3.desire = 150
-        gen_4 = tak_1.mated(tak_3)[3]
+        gen_4 = tak_1.genome.recombine(tak_3.genome)
         tak_4 = tako.Tako(0, True, 0, 0, gen_4, "tak_4", None,
                           [tak_1.ident, tak_3.ident], 1)
         self.assertEqual(tak_4.genoverlap(tak_1), 0.5)
@@ -111,14 +109,14 @@ class testGenetics(unittest.TestCase):
         tak_3.desire = 150
         tako.random.random()
         tako.random.random()
-        gen_5 = tak_1.mated(tak_3)[3]
+        gen_5 = tak_1.genome.recombine(tak_3.genome)
         tak_5 = tako.Tako(0, True, 0, 0, gen_5, "tak_5", None,
                           [tak_1.ident, tak_3.ident], 1)
         self.assertAlmostEqual(tak_5.genoverlap(tak_4), 0.68, 2)
         self.assertAlmostEqual(tak_4.genoverlap(tak_5), 0.68, 2)
         tak_4.desire = 150
         tak_5.desire = 150
-        gen_6 = tak_5.mated(tak_4)[3]
+        gen_6 = tak_5.genome.recombine(tak_4.genome)
         tak_6 = tako.Tako(0, True, 0, 0, gen_6, "tak_6", None,
                           [tak_4.ident, tak_5.ident], 1)
         self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.74, 2)
@@ -133,75 +131,49 @@ class testGenetics(unittest.TestCase):
         GP4 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
         G5 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
         P3 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
-        tako_l = [GGP1, GGP2, GP2, GP3, GP4, G5, P3]
-        for tak in tako_l:
-            tak.desire = 150
-        GA = tako.Tako(0, True, 0, 0, GGP1.mated(GGP2)[3], "GA", None,
-                          [GGP1, GGP2], 1)
-        GGP1.desire = 150
-        GGP2.desire = 150
-        GP1 = tako.Tako(0, True, 0, 0, GGP1.mated(GGP2)[3], "GP1", None,
-                          [GGP1, GGP2], 1)
-        tako_l.append(GP1)
-        GP1.desire = 150
-        A1 = tako.Tako(0, True, 0, 0, GP1.mated(GP2)[3], "A1", None,
-                          [GP1, GP2], 1)
-        A2 = tako.Tako(0, True, 0, 0, GP3.mated(GP4)[3], "A2", None,
-                          [GP3, GP4], 1)
-        tako_l.append(A1)
-        tako_l.append(A2)
+        GA = tako.Tako(0, True, 0, 0, GGP1.genome.recombine(GGP2.genome),
+                       "GA", None, [GGP1, GGP2], 1)
+        GP1 = tako.Tako(0, True, 0, 0, GGP1.genome.recombine(GGP2.genome),
+                        "GP1", None, [GGP1, GGP2], 1)
+        A1 = tako.Tako(0, True, 0, 0, GGP1.genome.recombine(GGP2.genome), "A1",
+                       None, [GP1, GP2], 1)
+        A2 = tako.Tako(0, True, 0, 0, GP3.genome.recombine(GP4.genome), "A2",
+                       None, [GP3, GP4], 1)
         A_M1 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
-        tako_l.append(A_M1)
-        for tak in tako_l:
-            tak.desire = 150
-        P1 = tako.Tako(0, True, 0, 0, GP1.mated(GP2)[3], "P1", None,
-                          [GP1, GP2], 1)
-        P2 = tako.Tako(0, True, 0, 0, GP3.mated(GP4)[3], "P2", None,
-                          [GP3, GP4], 1)
-        GP4.desire = 150
-        HA = tako.Tako(0, True, 0, 0, GP4.mated(G5)[3], "HA", None,
-                          [GP4, G5], 1)
-        CO = tako.Tako(0, True, 0, 0, A_M1.mated(A1)[3], "CO", None,
-                          [A_M1, A1], 1)
-        tako_l = [P1, P2, A1]
-        for tak in tako_l:
-            tak.desire = 150
-        Sib = tako.Tako(0, True, 0, 0, P1.mated(P2)[3], "Sib", None,
-                          [P1, P2], 1)
-        P1.desire = 150
-        P2.desire = 150
-        Center = tako.Tako(0, True, 0, 0, P1.mated(P2)[3], "Center", None,
-                          [P1, P2], 1)
-        P2.desire = 150
-        HS = tako.Tako(0, True, 0, 0, P2.mated(P3)[3], "HS", None,
-                          [P2, P3], 1)
-        DC = tako.Tako(0, True, 0, 0, A1.mated(A2)[3], "DC", None,
-                          [A1, A2], 1)
+        P1 = tako.Tako(0, True, 0, 0, GP1.genome.recombine(GP2.genome),
+                       "P1", None, [GP1, GP2], 1)
+        P2 = tako.Tako(0, True, 0, 0, GP3.genome.recombine(GP4.genome),
+                       "P2", None, [GP3, GP4], 1)
+        HA = tako.Tako(0, True, 0, 0, GP4.genome.recombine(G5.genome),
+                       "HA", None, [GP4, G5], 1)
+        CO = tako.Tako(0, True, 0, 0, A_M1.genome.recombine(A1.genome),
+                       "CO", None, [A_M1, A1], 1)
+        Sib = tako.Tako(0, True, 0, 0, P1.genome.recombine(P2.genome),
+                        "Sib", None, [P1, P2], 1)
+        Center = tako.Tako(0, True, 0, 0, P1.genome.recombine(P2.genome),
+                           "Center", None, [P1, P2], 1)
+        HS = tako.Tako(0, True, 0, 0, P2.genome.recombine(P3.genome),
+                       "HS", None, [P2, P3], 1)
+        DC = tako.Tako(0, True, 0, 0, A1.genome.recombine(A2.genome),
+                       "DC", None, [A1, A2], 1)
         Sib_m = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
         Center_m = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
         HS_m = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
         Nib_m = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
         C_m = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
         GC_m = tako.Tako.default_tako(0, True, 0, 0, "Diverse", True)
-        tako_list = [Center, Sib, HS, Sib_m, Center_m, HS_m, Nib_m,
-                     C_m, GC_m]
-        for tak in tako_list:
-            tak.desire = 150
-        Nib = tako.Tako(0, True, 0, 0, Sib.mated(Sib_m)[3], "Nib", None,
-                          [Sib, Sib_m], 1)
-        C = tako.Tako(0, True, 0, 0, Center.mated(Center_m)[3], "C", None,
-                          [Center, Center_m], 1)
-        HNib = tako.Tako(0, True, 0, 0, HS.mated(HS_m)[3], "HNib", None,
-                          [HS, HS_m], 1)
-        Nib.desire = 150
-        GNib = tako.Tako(0, True, 0, 0, Nib.mated(Nib_m)[3], "GNib", None,
-                          [Nib, Nib_m], 1)
-        C.desire = 150
-        GC = tako.Tako(0, True, 0, 0, C.mated(C_m)[3], "GC", None,
-                          [C, C_m], 1)
-        GC.desire = 150
-        GGC = tako.Tako(0, True, 0, 0, GC.mated(GC_m)[3], "GGC", None,
-                          [GC, GC_m], 1)
+        Nib = tako.Tako(0, True, 0, 0, Sib.genome.recombine(Sib_m.genome),
+                        "Nib", None, [Sib, Sib_m], 1)
+        C = tako.Tako(0, True, 0, 0, Center.genome.recombine(Center_m.genome),
+                      "C", None, [Center, Center_m], 1)
+        HNib = tako.Tako(0, True, 0, 0, HS.genome.recombine(HS_m.genome),
+                         "HNib", None, [HS, HS_m], 1)
+        GNib = tako.Tako(0, True, 0, 0, Nib.genome.recombine(Nib_m.genome),
+                         "GNib", None, [Nib, Nib_m], 1)
+        GC = tako.Tako(0, True, 0, 0, C.genome.recombine(C_m.genome), "GC",
+                       None, [C, C_m], 1)
+        GGC = tako.Tako(0, True, 0, 0, GC.genome.recombine(GC_m.genome), "GGC",
+                        None, [GC, GC_m], 1)
         self.assertEqual(Center.children, [C])
         self.assertEqual(Center.parents, [P1, P2])
         self.assertEqual(Center.siblings, [Sib])

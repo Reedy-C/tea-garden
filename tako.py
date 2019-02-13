@@ -56,8 +56,6 @@ class Tako(Widget):
         self.x = x
         self.y = y
         self.genome = genome
-        if ident != None:
-            self.ident = ident
         #note to self: these three lines need to be disabled to run test suite
         self.image, self.rect = self.load_image(self.dir_map[dire],
                                                 Color('#FF00FF'))
@@ -103,10 +101,13 @@ class Tako(Widget):
         self.cod = None
         if solver != None:
             self.solver = solver
+            self.ident = ident
         else:
             self.solver = self.genome.build()
             if ident == None:
                 self.ident = self.genome.ident
+            else:
+                self.ident = ident
         
     #gen_type can be "Diverse", "Plain", or "Haploid"
     #Diverse = two chromosomes are different
@@ -307,9 +308,7 @@ class Tako(Widget):
                 self.desire = 0
                 tak.dez = 0
                 tak.desire = 0
-                return [("amuse", 45), ("fullness", -10), ("desire", -150),
-                self.genome.recombine(tak.genome), [self, tak],
-                        (max(self.gen, tak.gen) + 1)]
+                return [("amuse", 45), ("fullness", -10), ("desire", -150)]
             else:
                 return ("amuse", -1)
         else:
