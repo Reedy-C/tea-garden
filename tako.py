@@ -56,8 +56,9 @@ class Tako(Widget):
         self.x = x
         self.y = y
         self.genome = genome
-        #note to self: these three lines need to be disabled to run test suite
-        self.image, self.rect = self.load_image(self.dir_map[dire],
+        self.display_off = display_off
+        if not display_off:
+            self.image, self.rect = self.load_image(self.dir_map[dire],
                                                 Color('#FF00FF'))
         self.rect = Rect(x*50, y*50, 50, 50)
         self.fullness = 150
@@ -230,7 +231,8 @@ class Tako(Widget):
                 self.dez = 0.0
             #this makes a wave between 0 and 150 with a period of 502 ticks
             self.desire = (math.sin((self.dez/80.0)+11.0)*75.0)+75.0
-            self.update_sprite()
+            if not self.display_off:
+                self.update_sprite()
 
     def update_sprite(self):
         if self.last_action == 1 or self.last_action == 2:

@@ -9,13 +9,15 @@ class Widget(sprite.Sprite):
     #a widget has a position
     def __init__(self, display_off, x=None, y=None):
         sprite.Sprite.__init__(self)
-        self.image, self.rect = self.load_image(self.display, display_off,
-                                                Color('#FF00FF'))
+        if not display_off:
+            self.image, self.rect = self.load_image(self.display, display_off,
+                                                    Color('#FF00FF'))
         self.x = x
         self.y = y
-        if self.x is not None:
-            if self.y is not None:
-                self.rect = Rect(x*50, y*50, 50, 50)
+        if not display_off:
+            if self.x is not None:
+                if self.y is not None:
+                    self.rect = Rect(x*50, y*50, 50, 50)
 
     # functions should be implemented in subclasses
     # if they are relevant to that widget type
@@ -36,12 +38,11 @@ class Widget(sprite.Sprite):
     def load_image(self, name, display_off, colorkey=None):
         fullname = os.path.join('img', name)
         img = image.load(fullname)
-        if not display_off:
-            img = img.convert()
-            if colorkey is not None:
-                if colorkey is -1:
-                    colorkey = img.get_at((0,0))
-                img.set_colorkey(colorkey, RLEACCEL)
+        img = img.convert()
+        if colorkey is not None:
+            if colorkey is -1:
+                colorkey = img.get_at((0,0))
+            img.set_colorkey(colorkey, RLEACCEL)
         return img, img.get_rect()
 
     def update_rect(self):
