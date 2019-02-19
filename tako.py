@@ -492,9 +492,8 @@ class STMlayer(caffe.Layer):
 
     def forward(self, bottom, top):
         #action # is fed directly in
-        act = bottom[0].data.flatten()
-        action = act[0]
-        ftop = top[0].data.flatten()
+        action = bottom[0].data[0][0]
+        ftop = top[0].data[0]
         if action >= 0:
             for x in range(len(ftop)):
                 if x == action:
@@ -502,8 +501,9 @@ class STMlayer(caffe.Layer):
                     top[0].data[0][x] += 1
                 else:
                     #if not selected action, decay the memory
-                    if top[0].data[0][x] != 0:
-                        top[0].data[0][x] = self.decay(top[0].data[0][x])
+                    t = top[0].data[0][x]
+                    if t != 0:
+                        top[0].data[0][x] = self.decay(t)
 
     def backward(self, top, propagate_down, bottom):
         pass
