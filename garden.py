@@ -206,7 +206,7 @@ class Garden:
                 new_genome = tako.genome.recombine(v.genome)             
                 new_tak = Tako(direction, self.display_off, x, y, new_genome,
                                None, None, [tako, v],
-                               max(tako.gen, v.gen))
+                               (max(tako.gen, v.gen) + 1))
                 self.garden_map[y][x].kill()
                 self.garden_map[y][x] = new_tak
                 self.tako_list.append(new_tak)
