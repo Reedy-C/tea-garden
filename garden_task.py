@@ -46,7 +46,6 @@ class garden_task:
     
     def find_action(self, action):
         highest = 0
-        action = action[0]
         for i in range(len(action)):
             if action[highest] < action[i]:
                 highest = i
@@ -95,13 +94,12 @@ class garden_task:
         for tako in self.env.tako_list:
             observation = self.get_observation(tako)
             #feed it the observation
-            tako.solver.net.blobs['data'].data[...] = observation
+            tako.data[...] = observation
             if self.learning_on:
                 tako.solver.net.blobs['reward'].data[...] = 0
-            tako.solver.net.blobs['stm_input'].data[...] = tako.last_action
+            tako.stm_input[...] = tako.last_action
             #forward and get action
-            tako.solver.net.forward()
-            act = tako.solver.net.blobs['action'].data
+            act = tako.solver.net.forward()['action'][0]
             action = self.find_action(act)
             #1/rand_percent chance of rolling different random action
             #(old experimental code)
@@ -114,6 +112,8 @@ class garden_task:
                     action = newact
             #perform action and get reward
             self.perform_action(action, tako)
+            #learning currently not recommended
+            #TODO this and above could use updating for slight speed gain
             if self.learning_on:
                 reward = self.get_reward(tako)
                 #feed it reward and backpropogate

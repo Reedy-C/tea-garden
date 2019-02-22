@@ -109,6 +109,8 @@ class Tako(Widget):
                 self.ident = self.genome.ident
             else:
                 self.ident = ident
+        self.data = self.solver.net.blobs['data'].data
+        self.stm_input = self.solver.net.blobs['stm_input'].data
         
     #gen_type can be "Diverse", "Plain", or "Haploid"
     #Diverse = two chromosomes are different
@@ -509,7 +511,7 @@ class STMlayer(caffe.Layer):
         pass
 
     def reshape(self, bottom, top):
-        top[0].reshape(*bottom[0].data.shape)
+        top[0].reshape(*bottom[0].data.shape)      
 
     def decay(self, x):
         x = x/2
