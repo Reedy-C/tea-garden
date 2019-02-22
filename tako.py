@@ -491,6 +491,7 @@ class STMlayer(caffe.Layer):
     #TODO check this
     def setup(self, bottom, top):
         self.blobs.add_blob(6)
+        top[0].reshape(*bottom[0].data.shape)
 
     def forward(self, bottom, top):
         #action # is fed directly in
@@ -511,7 +512,7 @@ class STMlayer(caffe.Layer):
         pass
 
     def reshape(self, bottom, top):
-        top[0].reshape(*bottom[0].data.shape)      
+        pass   
 
     def decay(self, x):
         x = x/2
