@@ -492,21 +492,22 @@ class STMlayer(caffe.Layer):
     def setup(self, bottom, top):
         self.blobs.add_blob(6)
         top[0].reshape(*bottom[0].data.shape)
+        self.act = bottom[0].data[0]
+        self.ftop = top[0].data[0]
 
     def forward(self, bottom, top):
         #action # is fed directly in
-        action = bottom[0].data[0][0]
-        ftop = top[0].data[0]
+        action = self.act[0]
         if action >= 0:
-            for x in range(len(ftop)):
+            for x in range(len(self.ftop)):
                 if x == action:
                     #means that this was the selected action
-                    top[0].data[0][x] += 1
+                    self.ftop[x] += 1
                 else:
                     #if not selected action, decay the memory
-                    t = top[0].data[0][x]
+                    t = self.ftop[x]
                     if t != 0:
-                        top[0].data[0][x] = self.decay(t)
+                        self.ftop[x] = self.decay(t)
 
     def backward(self, top, propagate_down, bottom):
         pass
