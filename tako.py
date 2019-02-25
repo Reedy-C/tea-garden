@@ -488,7 +488,6 @@ class Tako(Widget):
 
 class STMlayer(caffe.Layer):
 
-    #TODO check this
     def setup(self, bottom, top):
         self.blobs.add_blob(6)
         top[0].reshape(*bottom[0].data.shape)
@@ -498,16 +497,16 @@ class STMlayer(caffe.Layer):
     def forward(self, bottom, top):
         #action # is fed directly in
         action = self.act[0]
-        if action >= 0:
-            for x in range(len(self.ftop)):
-                if x == action:
-                    #means that this was the selected action
-                    self.ftop[x] += 1
-                else:
-                    #if not selected action, decay the memory
-                    t = self.ftop[x]
-                    if t != 0:
-                        self.ftop[x] = self.decay(t)
+        #this was used for learning
+        #currently not used
+        #if action >= 0:
+        for n in (0, 1, 2, 3, 4, 5):
+            if n == action:
+                #means that this was the selected action
+                self.ftop[n] += 1
+            else:
+                #if not selected action, decay the memory
+                self.ftop[n] = self.ftop[n]/2 if self.ftop[n] >= .2 else 0
 
     def backward(self, top, propagate_down, bottom):
         pass
@@ -515,8 +514,3 @@ class STMlayer(caffe.Layer):
     def reshape(self, bottom, top):
         pass   
 
-    def decay(self, x):
-        x = x/2
-        if x < 0.1:
-            x = 0
-        return x
