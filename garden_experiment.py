@@ -13,6 +13,8 @@ import numpy
 import caffe
 import csv
 from collections import deque
+import cProfile
+import pstats
 
 class garden_game:
     def __init__(self, rand_chance, garden_size, tako_number, pop_max,
@@ -51,13 +53,22 @@ class garden_game:
         global env
         env = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
                      seed, display_off, garden_mode)
-        if export_all:
-            for tako in env.tako_list:
-                export(tako, filename)
+            
         global task
         task = garden_task(env, rand_chance, learning_on)
         self.filename = filename
         self.export_all = export_all
+
+        if self.export_all:
+            h = make_headers()
+            f = os.path.join('Data', (filename[:-4] + ' gene data.csv'))
+            if not os.path.exists("Data"):
+                os.makedirs("Data")
+            if not os.path.exists(f):
+                with open(f, 'a') as file:
+                    writ = csv.writer(file)
+                    writ.writerow(h)
+            export(env.tako_list, filename)
 
         self.selected_Tako = None
         self.neur = None
@@ -86,6 +97,7 @@ class garden_game:
                                    'timestep', 'mutations'])
             dead_tako = deque()
         while 1:
+            #see if ending conditions have been met
             if max_ticks > 0:
                 if self.stepid > max_ticks:
                     if collect_data:
@@ -93,7 +105,6 @@ class garden_game:
                             dead_tako.append([tako, self.stepid])
                         write_csv(self.filename, i, dead_tako)
                     return
-            #probably not the most elegant way to do this, but it works
             if max_gen > 0:
                 if env.highest_gen > max_gen:
                     if collect_data:
@@ -187,7 +198,7 @@ class garden_game:
                     self.widget_sprites.add(sprite)
                 else:
                     if self.export_all:
-                        export(sprite, self.filename)
+                        export(new_sprites, self.filename)
                 self.all_sprites.add(sprite)
             env.new_sprites.remove(sprite)
 
@@ -254,7 +265,8 @@ def write_csv(filename, i, q):
 
 #export the genome of a tako to a csv file
 #will use the same filename as write_csv as a subfolder name at the moment
-def export(tako, filename):
+#depreciated function, not recommended for mass use
+def export_old(tako, filename):
     #if not os.path.exists('Exported Genomes'):
     #    os.makedirs('Exported Genomes')
     path = "Exported Genomes"
@@ -290,6 +302,70 @@ def export(tako, filename):
             writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
                            gen.ident, gen.inputs, gen.nodes, gen.layer_type,
                            "b"])
+            
+#exports condensed version of weight genes to a single csv file in \Data
+#one line for haploid agents, two for diploid
+#each row contains the variable info for each of the agent's weight genes
+#n.b. expects a standard genome to work properly
+def export(tako_list, filename):
+    for tak in tako_list:
+        l1 = [tak.ident, "a"]
+        for gen in tak.genome.weightchr_a:
+            l1.append(gen.ident)
+            l1.append(gen.weight)
+            l1.append(gen.mut_rate)
+            l1.append(gen.dom)
+        f = os.path.join("Data", (filename[:-4] + " gene data.csv"))
+        with open(f, 'a', newline="") as csvfile:
+            writ = csv.writer(csvfile)
+            writ.writerow(l1)
+            if len(tak.genome.weightchr_b) != 0:
+                l2 = [tak.ident, "b"]
+                for gen in tak.genome.weightchr_b:
+                    l2.append(gen.ident)
+                    l2.append(gen.weight)
+                    l2.append(gen.mut_rate)
+                    l2.append(gen.dom)   
+                writ.writerow(l2)
+
+#helper function for export, run from __init__
+#makes the headers for the CSV file
+def make_headers():
+    headers = ["agent_ident", "chro"]
+    for i in range(10):
+        for j in range(5):
+            s = "d" + str(i) + "e" + str(j)
+            headers.append(s + "_gene ident")
+            headers.append(s + "_weight")
+            headers.append(s + "_mut")
+            headers.append(s + "_dom")
+    for j in range(5):
+        s = "d" + "a" + "e" + str(j)
+        headers.append(s + "_gene ident")
+        headers.append(s + "_weight")
+        headers.append(s + "_mut")
+        headers.append(s + "_dom")
+    for j in range(5):
+        s = "d" + "b" + "e" + str(j)
+        headers.append(s + "_gene ident")
+        headers.append(s + "_weight")
+        headers.append(s + "_mut")
+        headers.append(s + "_dom")
+    for i in range(6):
+        for j in range(5):
+            s = "s" + str(i) + "e" + str(j)
+            headers.append(s + "_gene ident")
+            headers.append(s + "_weight")
+            headers.append(s + "_mut")
+            headers.append(s + "_dom")
+    for i in range(5):
+        for j in range(6):
+            s = "e" + str(i) + "a" + str(j)
+            headers.append(s + "_gene ident")
+            headers.append(s + "_weight")
+            headers.append(s + "_mut")
+            headers.append(s + "_dom")
+    return headers
     
 #x_loops (int): run x times (<1 interpreted as 1)
 #max_ticks (int): limit to x ticks (<= 0 interpreted as 'until all dead')
@@ -351,7 +427,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
     loop_limit = x_loops
     if loop_limit < 1:
         loop_limit = 1
-    i = 0
+    i = 11
 
     
     while loop_limit > 0:
