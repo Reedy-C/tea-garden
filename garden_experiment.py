@@ -192,15 +192,19 @@ class garden_game:
             self.all_sprites.add(sprite)
 
     def get_new(self):
+        if self.export_all:
+            ex = []
         for sprite in env.new_sprites:
             if not isinstance(sprite, Dirt):
                 if not isinstance(sprite, tako.Tako):
                     self.widget_sprites.add(sprite)
                 else:
                     if self.export_all:
-                        export(new_sprites, self.filename)
+                        ex.append(sprite)
                 self.all_sprites.add(sprite)
             env.new_sprites.remove(sprite)
+        if self.export_all:
+            export(ex, self.filename)
 
     def draw_onscreen(self):
         for spr in self.all_sprites:
@@ -427,7 +431,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
     loop_limit = x_loops
     if loop_limit < 1:
         loop_limit = 1
-    i = 11
+    i = 0
 
     
     while loop_limit > 0:
