@@ -7,14 +7,9 @@ from widget import *
 import time
 import os, sys
 import pygame
-import math
 from pygame.locals import *
-import numpy
-import caffe
 import csv
 from collections import deque
-import cProfile
-import pstats
 
 class garden_game:
     def __init__(self, rand_chance, garden_size, tako_number, pop_max,
@@ -244,7 +239,7 @@ def load_image(name, colorkey=None):
         image.set_colorkey(colorkey, RLEACCEL)
     return image, image.get_rect()
 
-#records data to a csv file on an agent's death
+#records data about an agent to a csv file on the agent's death
 def write_csv(filename, i, q):  
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
@@ -415,7 +410,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
 
     filename = ""
     if collect_data or export_all:
-        filename = input("Filename for csv and export sub-folder?")
+        filename = input("Filename for .csv files?")
         if filename == "":
             filename = str(int(time.time())) + ".csv"
         elif len(filename) < 4:

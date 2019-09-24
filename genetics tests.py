@@ -43,6 +43,7 @@ class testGenetics(unittest.TestCase):
 
     def test_haploid(self):
         tak = tako.Tako.default_tako(0, True, 0, 0, "Haploid", False)
+        print(tak.genome.weightchr_a[0].mut_rate)
         with open("Default Genetics/15_a.csv") as file:
             r = csv.DictReader(file, fieldnames=self.fields)
             i = 0
@@ -112,14 +113,14 @@ class testGenetics(unittest.TestCase):
         gen_5 = tak_1.genome.recombine(tak_3.genome)
         tak_5 = tako.Tako(0, True, 0, 0, gen_5, "tak_5", None,
                           [tak_1.ident, tak_3.ident], 1)
-        self.assertAlmostEqual(tak_5.genoverlap(tak_4), 0.68, 2)
-        self.assertAlmostEqual(tak_4.genoverlap(tak_5), 0.68, 2)
+        self.assertAlmostEqual(tak_5.genoverlap(tak_4), 0.375, 2)
+        self.assertAlmostEqual(tak_4.genoverlap(tak_5), 0.375, 2)
         tak_4.desire = 150
         tak_5.desire = 150
         gen_6 = tak_5.genome.recombine(tak_4.genome)
         tak_6 = tako.Tako(0, True, 0, 0, gen_6, "tak_6", None,
                           [tak_4.ident, tak_5.ident], 1)
-        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.74, 2)
+        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.625, 2)
 
     def test_degree_setting(self):
         tako.family_detection = "Degree"

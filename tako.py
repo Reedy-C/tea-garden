@@ -48,7 +48,7 @@ class Tako(Widget):
     node = 4
     dir_map = {0: "north.png", 1: "east.png", 2: "south.png", 3: "west.png"}
 
-    #gen is short for generation, not genome or the like
+    #gen is short for generation, not genome
     def __init__(self, dire, display_off, x, y, genome, ident, solver=None,
                  parents=[], gen=0):
         sprite.Sprite.__init__(self)
@@ -96,7 +96,7 @@ class Tako(Widget):
                 parents[0].degree_setting(parents[1], self)
 
         self.fam_dict = {}
-        
+
         self.gen = gen
         self.mating_attempts = 0
         self.cod = None
@@ -116,7 +116,7 @@ class Tako(Widget):
     #Diverse = two chromosomes are different
     #Plain = two chromosomes are the same
     #rand_net (bool) overrides this and creates a genome from a random starting
-    #   network in the 'plain' style (except for random dominance)
+    #   network in the 'plain' style
     @staticmethod
     def default_tako(direction, display_off, x, y, gen_type, rand_net):
         parents = []
@@ -155,9 +155,11 @@ class Tako(Widget):
                 for row in r:
                     in_node = int(row['in_node'])
                     w = dgeann.weight_gene(int(row['dom']),
-                                           bool(row['can_mut']),
+                                           #bool(row['can_mut']),
+                                           False,
                                            bool(row['can_dup']),
-                                           float(row['mut_rate']),
+                                           #float(row['mut_rate']),
+                                           0,
                                            row['ident'], float(row['weight']),
                                            in_node, int(row['out_node']),
                                            row['in_layer'], row['out_layer'])
@@ -185,9 +187,11 @@ class Tako(Widget):
                     for row in r:
                         in_node = int(row['in_node'])
                         w = dgeann.weight_gene(int(row['dom']),
-                                           bool(row['can_mut']),
+                                           #bool(row['can_mut']),
+                                            False,
                                            bool(row['can_dup']),
-                                           float(row['mut_rate']),
+                                           #float(row['mut_rate']),
+                                               0,
                                            row['ident'], float(row['weight']),
                                            in_node, int(row['out_node']),
                                            row['in_layer'], row['out_layer'])
@@ -513,4 +517,3 @@ class STMlayer(caffe.Layer):
 
     def reshape(self, bottom, top):
         pass   
-

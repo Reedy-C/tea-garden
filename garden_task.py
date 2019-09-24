@@ -6,7 +6,6 @@ import random
 import numpy
 
 class garden_task:
-    last_action = None
 
     def __init__(self, environment, rand_percent, learning_on):
         self.env = environment
@@ -14,11 +13,11 @@ class garden_task:
         self.learning_on = learning_on
     
     def perform_action(self, action, tako):
-        self.last_action = action
         tako.last_action = action
         result = self.env.perform_action(action, tako)
         tako.modify(result)
 
+    #TODO learning-related
     def get_reward(self, tako):
         reward = 0
         full_diff = tako.fullness - tako.last_fullness
@@ -43,31 +42,31 @@ class garden_task:
         if desire_diff < -1.1:
             reward += 1
         return reward
-    
+
+    #function that finds a tako's action for a given tick from its neural net
+    #seems to be slightly faster than using max() + np.where()
     def find_action(self, action):
         highest = 0
-        for i in range(len(action)):
-            if action[highest] < action[i]:
+        high = action[0]
+        for i in range(6):
+            if high < action[i]:
                 highest = i
+                high = action[i]
         return highest
 
     def get_observation(self, tako):
         #drives are transformed to a sigmoid curve -2.5~2.5
         #this decision was the result of an experiment that showed it produced
         #better perfomance than not transforming it
-        obs = self.env.get_sensors(tako)
-        nobs = self.transform_obs(obs)
-        full = 5/(1 + (0.38 * 2.71828)**(-tako.fullness + 75)) - 2.5
-        nobs.append(full)
-        amuse = 5/(1 + (0.38 * 2.71828)**(-tako.amuse + 75)) - 2.5
-        nobs.append(amuse)
-        pain = 5/(1 + (0.38 * 2.71828)**(-tako.pain + 75)) - 2.5
-        nobs.append(pain)
-        desire = 5/(1 + (0.38 * 2.71828)**(-tako.desire + 75)) - 2.5
-        nobs.append(desire)
+        nobs = [0, 0, 0, 0, 0, 0]
+        nobs[self.env.get_sensors(tako)] = 1
+        nobs.append(5/(1 + (0.38 * 2.71828)**(-tako.fullness + 75)) - 2.5)
+        nobs.append(5/(1 + (0.38 * 2.71828)**(-tako.amuse + 75)) - 2.5)
+        nobs.append(5/(1 + (0.38 * 2.71828)**(-tako.pain + 75)) - 2.5)
+        nobs.append(5/(1 + (0.38 * 2.71828)**(-tako.desire + 75)) - 2.5)
         #if tako is currently looking at another tako
         if nobs[4] == 1:
-            #mateable?
+            #find if other_tako is mateable
             targ = self.env.get_target(tako)
             other_tako = self.env.garden_map[targ[1]][targ[0]]
             if other_tako.desire >= 100:
@@ -83,12 +82,10 @@ class garden_task:
             nobs.append(-1)
             nobs.append(0)
         return nobs
-    
-    def transform_obs(self, obs):
-        normed = [0, 0, 0, 0, 0, 0]
-        normed[obs] = 1
-        return normed
 
+    #main garden_task function
+    #handles each tako observing its environment
+    #and performing an action on each tick
     def interact_and_learn(self):
         #for each tako in env, get its observation
         for tako in self.env.tako_list:
@@ -113,7 +110,8 @@ class garden_task:
             #perform action and get reward
             self.perform_action(action, tako)
             #learning currently not recommended
-            #TODO this and above could use updating for slight speed gain
+            #TODO this could use updating for slight speed gain
+            #if I figure out if it's working
             if self.learning_on:
                 reward = self.get_reward(tako)
                 #feed it reward and backpropogate
