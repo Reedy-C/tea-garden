@@ -89,7 +89,8 @@ class garden_game:
                     writ.writerow(['iteration', 'ID', 'parent1', 'parent2',
                                    'age', 'generation', '# children',
                                    'mating attempts', 'cause of death',
-                                   'timestep', 'mutations'])
+                                   'timestep', 'mutations', 'parent_degree',
+                                   'parent_genoverlap'])
             dead_tako = deque()
         while 1:
             #see if ending conditions have been met
@@ -253,12 +254,14 @@ def write_csv(filename, i, q):
                     writ.writerow([i, tako.ident, tako.parents[0].ident,
                                    tako.parents[1].ident, tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
-                                   tako.cod, l[1], tako.genome.mut_record])
+                                   tako.cod, l[1], tako.genome.mut_record,
+                                   tako.parent_degree, tako.parent_genoverlap])
                 else:
                     writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
                                    tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
-                                   tako.cod, l[1], tako.genome.mut_record])
+                                   tako.cod, l[1], tako.genome.mut_record,
+                                   tako.parent_degree, tako.parent_genoverlap])
                 j += 1
             
 
@@ -397,12 +400,17 @@ def make_headers():
 #                    Genoverlap (how much do their weight genes overlap?)
 #                    None (disables)
 #family_mod (float): modulates the above kinship detection, values 0~1
+#record_inbreeding (bool): if True, records genetic and familial relationship
+#                          b/w parents of an agent
+#inbred_lim (float): if set to b/w 0 and 1, will only allow agents to live if
+#                    the genetic relationship b/w parents is < inbred_lim
 def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
                    garden_size=8, tako_number=1, pop_max=30, max_width=1800,
                    max_height=900, collect_data=True, export_all=False,
                    rand_nets=False, max_gen = 505, genetic_mode="Plain",
                    learning_on=False, seeds=None, garden_mode="Diverse Static",
-                   family_detection=None, family_mod=0):
+                   family_detection=None, family_mod=0, record_inbreeding=True,
+                   inbreed_lim = 1.1):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -422,6 +430,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
         tako.rand_nets = True
     tako.family_mod = family_mod
     tako.family_detection = family_detection
+    tako.record_inbreeding = record_inbreeding
+    tako.inbreed_lim = inbreed_lim
     
     loop_limit = x_loops
     if loop_limit < 1:
@@ -464,5 +474,5 @@ if __name__ == "__main__":
              "gene", "advantage", "children", "parents", "identity",
              "input", "output", "hidden", "weights", "crossover"]
     run_experiment(garden_size=13, tako_number=20, x_loops=1,
-                   pop_max=40, max_gen=2, collect_data=False, seeds=seeds,
+                   pop_max=40, max_gen=2, collect_data=True, seeds=seeds,
                    genetic_mode="Plain", garden_mode="Diverse Static") 

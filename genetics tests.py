@@ -43,7 +43,6 @@ class testGenetics(unittest.TestCase):
 
     def test_haploid(self):
         tak = tako.Tako.default_tako(0, True, 0, 0, "Haploid", False)
-        print(tak.genome.weightchr_a[0].mut_rate)
         with open("Default Genetics/15_a.csv") as file:
             r = csv.DictReader(file, fieldnames=self.fields)
             i = 0
@@ -65,6 +64,8 @@ class testGenetics(unittest.TestCase):
                              tak.genome.weightchr_b[i].weight)
 
     def test_mating(self):
+        tako.family_detection = None
+        tako.family_mod = 0
         tak_1 = tako.Tako.default_tako(0, True, 0, 0, "Plain", False)
         tak_2 = tako.Tako.default_tako(0, True, 0, 1, "Plain", False)
         result = tak_1.mated(tak_2)
@@ -97,15 +98,16 @@ class testGenetics(unittest.TestCase):
         tako.family_mod = 1
         tak_1 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", False)
         tak_2 = copy.copy(tak_1)
+
         self.assertEqual(tak_1.genoverlap(tak_2), 1.0)
         self.assertEqual(tak_1.mated(tak_2), [("amuse", -30)])
         tak_3 = tako.Tako.default_tako(0, True, 0, 0, "Diverse", False)
-        self.assertEqual(tak_1.genoverlap(tak_3), 0.0)
+        self.assertAlmostEqual(tak_1.genoverlap(tak_3), 0.0125, 3)
         gen_4 = tak_1.genome.recombine(tak_3.genome)
         tak_4 = tako.Tako(0, True, 0, 0, gen_4, "tak_4", None,
                           [tak_1.ident, tak_3.ident], 1)
-        self.assertEqual(tak_4.genoverlap(tak_1), 0.5)
-        self.assertEqual(tak_4.genoverlap(tak_3), 0.5)
+        self.assertAlmostEqual(tak_4.genoverlap(tak_1), 0.5, 1)
+        self.assertAlmostEqual(tak_4.genoverlap(tak_3), 0.5, 1)
         tak_1.desire = 150
         tak_3.desire = 150
         tako.random.random()
@@ -113,14 +115,13 @@ class testGenetics(unittest.TestCase):
         gen_5 = tak_1.genome.recombine(tak_3.genome)
         tak_5 = tako.Tako(0, True, 0, 0, gen_5, "tak_5", None,
                           [tak_1.ident, tak_3.ident], 1)
-        self.assertAlmostEqual(tak_5.genoverlap(tak_4), 0.375, 2)
-        self.assertAlmostEqual(tak_4.genoverlap(tak_5), 0.375, 2)
+        self.assertEqual(tak_5.genoverlap(tak_4), tak_4.genoverlap(tak_5))
         tak_4.desire = 150
         tak_5.desire = 150
         gen_6 = tak_5.genome.recombine(tak_4.genome)
         tak_6 = tako.Tako(0, True, 0, 0, gen_6, "tak_6", None,
                           [tak_4.ident, tak_5.ident], 1)
-        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.625, 2)
+        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.63, 2)
 
     def test_degree_setting(self):
         tako.family_detection = "Degree"

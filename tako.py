@@ -29,11 +29,22 @@ dgeann.layer_dict["STMlayer"] = '''\
 #used for family detection - moderates the chance of mating with relatives
 #should be between 0 and 1
 family_mod = 0
+
 #determines if or which family detection is used
 #possible values: Degree (finds degree separation of relatives)
 #Genoverlap (how much do their weight genes overlap?)
 #None (disables)
 family_detection = None
+
+#can be set to False
+#if True, records the genetic overlap and degree of relationship b/w parents
+record_inbreeding = True
+
+#can be set to float b/w 0 and 1
+#where if an agent's parents' genetic overlap is >= to inbred_lim
+#it is considered to be too inbred and dies
+#more nuanced approach to come
+inbreed_lim = 1.1
 
 def set_seed(seed):
     random.seed(seed)
@@ -50,7 +61,7 @@ class Tako(Widget):
 
     #gen is short for generation, not genome
     def __init__(self, dire, display_off, x, y, genome, ident, solver=None,
-                 parents=[], gen=0):
+                 parents=[], gen=0, parent_degree=None, parent_genoverlap=None):
         sprite.Sprite.__init__(self)
         self.direction = dire
         self.x = x
@@ -73,11 +84,12 @@ class Tako(Widget):
         self.last_action = -1
         self.age = 0
         self.dez = 0
-        self.dead = False
         self.parents = parents
+        self.parent_degree = parent_degree
+        self.parent_genoverlap = parent_genoverlap
         #and all the other relatives
         self.children = []
-        if family_detection == "Degree":
+        if family_detection == "Degree" or record_inbreeding:
             self.siblings = []
             self.half_siblings = []
             self.niblings = []
@@ -99,22 +111,29 @@ class Tako(Widget):
 
         self.gen = gen
         self.mating_attempts = 0
-        self.cod = None
-        if solver != None:
-            self.solver = solver
-            self.ident = ident
+        
+        if (self.parent_genoverlap != None and
+            self.parent_genoverlap >= inbreed_lim):
+            self.cod = "Inbred"
+            self.dead = True
         else:
-            self.solver = self.genome.build()
-            if ident == None:
-                self.ident = self.genome.ident
-            else:
+            self.dead = False
+            self.cod = None
+            if solver != None:
+                self.solver = solver
                 self.ident = ident
-        self.data = self.solver.net.blobs['data'].data
-        self.stm_input = self.solver.net.blobs['stm_input'].data
+            else:
+                self.solver = self.genome.build()
+                if ident == None:
+                    self.ident = self.genome.ident
+                else:
+                    self.ident = ident
+            self.data = self.solver.net.blobs['data'].data
+            self.stm_input = self.solver.net.blobs['stm_input'].data
         
     #gen_type can be "Diverse", "Plain", or "Haploid"
-    #Diverse = two chromosomes are different
-    #Plain = two chromosomes are the same
+    #Diverse = diploid, two chromosomes are different
+    #Plain = diploid, two chromosomes are the same
     #rand_net (bool) overrides this and creates a genome from a random starting
     #   network in the 'plain' style
     @staticmethod
@@ -155,11 +174,9 @@ class Tako(Widget):
                 for row in r:
                     in_node = int(row['in_node'])
                     w = dgeann.weight_gene(int(row['dom']),
-                                           #bool(row['can_mut']),
-                                           False,
+                                           bool(row['can_mut']),
                                            bool(row['can_dup']),
-                                           #float(row['mut_rate']),
-                                           0,
+                                           float(row['mut_rate']),
                                            row['ident'], float(row['weight']),
                                            in_node, int(row['out_node']),
                                            row['in_layer'], row['out_layer'])
@@ -187,11 +204,9 @@ class Tako(Widget):
                     for row in r:
                         in_node = int(row['in_node'])
                         w = dgeann.weight_gene(int(row['dom']),
-                                           #bool(row['can_mut']),
-                                            False,
+                                           bool(row['can_mut']),
                                            bool(row['can_dup']),
-                                           #float(row['mut_rate']),
-                                               0,
+                                           float(row['mut_rate']),
                                            row['ident'], float(row['weight']),
                                            in_node, int(row['out_node']),
                                            row['in_layer'], row['out_layer'])
@@ -443,24 +458,21 @@ class Tako(Widget):
     #helper function for check_relationships
     #finds percentage of genetic overlap
     #TODO currently just doing weight genes b/c still working on layer genes
-    #+then they would all look a little related 
+    #+then they would all look a little related
+    #also currently assumes everyone has the same-sized genome on both strands
     def genoverlap(self, tak):
         overlap = 0
         tot = 0
         ident_list = []
-        for gen in tak.genome.weightchr_a:
-            ident_list.append(gen.ident)
-            tot += 1
-        for gen in tak.genome.weightchr_b:
-            ident_list.append(gen.ident)
-            tot += 1
-        for gen in self.genome.weightchr_a:
-            if gen.ident in ident_list:
+        for g in range(len(tak.genome.weightchr_a)):
+            gens = [round(self.genome.weightchr_a[g].weight, 2),
+                    round(self.genome.weightchr_b[g].weight, 2)]
+            if round(tak.genome.weightchr_a[g].weight, 2) in gens:
+                gens.remove(round(tak.genome.weightchr_a[g].weight, 2))
                 overlap += 1
-                ident_list.remove(gen.ident)
-        for gen in self.genome.weightchr_b:
-            if gen.ident in ident_list:
+            if round(tak.genome.weightchr_b[g].weight, 2) in gens:
                 overlap += 1
+            tot += 2
         return (overlap/tot)
 
     #I didn't want to assign a death age at birth

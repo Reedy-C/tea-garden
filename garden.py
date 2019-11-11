@@ -1,6 +1,6 @@
 import random
 from widget import *
-from tako import Tako
+import tako
 from pygame import sprite
 
 class Garden:
@@ -81,7 +81,7 @@ class Garden:
             if isinstance(self.garden_map[y][x], Dirt):
                 break
         direction = random.randrange(0,3)
-        Tak = Tako.default_tako(direction, self.display_off, x, y,
+        Tak = tako.Tako.default_tako(direction, self.display_off, x, y,
                                 self.genetic_type, self.rand_net)
         self.garden_map[y][x].kill()
         self.garden_map[y][x] = Tak
@@ -115,54 +115,54 @@ class Garden:
                     self.garden_map[y][x] = g
                     self.new_sprites.add(g)
         
-    def get_sensors(self, tako):
-        target = self.get_target(tako)
+    def get_sensors(self, tak):
+        target = self.get_target(tak)
         obj = self.garden_map[target[1]][target[0]]
         return obj.node
     
-    def perform_action(self, index, tako):
-        result = function_array[index](self, tako, tako.last_obj)
+    def perform_action(self, index, tak):
+        result = function_array[index](self, tak, tak.last_obj)
         return result
 
-    def forward(self, tako, obj=None):
+    def forward(self, tak, obj=None):
         #get target square
-        target = self.get_target(tako)
+        target = self.get_target(tak)
         targ = self.garden_map[target[1]][target[0]]
         result = targ.intersected()
         #check if it's dirt
         if result is None:
-            new = Dirt(self.display_off, tako.x, tako.y)
-            self.garden_map[tako.y][tako.x] = new
+            new = Dirt(self.display_off, tak.x, tak.y)
+            self.garden_map[tak.y][tak.x] = new
             self.new_sprites.add(new)
             self.garden_map[target[1]][target[0]].kill()
-            self.garden_map[target[1]][target[0]] = tako
-            tako.move_rect((target[0] - tako.x), (target[1] - tako.y))
-            tako.y = target[1]
-            tako.x = target[0]
+            self.garden_map[target[1]][target[0]] = tak
+            tak.move_rect((target[0] - tak.x), (target[1] - tak.y))
+            tak.y = target[1]
+            tak.x = target[0]
         return result
     
-    def turn_left(self, tako, obj):
-        newdir = tako.direction
+    def turn_left(self, tak, obj):
+        newdir = tak.direction
         newdir -= 1
         if newdir < 0:
             newdir = 3
-        tako.direction = newdir
+        tak.direction = newdir
         return None
 
-    def turn_right(self, tako, obj):
-        newdir = tako.direction
+    def turn_right(self, tak, obj):
+        newdir = tak.direction
         newdir += 1
         if newdir > 3:
             newdir = 0
-        tako.direction = newdir
+        tak.direction = newdir
         return None
 
     #for now take eaten object out if grass
     #TODO; changed for now
-    def eat(self, tako, obj):
-        target = self.get_target(tako)
-        tako.last_obj = self.garden_map[target[1]][target[0]]
-        x = tako.last_obj
+    def eat(self, tak, obj):
+        target = self.get_target(tak)
+        tak.last_obj = self.garden_map[target[1]][target[0]]
+        x = tak.last_obj
         result = x.eaten()
         #if isinstance(tako.last_obj, Grass):
         #    self.add_item(Grass())
@@ -187,26 +187,35 @@ class Garden:
 ##            self.add_item(Ball())
         return result
 
-    def mate(self, tako, obj):
-        target = self.get_target(tako)
-        tako.last_obj = self.garden_map[target[1]][target[0]]
-        v = tako.last_obj
-        result = v.mated(tako)
+    def mate(self, tak, obj):
+        target = self.get_target(tak)
+        tak.last_obj = self.garden_map[target[1]][target[0]]
+        v = tak.last_obj
+        result = v.mated(tak)
         if len(result)>2:
-            tako.mating_attempts += 1
+            tak.mating_attempts += 1
             if len(self.tako_list) < self.pop_max:
                 while True:
                     x = random.randrange(0, (self.size))
                     y = random.randrange(0, (self.size))
                     if isinstance(self.garden_map[y][x], Dirt):
-                        if x > tako.x - 3 or x < tako.x + 3:
-                            if y > tako.y - 3 or y < tako.y + 3:
+                        if x > tak.x - 3 or x < tak.x + 3:
+                            if y > tak.y - 3 or y < tak.y + 3:
                                 break
                 direction = random.randrange(0,3)
-                new_genome = tako.genome.recombine(v.genome)             
-                new_tak = Tako(direction, self.display_off, x, y, new_genome,
-                               None, None, [tako, v],
-                               (max(tako.gen, v.gen) + 1))
+                new_genome = tak.genome.recombine(v.genome)
+                if (tako.family_detection != None or
+                    tako.record_inbreeding == True or
+                    tako.inbred_lim < 1.1):
+                    new_tak = tako.Tako(direction, self.display_off, x, y,
+                                        new_genome, None, None, [tak, v],
+                                        (max(tak.gen, v.gen) + 1),
+                                        tak.degree_detection(v),
+                                        tak.genoverlap(v))
+                else:
+                    new_tak = tako.Tako(direction, self.display_off, x, y,
+                                        new_genome, None, None, [tak, v],
+                                        (max(tak.gen, v.gen) + 1), None, None)
                 self.garden_map[y][x].kill()
                 self.garden_map[y][x] = new_tak
                 self.tako_list.append(new_tak)
@@ -215,33 +224,33 @@ class Garden:
                     self.highest_gen = new_tak.gen
         return result
 
-    def get_target(self, tako):
-        target = [tako.x, tako.y]
+    def get_target(self, tak):
+        target = [tak.x, tak.y]
         # looking north
-        if tako.direction == 0:
+        if tak.direction == 0:
             # if on extreme north edge
-            if tako.y == 0:
+            if tak.y == 0:
                 target[1] = self.size - 1
             else:
-                target[1] = tako.y - 1
+                target[1] = tak.y - 1
         #east
-        elif tako.direction == 1:
-            if tako.x == self.size - 1:
+        elif tak.direction == 1:
+            if tak.x == self.size - 1:
                 target[0] = 0
             else:
-                target[0] = tako.x + 1
+                target[0] = tak.x + 1
         #south
-        elif tako.direction == 2:
-            if tako.y == self.size - 1:
+        elif tak.direction == 2:
+            if tak.y == self.size - 1:
                 target[1] = 0
             else:
-                target[1] = tako.y + 1
+                target[1] = tak.y + 1
         #west
-        elif tako.direction == 3:
-            if tako.x == 0:
+        elif tak.direction == 3:
+            if tak.x == 0:
                 target[0] = self.size - 1
             else:
-                target[0] = tako.x - 1
+                target[0] = tak.x - 1
         return target
 
 
