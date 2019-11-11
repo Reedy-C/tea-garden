@@ -53,16 +53,7 @@ class garden_game:
         task = garden_task(env, rand_chance, learning_on)
         self.filename = filename
         self.export_all = export_all
-
         if self.export_all:
-            h = make_headers()
-            f = os.path.join('Data', (filename[:-4] + ' gene data.csv'))
-            if not os.path.exists("Data"):
-                os.makedirs("Data")
-            if not os.path.exists(f):
-                with open(f, 'a') as file:
-                    writ = csv.writer(file)
-                    writ.writerow(h)
             export(env.tako_list, filename)
 
         self.selected_Tako = None
@@ -81,16 +72,6 @@ class garden_game:
             self.cam = [0,0]
             font = pygame.font.Font(None, 18)
         if collect_data:
-            if not os.path.exists("Data"):
-                os.makedirs("Data")
-            if not os.path.exists(os.path.join("Data", self.filename)):
-                with open(os.path.join("Data", self.filename), 'a', newline='') as csvfile:
-                    writ = csv.writer(csvfile)
-                    writ.writerow(['iteration', 'ID', 'parent1', 'parent2',
-                                   'age', 'generation', '# children',
-                                   'mating attempts', 'cause of death',
-                                   'timestep', 'mutations', 'parent_degree',
-                                   'parent_genoverlap'])
             dead_tako = deque()
         while 1:
             #see if ending conditions have been met
@@ -331,7 +312,7 @@ def export(tako_list, filename):
                 writ.writerow(l2)
 
 #helper function for export, run from __init__
-#makes the headers for the CSV file
+#makes the headers for the gene export CSV file
 def make_headers():
     headers = ["agent_ident", "chro"]
     for i in range(10):
@@ -416,7 +397,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
 
-    filename = ""
+    
+    #create csv files
     if collect_data or export_all:
         filename = input("Filename for .csv files?")
         if filename == "":
@@ -426,8 +408,38 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
         elif filename[-4:] != ".csv":
             filename = filename + ".csv"
 
-    if rand_nets:
-        tako.rand_nets = True
+        if not os.path.exists("Data"):
+            os.makedirs("Data")
+            
+        if collect_data:
+            if not os.path.exists(os.path.join("Data", filename)):
+                with open(os.path.join("Data", filename), 'a', newline='') as\
+                     csvfile:
+                    writ = csv.writer(csvfile)
+                    writ.writerow(['iteration', 'ID', 'parent1', 'parent2',
+                                   'age', 'generation', '# children',
+                                   'mating attempts', 'cause of death',
+                                   'timestep', 'mutations', 'parent_degree',
+                                   'parent_genoverlap'])
+                i = 0
+            else:
+                with open(os.path.join("Data", filename), newline='') as\
+                      csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for row in reader: pass
+                    i = int(row["iteration"]) + 1
+        else:
+            i = 0
+
+        if export_all:
+            h = make_headers()
+            f = os.path.join('Data', (filename[:-4] + ' gene data.csv'))
+            if not os.path.exists(f):
+                with open(f, 'a') as file:
+                    writ = csv.writer(file)
+                    writ.writerow(h)
+
+    tako.rand_nets = rand_nets
     tako.family_mod = family_mod
     tako.family_detection = family_detection
     tako.record_inbreeding = record_inbreeding
@@ -436,8 +448,6 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
     loop_limit = x_loops
     if loop_limit < 1:
         loop_limit = 1
-    i = 0
-
     
     while loop_limit > 0:
         if seeds != None:
