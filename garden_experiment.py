@@ -12,10 +12,9 @@ import csv
 from collections import deque
 
 class garden_game:
-    def __init__(self, rand_chance, garden_size, tako_number, pop_max,
-                 max_width, max_height, display_off, learning_on, genetic_mode,
-                 rand_nets, garden_mode, filename, export_all, family_mod,
-                 family_detection, seed=None):
+    def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
+                 display_off, learning_on, genetic_mode, rand_nets, garden_mode,
+                 filename, export_all, family_mod, family_detection, seed=None):
         pygame.init()
         global scroll
         if not display_off:
@@ -50,7 +49,7 @@ class garden_game:
                      seed, display_off, garden_mode)
             
         global task
-        task = garden_task(env, rand_chance, learning_on)
+        task = garden_task(env, learning_on)
         self.filename = filename
         self.export_all = export_all
         if self.export_all:
@@ -354,8 +353,6 @@ def make_headers():
 #max_ticks (int): limit to x ticks (<= 0 interpreted as 'until all dead')
 #display_off (bool): if true, does not display anything; otherwise, runs
 #                   a pygame display capped at 10FPS
-#rand_chance (int): make 1/x actions randomly different
-#                   (<=1 interpreted as no random)
 #garden_size (int): garden size in length/width in tiles
 #tako_number (int): number of creatures created in the garden at startup
 #pop_max (int): the maximum population that will be allowed at any time
@@ -385,13 +382,13 @@ def make_headers():
 #                          b/w parents of an agent
 #inbred_lim (float): if set to b/w 0 and 1, will only allow agents to live if
 #                    the genetic relationship b/w parents is < inbred_lim
-def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
-                   garden_size=8, tako_number=1, pop_max=30, max_width=1800,
-                   max_height=900, collect_data=True, export_all=False,
-                   rand_nets=False, max_gen = 505, genetic_mode="Plain",
-                   learning_on=False, seeds=None, garden_mode="Diverse Static",
+def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
+                   tako_number=1, pop_max=30, max_width=1800, max_height=900,
+                   collect_data=True, export_all=False, rand_nets=False,
+                   max_gen = 505, genetic_mode="Plain", learning_on=False,
+                   seeds=None, garden_mode="Diverse Static",
                    family_detection=None, family_mod=0, record_inbreeding=True,
-                   inbreed_lim = 1.1):
+                   inbreed_lim = 1.1, filename=""):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -400,7 +397,6 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
     
     #create csv files
     if collect_data or export_all:
-        filename = input("Filename for .csv files?")
         if filename == "":
             filename = str(int(time.time())) + ".csv"
         elif len(filename) < 4:
@@ -452,22 +448,20 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
     while loop_limit > 0:
         if seeds != None:
             #check if seeds is long enough
-            if len(seeds) < loop_limit:
-                for i in range(loop_limit - len(seeds)):
+            if len(seeds) < loop_limit + i:
+                for i in range(loop_limit + i - len(seeds)):
                     seeds.append(seeds[i])
             tako.set_seed(seeds[i])
-            g = garden_game(rand_chance, garden_size, tako_number,
-                            pop_max, max_width, max_height,
-                            display_off, learning_on, genetic_mode,
+            g = garden_game(garden_size, tako_number, pop_max, max_width,
+                            max_height, display_off, learning_on, genetic_mode,
                             rand_nets, garden_mode, filename,
                             export_all, family_mod, family_detection,
                             seeds[i])
         else:
-            g = garden_game(rand_chance, garden_size, tako_number,
-                                     pop_max, max_width, max_height,
-                                     display_off, learning_on, genetic_mode,
-                                     rand_nets, garden_mode, filename,
-                                     export_all, family_mod, family_detection)
+            g = garden_game(garden_size, tako_number, pop_max, max_width,
+                            max_height, display_off, learning_on, genetic_mode,
+                            rand_nets, garden_mode, filename, export_all,
+                            family_mod, family_detection)
         if not display_off:
             main_window = g
             main_window.main_loop(max_ticks, max_gen, display_off,
@@ -477,12 +471,103 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, rand_chance=0,
                         garden_mode, i)
         loop_limit -= 1
         i += 1
+
+#runs a garden experiment from a file
+def run_from_file(f):
+    #set defaults
+    x_loops=1;max_ticks=0;display_off=True;garden_size=13;tako_number=20
+    pop_max=40;max_width=1800;max_height=900;collect_data=True;export_all=False
+    rand_nets=False;max_gen=2;genetic_mode="Plain";learning_on=False
+    seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
+    record_inbreeding=True;inbreed_lim=1.1;filename="default file"
+    
+    atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
+                "display_off": display_off, "garden_size": garden_size,
+                "tako_number": tako_number, "pop_max": pop_max,
+                "max_width": max_width, "max_height": max_height,
+                "collect_data": collect_data, "export_all": export_all,
+                "rand_nets": rand_nets, "max_gen": max_gen,
+                "genetic_mode": genetic_mode, "learning_on": learning_on,
+                "seeds": seeds, "garden_mode": garden_mode,
+                "family_detection": family_detection, "family_mod": family_mod,
+                "record_inbreeding": record_inbreeding,
+                "inbreed_lim": inbreed_lim, "filename": filename}
+    
+    ints = ["x_loops", "max_ticks", "garden_size", "tako_number", "pop_max",
+            "max_width", "max_height", "max_gen"]
+    floats = ["family_mod", "inbreed_lim"]
+    strs = ["genetic_mode", "garden_mode", "filename"]
+    bools = ["display_off", "collect_data", "export_all", "rand_nets",
+             "learning_on", "record_inbreeding"]
+    
+    with open(f) as exp_file:
+        for line in exp_file:
+            #comments
+            if line[0] == "#":
+                pass
+            #blank line = run what we have, then continue
+            #to read the file for a new set of parameters
+            elif line == "\n":
+                run_experiment(atr_dict["x_loops"], atr_dict["max_ticks"],
+                               atr_dict["display_off"], atr_dict["garden_size"],
+                               atr_dict["tako_number"], atr_dict["pop_max"],
+                               atr_dict["max_width"], atr_dict["max_height"],
+                               atr_dict["collect_data"], atr_dict["export_all"],
+                               atr_dict["rand_nets"], atr_dict["max_gen"],
+                               atr_dict["genetic_mode"],
+                               atr_dict["learning_on"],
+                               atr_dict["seeds"], atr_dict["garden_mode"],
+                               atr_dict["family_detection"],
+                               atr_dict["family_mod"],
+                               atr_dict["record_inbreeding"],
+                               atr_dict["inbreed_lim"], atr_dict["filename"])
+                #reset defaults
+                atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
+                    "display_off": display_off, "garden_size": garden_size,
+                    "tako_number": tako_number, "pop_max": pop_max,
+                    "max_width": max_width, "max_height": max_height,
+                    "collect_data": collect_data, "export_all": export_all,
+                    "rand_nets": rand_nets, "max_gen": max_gen,
+                    "genetic_mode": genetic_mode, "learning_on": learning_on,
+                    "seeds": seeds, "garden_mode": garden_mode,
+                    "family_detection": family_detection, "family_mod": family_mod,
+                    "record_inbreeding": record_inbreeding,
+                    "inbreed_lim": inbreed_lim, "filename": filename}
+            else:
+                #get rid of newline character
+                line = line[:-1]
+                line = line.split(": ")
+                if line[0] in ints:
+                    val = int(line[1])
+                elif line[0] in floats:
+                    val = float(line[1])
+                elif line[0] in bools:
+                    val = True if line[1] == "True" else False
+                elif line[0] in strs:
+                    val = line[1]
+                elif line[0] == "family_detection":
+                    if line[1] == "None":
+                        val = None
+                    else:
+                        val = line[1]
+                elif line[0] == "seeds":
+                    val = line[1].split(" ")
+                atr_dict[line[0]] = val
+    #run the last one in the file
+    run_experiment(atr_dict["x_loops"], atr_dict["max_ticks"],
+                   atr_dict["display_off"], atr_dict["garden_size"],
+                   atr_dict["tako_number"], atr_dict["pop_max"],
+                   atr_dict["max_width"], atr_dict["max_height"],
+                   atr_dict["collect_data"], atr_dict["export_all"],
+                   atr_dict["rand_nets"], atr_dict["max_gen"],
+                   atr_dict["genetic_mode"],
+                   atr_dict["learning_on"],
+                   atr_dict["seeds"], atr_dict["garden_mode"],
+                   atr_dict["family_detection"],
+                   atr_dict["family_mod"],
+                   atr_dict["record_inbreeding"],
+                   atr_dict["inbreed_lim"], atr_dict["filename"])
+    
        
 if __name__ == "__main__":
-    seeds = ["evo", "genome", "diploidy", "haploidy", "tako",
-             "selection", "ika", "mate", "mutation", "network",
-             "gene", "advantage", "children", "parents", "identity",
-             "input", "output", "hidden", "weights", "crossover"]
-    run_experiment(garden_size=13, tako_number=20, x_loops=1,
-                   pop_max=40, max_gen=2, collect_data=True, seeds=seeds,
-                   genetic_mode="Plain", garden_mode="Diverse Static") 
+    run_from_file('run params example.txt')

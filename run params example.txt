@@ -1,0 +1,35 @@
+#lines starting with octothorpes are comments
+#all attributes have defaults, so not all need to be assigned
+#shown values in this first example are the defaults for each attribute
+#for more info on attributes, see the readme
+x_loops: 1
+max_ticks: 0
+display_off: True
+garden_size: 13
+tako_number: 20
+pop_max: 25
+max_width: 1800
+max_height: 900
+filename: default file
+collect_data: True
+export_all: False
+rand_nets: False
+max_gen: 5
+genetic_mode: Plain
+learning_on: False
+seeds: seed1 seed2 seed3 seed4
+garden_mode: Diverse Static
+family_detection: None
+family_mod: 0
+record_inbreeding: True
+inbreed_lim: 1.1
+#blank line can separate multiple experiments with different attribute values
+#defaults are reset each time!
+
+x_loops: 1
+tako_number: 5
+filename: default file 2
+
+x_loops: 2
+seeds: ticktock
+filename: default file 3

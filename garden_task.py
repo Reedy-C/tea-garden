@@ -2,14 +2,12 @@ from garden import Garden
 from numpy import floor
 from tako import Tako, family_detection
 from widget import *
-import random
 import numpy
 
 class garden_task:
 
-    def __init__(self, environment, rand_percent, learning_on):
+    def __init__(self, environment, learning_on):
         self.env = environment
-        self.rand_percent = rand_percent
         self.learning_on = learning_on
     
     def perform_action(self, action, tako):
@@ -98,15 +96,6 @@ class garden_task:
             #forward and get action
             act = tako.solver.net.forward()['action'][0]
             action = self.find_action(act)
-            #1/rand_percent chance of rolling different random action
-            #(old experimental code)
-            if self.rand_percent > 1:
-                x = random.randint(0, self.rand_percent)
-                if x == 0:
-                    newact = random.randint(0, 5)
-                    while newact == action:
-                        newact = random.randint(0, 5)
-                    action = newact
             #perform action and get reward
             self.perform_action(action, tako)
             #learning currently not recommended
