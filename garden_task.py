@@ -87,27 +87,28 @@ class garden_task:
     def interact_and_learn(self):
         #for each tako in env, get its observation
         for tako in self.env.tako_list:
-            observation = self.get_observation(tako)
-            #feed it the observation
-            tako.data[...] = observation
-            if self.learning_on:
-                tako.solver.net.blobs['reward'].data[...] = 0
-            tako.stm_input[...] = tako.last_action
-            #forward and get action
-            act = tako.solver.net.forward()['action'][0]
-            action = self.find_action(act)
-            #perform action and get reward
-            self.perform_action(action, tako)
-            #learning currently not recommended
-            #TODO this could use updating for slight speed gain
-            #if I figure out if it's working
-            if self.learning_on:
-                reward = self.get_reward(tako)
-                #feed it reward and backpropogate
-                tako.solver.net.blobs['stm_input'].data[...] = -1
-                for i in range(len(
-                    tako.solver.net.blobs['reward'].data[0][0][0])):
-                    feedback = reward + act[0][i]
-                    tako.solver.net.blobs['reward'].data[0][0][0][i] = feedback
-                tako.solver.step(1)
+            if not tako.dead:
+                observation = self.get_observation(tako)
+                #feed it the observation
+                tako.data[...] = observation
+                if self.learning_on:
+                    tako.solver.net.blobs['reward'].data[...] = 0
+                tako.stm_input[...] = tako.last_action
+                #forward and get action
+                act = tako.solver.net.forward()['action'][0]
+                action = self.find_action(act)
+                #perform action and get reward
+                self.perform_action(action, tako)
+                #learning currently not recommended
+                #TODO this could use updating for slight speed gain
+                #if I figure out if it's working
+                if self.learning_on:
+                    reward = self.get_reward(tako)
+                    #feed it reward and backpropogate
+                    tako.solver.net.blobs['stm_input'].data[...] = -1
+                    for i in range(len(
+                        tako.solver.net.blobs['reward'].data[0][0][0])):
+                        feedback = reward + act[0][i]
+                        tako.solver.net.blobs['reward'].data[0][0][0][i] = feedback
+                    tako.solver.step(1)
             
