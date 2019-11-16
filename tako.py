@@ -114,7 +114,7 @@ class Tako(Widget):
         
         if (self.parent_genoverlap != None and
             self.parent_genoverlap >= inbreed_lim):
-            self.ident = ident
+            self.ident = dgeann.genome.network_ident()
             self.cod = "Inbred"
             self.dead = True
         else:
