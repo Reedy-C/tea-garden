@@ -4,6 +4,9 @@ from tako import Tako, family_detection
 from widget import *
 import numpy
 
+
+family_detection = None
+
 class garden_task:
 
     def __init__(self, environment, learning_on):

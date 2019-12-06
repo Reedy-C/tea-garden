@@ -1,7 +1,7 @@
 from garden import Garden
 import garden
 from dgeann import dgeann
-from garden_task import garden_task
+import garden_task as gt
 import tako
 from widget import *
 import time
@@ -49,7 +49,7 @@ class garden_game:
                      seed, display_off, garden_mode)
             
         global task
-        task = garden_task(env, learning_on)
+        task = gt.garden_task(env, learning_on)
         self.filename = filename
         self.export_all = export_all
         if self.export_all:
@@ -406,7 +406,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
 
         if not os.path.exists("Data"):
             os.makedirs("Data")
-            
+
+        i = 0
         if collect_data:
             if not os.path.exists(os.path.join("Data", filename)):
                 with open(os.path.join("Data", filename), 'a', newline='') as\
@@ -417,15 +418,14 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                                    'mating attempts', 'cause of death',
                                    'timestep', 'mutations', 'parent_degree',
                                    'parent_genoverlap'])
-                i = 0
             else:
                 with open(os.path.join("Data", filename), newline='') as\
                       csvfile:
                     reader = csv.DictReader(csvfile)
+                    row = None
                     for row in reader: pass
-                    i = int(row["iteration"]) + 1
-        else:
-            i = 0
+                    if row != None:
+                        i = int(row["iteration"]) + 1
 
         if export_all:
             h = make_headers()
@@ -438,6 +438,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
     tako.rand_nets = rand_nets
     tako.family_mod = family_mod
     tako.family_detection = family_detection
+    gt.family_detection = family_detection
     tako.record_inbreeding = record_inbreeding
     tako.inbreed_lim = inbreed_lim
     
