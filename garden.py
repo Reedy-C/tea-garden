@@ -206,7 +206,7 @@ class Garden:
                 new_genome = tak.genome.recombine(v.genome)
                 if (tako.family_detection != None or
                     tako.record_inbreeding == True or
-                    tako.inbred_lim < 1.1):
+                    tako.inbreed_lim < 1.1):
                     new_tak = tako.Tako(direction, self.display_off, x, y,
                                         new_genome, None, None, [tak, v],
                                         (max(tak.gen, v.gen) + 1),
