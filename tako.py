@@ -249,10 +249,10 @@ class Tako(Widget):
                 if self.pain < 1:
                     self.pain = 0
             self.dez += 1
-            if self.dez == 503.0:
+            if self.dez == 1005.0:
                 self.dez = 0.0
-            #this makes a wave between 0 and 150 with a period of 502 ticks
-            self.desire = (math.sin((self.dez/80.0)+11.0)*75.0)+75.0
+            #this makes a wave between 0 and 150 with a period of ~1005 ticks
+            self.desire = (math.sin((self.dez/160.0)+11.0)*75.0)+75.0
             if not self.display_off:
                 self.update_sprite()
 
@@ -323,8 +323,7 @@ class Tako(Widget):
                     too_close = False
             #'disgust' reaction
             if too_close:
-                self.dez = 0
-                self.desire = 0
+                mated_opcost(self)
                 return[("amuse", -30)]
         if tak.desire >= 100:
             if self.desire >= 100:
@@ -337,6 +336,26 @@ class Tako(Widget):
                 return ("amuse", -1)
         else:
             return ("amuse", -1)
+            mated_opcost(tak)
+            mated_opcost(self)
+
+    #creates the opportunity cost of mating
+    #occurs if top-down incest avoidances is turned on and an agent
+    #attempts to mate with a relative, for that agent only;
+    #also occurs under all settings if an agent fails an attempt to mate
+    #with another agent, for both agents
+    #essentially moves them back the desire function curve (in the first half)
+    #or forward along it (in the second half)
+    def mated_opcost(tak):
+        if tak.dez < 502:
+            tak.dez -= 300
+            if tak.dez < 0:
+                tak.dez += 1000
+        else:
+            if tak.dez >= 999:
+                tak.dez -= 300
+            else:
+                tak.dez = 698
 
     #returns a relatedness percentage dependent on detection mode
     def check_relations(self, tak):
