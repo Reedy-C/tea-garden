@@ -234,14 +234,16 @@ def write_csv(filename, i, q):
                     writ.writerow([i, tako.ident, tako.parents[0].ident,
                                    tako.parents[1].ident, tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
-                                   tako.cod, l[1], tako.genome.mut_record,
-                                   tako.parent_degree, tako.parent_genoverlap])
+                                   tako.accum_pain, tako.cod, l[1],
+                                   tako.genome.mut_record, tako.parent_degree,
+                                   tako.parent_genoverlap])
                 else:
                     writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
                                    tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
-                                   tako.cod, l[1], tako.genome.mut_record,
-                                   tako.parent_degree, tako.parent_genoverlap])
+                                   tako.accum_pain, tako.cod, l[1],
+                                   tako.genome.mut_record, tako.parent_degree,
+                                   tako.parent_genoverlap])
                 j += 1
             
 
@@ -415,9 +417,9 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                     writ = csv.writer(csvfile)
                     writ.writerow(['iteration', 'ID', 'parent1', 'parent2',
                                    'age', 'generation', '# children',
-                                   'mating attempts', 'cause of death',
-                                   'timestep', 'mutations', 'parent_degree',
-                                   'parent_genoverlap'])
+                                   'mating attempts', 'accum pain',
+                                   'cause of death', 'timestep', 'mutations',
+                                   'parent_degree', 'parent_genoverlap'])
             else:
                 with open(os.path.join("Data", filename), newline='') as\
                       csvfile:

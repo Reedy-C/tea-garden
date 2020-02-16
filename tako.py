@@ -111,6 +111,7 @@ class Tako(Widget):
 
         self.gen = gen
         self.mating_attempts = 0
+        self.accum_pain = 0
         
         if (self.parent_genoverlap != None and
             self.parent_genoverlap >= inbreed_lim):
@@ -255,6 +256,8 @@ class Tako(Widget):
             self.desire = (math.sin((self.dez/160.0)+11.0)*75.0)+75.0
             if not self.display_off:
                 self.update_sprite()
+            self.accum_pain += self.pain
+            self.accum_pain -= self.amuse/15
 
     def update_sprite(self):
         if self.last_action == 1 or self.last_action == 2:
@@ -504,11 +507,12 @@ class Tako(Widget):
     #by comparing ratios of starvation time/average lifespan
     #across a few species
     def check_death(self):
-        if self.age > 130000:
+        if self.age + (self.accum_pain) > 130000 or self.age > 130000:
             self.cod = "old age"
             self.dead = True
         else:
-            chance = self.skew_norm_pdf(self.age, 115000, 10000.0, -4)
+            chance = self.skew_norm_pdf(self.age + self.accum_pain,
+                                        115000, 10000.0, -4)
             r = random.random()
             if r < chance:
                 self.cod = "natural"
