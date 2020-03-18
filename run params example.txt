@@ -1,10 +1,11 @@
 #lines starting with octothorpes are comments
 #all attributes have defaults, so not all need to be assigned
-#shown values in this first example are the defaults for each attribute
+#shown values in this first example are the defaults for each attribute except seeds
+#(default for seeds is none)
 #for more info on attributes, see the readme
 x_loops: 1
 max_ticks: 0
-display_off: True
+display_off: False
 garden_size: 13
 tako_number: 20
 pop_max: 25
@@ -12,11 +13,13 @@ max_width: 1800
 max_height: 900
 filename: default file
 collect_data: True
-export_all: False
+export_all: True
 rand_nets: False
 max_gen: 5
 genetic_mode: Plain
 learning_on: False
+#for seeds: add space between each seed
+#default is no seeds
 seeds: seed1 seed2 seed3 seed4
 garden_mode: Diverse Static
 family_detection: None
