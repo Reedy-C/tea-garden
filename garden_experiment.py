@@ -52,8 +52,6 @@ class garden_game:
         task = gt.garden_task(env, learning_on)
         self.filename = filename
         self.export_all = export_all
-        if self.export_all:
-            export(env.tako_list, filename)
 
         self.selected_Tako = None
         self.neur = None
@@ -70,23 +68,29 @@ class garden_game:
             pygame.display.flip()
             self.cam = [0,0]
             font = pygame.font.Font(None, 18)
-        if collect_data:
+        if collect_data or self.export_all:
             dead_tako = deque()
         while 1:
             #see if ending conditions have been met
             if max_ticks > 0:
                 if self.stepid > max_ticks:
-                    if collect_data:
+                    if collect_data or self.export_all:
                         for tako in env.tako_list:
                             dead_tako.append([tako, self.stepid])
-                        write_csv(self.filename, i, dead_tako)
+                        if self.export_all:
+                            export(dead_tako, self.filename)
+                        if collect_data:
+                            write_csv(self.filename, i, dead_tako)
                     return
             if max_gen > 0:
                 if env.highest_gen > max_gen:
-                    if collect_data:
+                    if collect_data or self.export_all:
                         for tako in env.tako_list:
                             dead_tako.append([tako, self.stepid])
-                        write_csv(self.filename, i, dead_tako)
+                        if self.export_all:
+                            export(dead_tako, self.filename)
+                        if collect_data:
+                            write_csv(self.filename, i, dead_tako)
                     return
             if not display_off:
                 for event in pygame.event.get():
@@ -116,6 +120,8 @@ class garden_game:
                                         spr.move_rect(0, -1)
             #see if all are dead
             if len(env.tako_list) == 0:
+                if self.export_all:
+                    export(dead_tako, self.filename)
                 if collect_data:
                     if len(dead_tako) > 0:
                         write_csv(self.filename, i, dead_tako)
@@ -135,12 +141,14 @@ class garden_game:
                     env.garden_map[tako.y][tako.x] = Dirt(display_off,
                                                           tako.x, tako.y)
                     env.tako_list.remove(tako)
-                    if collect_data:
+                    if collect_data or self.export_all:
                         dead_tako.append([tako, self.stepid])
                     tako.kill()
             #check for data collection
-            if collect_data:
-                if self.stepid % 3000 == 0:
+            if self.stepid % 3000 == 0:
+                if self.export_all:
+                    export(dead_tako, self.filename)
+                if collect_data:
                     write_csv(self.filename, i, dead_tako)
             #now, update sprites, then draw them if using graphics
             if env.new_sprites != []:
@@ -168,19 +176,13 @@ class garden_game:
             self.all_sprites.add(sprite)
 
     def get_new(self):
-        if self.export_all:
-            ex = []
         for sprite in env.new_sprites:
             if not isinstance(sprite, Dirt):
                 if not isinstance(sprite, tako.Tako):
                     self.widget_sprites.add(sprite)
                 else:
-                    if self.export_all:
-                        ex.append(sprite)
-                self.all_sprites.add(sprite)
+                    self.all_sprites.add(sprite)
             env.new_sprites.remove(sprite)
-        if self.export_all:
-            export(ex, self.filename)
 
     def draw_onscreen(self):
         for spr in self.all_sprites:
@@ -293,6 +295,7 @@ def export_old(tako, filename):
 #n.b. expects a standard genome to work properly
 def export(tako_list, filename):
     for tak in tako_list:
+        tak = tak[0]
         l1 = [tak.ident, "a"]
         for gen in tak.genome.weightchr_a:
             l1.append(gen.ident)
