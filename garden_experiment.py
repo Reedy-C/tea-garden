@@ -10,6 +10,7 @@ import pygame
 from pygame.locals import *
 import csv
 from collections import deque
+import tako_genetics as tg
 
 class garden_game:
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
@@ -230,22 +231,30 @@ def write_csv(filename, i, q):
             k = len(q)
             while j < k:
                 l = q.popleft()
-                #l = tako, stepid
                 tako = l[0]
+                healthchr_a = []
+                healthchr_b = []
+                if type(tako.genome) == tg.health_genome:
+                    for a in tako.genome.healthchr_a:
+                        healthchr_a.append(a.ident)
+                    for b in tako.genome.healthchr_b:
+                        healthchr_b.append(b.ident)
                 if type(tako.parents[0]) != str:
                     writ.writerow([i, tako.ident, tako.parents[0].ident,
                                    tako.parents[1].ident, tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
                                    tako.accum_pain, tako.cod, l[1],
                                    tako.genome.mut_record, tako.parent_degree,
-                                   tako.parent_genoverlap])
+                                   tako.parent_genoverlap,
+                                   healthchr_a, healthchr_b])
                 else:
                     writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
                                    tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
                                    tako.accum_pain, tako.cod, l[1],
                                    tako.genome.mut_record, tako.parent_degree,
-                                   tako.parent_genoverlap])
+                                   tako.parent_genoverlap,
+                                   healthchr_a, healthchr_b])
                 j += 1
             
 
@@ -393,7 +402,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    max_gen = 505, genetic_mode="Plain", learning_on=False,
                    seeds=None, garden_mode="Diverse Static",
                    family_detection=None, family_mod=0, record_inbreeding=True,
-                   inbreed_lim = 1.1, filename=""):
+                   inbreed_lim = 1.1, hla_genes=0, binary_health=0,
+                   carrier_percentage=40, filename=""):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -422,7 +432,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                                    'age', 'generation', '# children',
                                    'mating attempts', 'accum pain',
                                    'cause of death', 'timestep', 'mutations',
-                                   'parent_degree', 'parent_genoverlap'])
+                                   'parent_degree', 'parent_genoverlap',
+                                   'health a', 'health b'])
             else:
                 with open(os.path.join("Data", filename), newline='') as\
                       csvfile:
@@ -446,6 +457,9 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
     gt.family_detection = family_detection
     tako.record_inbreeding = record_inbreeding
     tako.inbreed_lim = inbreed_lim
+    tako.hla_genes = hla_genes
+    tako.binary_health = binary_health
+    tako.carrier_percentage = carrier_percentage
     
     loop_limit = x_loops
     if loop_limit < 1:
@@ -486,6 +500,8 @@ def run_from_file(f):
     rand_nets=False;max_gen=2;genetic_mode="Plain";learning_on=False
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
     record_inbreeding=True;inbreed_lim=1.1;filename="default file"
+    hla_genes=0;binary_health=0;carrier_percentage=40
+
     
     atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
                 "display_off": display_off, "garden_size": garden_size,
@@ -497,10 +513,13 @@ def run_from_file(f):
                 "seeds": seeds, "garden_mode": garden_mode,
                 "family_detection": family_detection, "family_mod": family_mod,
                 "record_inbreeding": record_inbreeding,
-                "inbreed_lim": inbreed_lim, "filename": filename}
+                "inbreed_lim": inbreed_lim, "filename": filename,
+                "hla_genes": hla_genes, "binary_health": binary_health,
+                "carrier_percentage": carrier_percentage}
     
     ints = ["x_loops", "max_ticks", "garden_size", "tako_number", "pop_max",
-            "max_width", "max_height", "max_gen"]
+            "max_width", "max_height", "max_gen", "hla_genes",
+            "binary_health", "carrier_percentage"]
     floats = ["family_mod", "inbreed_lim"]
     strs = ["genetic_mode", "garden_mode", "filename"]
     bools = ["display_off", "collect_data", "export_all", "rand_nets",
@@ -526,7 +545,10 @@ def run_from_file(f):
                                atr_dict["family_detection"],
                                atr_dict["family_mod"],
                                atr_dict["record_inbreeding"],
-                               atr_dict["inbreed_lim"], atr_dict["filename"])
+                               atr_dict["inbreed_lim"],
+                               atr_dict["hla_genes"], atr_dict["binary_health"],
+                               atr_dict["carrier_percentage"],
+                               atr_dict["filename"])
                 #reset defaults
                 atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
                     "display_off": display_off, "garden_size": garden_size,
@@ -538,7 +560,9 @@ def run_from_file(f):
                     "seeds": seeds, "garden_mode": garden_mode,
                     "family_detection": family_detection, "family_mod": family_mod,
                     "record_inbreeding": record_inbreeding,
-                    "inbreed_lim": inbreed_lim, "filename": filename}
+                    "inbreed_lim": inbreed_lim, "filename": filename,
+                    "hla_genes": hla_genes, "binary_health": binary_health,
+                    "carrier_percentage": carrier_percentage}
             else:
                 #get rid of newline character
                 line = line[:-1]
@@ -572,7 +596,9 @@ def run_from_file(f):
                    atr_dict["family_detection"],
                    atr_dict["family_mod"],
                    atr_dict["record_inbreeding"],
-                   atr_dict["inbreed_lim"], atr_dict["filename"])
+                   atr_dict["inbreed_lim"], atr_dict["hla_genes"],
+                   atr_dict["binary_health"], atr_dict["carrier_percentage"],
+                   atr_dict["filename"])
     
        
 if __name__ == "__main__":

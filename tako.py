@@ -10,6 +10,7 @@ import sys
 import csv
 sys.path.append('..')
 from dgeann import dgeann
+import tako_genetics as tg
 
 rand_nets = False
 dele = True
@@ -45,6 +46,14 @@ record_inbreeding = True
 #it is considered to be too inbred and dies
 #more nuanced approach to come
 inbreed_lim = 1.1
+
+#can be set from 0 to n
+#control number of each kind of health genes
+hla_genes = 0
+binary_health = 0
+#set from 0 to 100
+#control number of carriers for each recessive binary health gene if in use
+carrier_percentage = 40
 
 def set_seed(seed):
     random.seed(seed)
@@ -126,12 +135,22 @@ class Tako(Widget):
                 self.ident = ident
             else:
                 self.solver = self.genome.build()
+                if type(self.genome) == tg.health_genome:
+                    if self.genome.health_status == False:
+                        self.ident = dgeann.genome.network_ident()
+                        self.cod = "Disease"
+                        self.dead = True
                 if ident == None:
                     self.ident = self.genome.ident
                 else:
                     self.ident = ident
-            self.data = self.solver.net.blobs['data'].data
-            self.stm_input = self.solver.net.blobs['stm_input'].data
+            if type(self.genome) == tg.health_genome:
+                if self.genome.health_status:
+                    self.data = self.solver.net.blobs['data'].data
+                    self.stm_input = self.solver.net.blobs['stm_input'].data
+            else:
+                self.data = self.solver.net.blobs['data'].data
+                self.stm_input = self.solver.net.blobs['stm_input'].data
         
     #gen_type can be "Diverse", "Plain", or "Haploid"
     #Diverse = diploid, two chromosomes are different
@@ -141,6 +160,44 @@ class Tako(Widget):
     @staticmethod
     def default_tako(direction, display_off, x, y, gen_type, rand_net):
         parents = []
+        #do health genes if necessary
+        if hla_genes > 0 or binary_health > 0:
+            healtha = []
+            healthb = []
+            #currently going with six alleles for HLA
+            if hla_genes > 0:
+                healthdict = {1: "A", 2: "B", 3: "C", 4: "D", 5: "E", 6: "F"}
+                for i in range(hla_genes):
+                    r = random.randint(1, 6)
+                    aident = healthdict[r]
+                    bident = aident
+                    while bident == aident:
+                        r = random.randint(1, 6)
+                        bident = healthdict[r]
+                    healtha.append(tg.hla_gene(3, False, False, 0, aident))
+                    healthb.append(tg.hla_gene(3, False, False, 0, bident))
+            if binary_health > 0:
+                for i in range(binary_health):
+                    r = random.randint(1, 100)
+                    #carrier
+                    if r < carrier_percentage:
+                        if random.randint(1, 2) == 1:
+                            healtha.append(tg.binary_gene(1, False, False,
+                                                          0, "*B"))
+                            healthb.append(tg.binary_gene(5, False, False,
+                                                          0, "*A"))
+                        else:
+                            healthb.append(tg.binary_gene(1, False, False,
+                                                          0, "*B"))
+                            healtha.append(tg.binary_gene(5, False, False,
+                                                          0, "*A"))
+                    #not a carrier, homozygous for dominant
+                    else:
+                        healtha.append(tg.binary_gene(5, False, False,
+                                                          0, "*A"))
+                        healthb.append(tg.binary_gene(5, False, False,
+                                                          0, "*A"))
+        #now all the genes for the network structure
         data = dgeann.layer_gene(5, False, False, 0, "data",
                                         [], 12, "input")
         stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
@@ -155,22 +212,15 @@ class Tako(Widget):
         layersb = [data, stm_input, stm, evo, action]
         weightsa = []
         weightsb = []
+        #genes for network weights
         if not rand_net:
             fields = ['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
                       'weight', 'in_node', 'out_node', 'in_layer', 'out_layer']
-            l = random.randint(1, 18)
-            m = random.randint(0, 1)
-            if m == 0:
-                filenamea = "Default Genetics/" + str(l) + "_a.csv"
-            else:
-                filenamea = "Default Genetics/" + str(l) + "_b.csv"
+            filenamea = random.randint(1, 26)
+            filenamea = os.path.join("Default Genetics", str(filenamea) + ".csv")
             parents.append(filenamea[:-4])
-            l = random.randint(1, 18)
-            m = random.randint(0, 1)
-            if m == 0:
-                filenameb = "Default Genetics/" + str(l) + "_a.csv"
-            else:
-                filenameb = "Default Genetics/" + str(l) + "_b.csv"
+            filenameb = random.randint(1, 26)
+            filenameb = os.path.join("Default Genetics", str(filenameb) + ".csv")
             with open(filenamea, newline="") as file:
                 r = csv.DictReader(file, fieldnames = fields)
                 for row in r:
@@ -214,8 +264,13 @@ class Tako(Widget):
                                            row['in_layer'], row['out_layer'])
                         weightsb.append(w)
             if gen_type != "Haploid":
-                default_genome = dgeann.genome(layersa, layersb,
-                                               weightsa, weightsb)
+                if hla_genes > 0 or binary_health > 0:
+                    default_genome = tg.health_genome(layersa, layersb,
+                                                      weightsa, weightsb,
+                                                      healtha, healthb)
+                else:
+                    default_genome = dgeann.genome(layersa, layersb,
+                                                   weightsa, weightsb)
             else:
                 default_genome = dgeann.haploid_genome(layersa, weightsa)
         else:
