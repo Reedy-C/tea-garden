@@ -6,9 +6,9 @@ import numpy as np
 plt.style.use("seaborn")
 
 #remove x characters at the beginning of file names to make plots more readable
-leading_remove = 13
+leading_remove = 0
 #maximum generation
-gen_limit = 20
+gen_limit = 50
 #iteration/run used per file
 its = ["0", "0", "0", "0", "0",
        "0", "0", "0", "0", "0"]
@@ -93,7 +93,10 @@ def lifespan(fs, keep_inbreds):
                                  int(row["age"]))
         avgs = []
         for a in np.arange(0, gen_limit+1):
-            avgs.append(sum(life_dict[a])/len(life_dict[a]))
+            if len(life_dict[a]) != 0:
+                avgs.append(sum(life_dict[a])/len(life_dict[a]))
+            else:
+                avgs.append(0)
         results[f[leading_remove:]] = avgs
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
@@ -130,7 +133,10 @@ def mas(fs, keep_inbreds):
                                  int(row["mating attempts"]))
         avgs = []
         for a in np.arange(0, gen_limit+1):
-            avgs.append(sum(mas_dict[a])/len(mas_dict[a]))
+            if len(mas_dict[a]) != 0:
+                avgs.append(sum(mas_dict[a])/len(mas_dict[a]))
+            else:
+                avgs.append(0)
         results[f[leading_remove:]] = avgs
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
@@ -172,7 +178,10 @@ def surv(fs, keep_inbreds, thresh=500):
         #save plots
         survs = []
         for a in np.arange(0, gen_limit+1):
-            survs.append(surv_gen[a]/tot_gen[a])
+            if tot_gen[a] != 0:
+                survs.append(surv_gen[a]/tot_gen[a])
+            else:
+                survs.append(0)
         results[f[leading_remove:]] = survs
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
@@ -184,7 +193,7 @@ def surv(fs, keep_inbreds, thresh=500):
     plt.ylabel("Percent survived to age " + str(thresh))
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("percent survival to " + str(thresh) + " ticks, inbreds kept"
+    plt.savefig("percent survival to " + str(thresh) + " ticks, inbreds kept "
                 + str(keep_inbreds) + ".png")
     plt.clf()
 
@@ -219,8 +228,12 @@ def parent_overlaps(fs, keep_inbreds):
         overlap_avgs = []
         degree_avgs = []
         for a in np.arange(0, gen_limit+1):
-            overlap_avgs.append(sum(overlap_dict[a])/len(overlap_dict[a]))
-            degree_avgs.append(sum(degree_dict[a])/len(degree_dict[a]))
+            if len(overlap_dict[a]) != 0:
+                overlap_avgs.append(sum(overlap_dict[a])/len(overlap_dict[a]))
+                degree_avgs.append(sum(degree_dict[a])/len(degree_dict[a]))
+            else:
+                overlap_avgs.append(0)
+                degree_avgs.append(0)
         result_overlaps[f[leading_remove:]] = overlap_avgs
         result_degrees[f[leading_remove:]] = degree_avgs
     for f in fs:
@@ -297,17 +310,20 @@ def nei_diversity(fs, keep_inbreds):
                                                                  "generation"]))
         tot_loci = len(fields[0].keys())
         for gen in fields:
-            for loc in fields[gen]:
-                freqs = []
-                for allele in fields[gen][loc]:
-                    freqs.append((fields[gen][loc][allele]/tot[gen])**2)
-                #hj = 1 - SUM(allele freq)^2
-                hjs[gen].append(1 - sum(freqs))
-            vals = []
-            for g in hjs[gen]:
-                vals.append(g/tot_loci)
-            #H = SUM(hj/TOTNUMloci)
-            H[gen] = sum(vals)
+            if tot[gen] == 0:
+                H[gen] = 0
+            else:
+                for loc in fields[gen]:
+                    freqs = []
+                    for allele in fields[gen][loc]:
+                        freqs.append((fields[gen][loc][allele]/tot[gen])**2)
+                    #hj = 1 - SUM(allele freq)^2
+                    hjs[gen].append(1 - sum(freqs))
+                vals = []
+                for g in hjs[gen]:
+                    vals.append(g/tot_loci)
+                #H = SUM(hj/TOTNUMloci)
+                H[gen] = sum(vals)
         results[f[leading_remove:]] = H
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1),
