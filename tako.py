@@ -381,7 +381,7 @@ class Tako(Widget):
                     too_close = False
             #'disgust' reaction
             if too_close:
-                mated_opcost(self)
+                Tako.mated_opcost(self)
                 return[("amuse", -30)]
         if tak.desire >= 100:
             if self.desire >= 100:
@@ -394,8 +394,8 @@ class Tako(Widget):
                 return ("amuse", -1)
         else:
             return ("amuse", -1)
-            mated_opcost(tak)
-            mated_opcost(self)
+            Tako.mated_opcost(tak)
+            Tako.mated_opcost(self)
 
     #creates the opportunity cost of mating
     #occurs if top-down incest avoidances is turned on and an agent
