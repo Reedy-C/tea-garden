@@ -7,18 +7,21 @@ import random
 class health_genome(dgeann.genome):
     
     def __init__(self, layerchr_a, layerchr_b, weightchr_a, weightchr_b,
-                 healthchr_a, healthchr_b):
+                 healthchr_a, healthchr_b, outs, mut_record):
         super().__init__(layerchr_a, layerchr_b, weightchr_a, weightchr_b)
         self.healthchr_a = healthchr_a
         self.healthchr_b = healthchr_b
-        self.health_status = True
+        self.disorder_count = 0
+        self.outs = outs
+        self.mut_record = mut_record
         
     def recombine(self, other_genome):
         c = super().recombine(other_genome)
-        healthchr_a =  self.health_cross()
+        healthchr_a = self.health_cross()
         healthchr_b = other_genome.health_cross()
         return health_genome(c.layerchr_a, c.layerchr_b, c.weightchr_a,
-                             c.weightchr_b, healthchr_a, healthchr_b)
+                             c.weightchr_b, healthchr_a, healthchr_b, c.outs,
+                             c.mut_record)
 
     def health_cross(self):
         l = len(self.healthchr_a) - 1
@@ -37,13 +40,9 @@ class health_genome(dgeann.genome):
         for i in range(len(self.healthchr_a)):
             res = self.healthchr_a[i].read(None, self.healthchr_b[i], None)
             if res == False:
-                #false == lethal
-                self.health_status = False
-                break
-        if self.health_status:
-            return super().build(delete)
-        else:
-            self.ident = dgeann.genome.network_ident()
+                self.disorder_count += 1
+        return super().build(delete)
+    
 
 #currently no mutations for health genes
 class health_gene(dgeann.gene):
