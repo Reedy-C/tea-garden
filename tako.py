@@ -135,22 +135,17 @@ class Tako(Widget):
                 self.ident = ident
             else:
                 self.solver = self.genome.build()
-                if type(self.genome) == tg.health_genome:
-                    if self.genome.health_status == False:
-                        self.ident = dgeann.genome.network_ident()
-                        self.cod = "Disease"
-                        self.dead = True
+                #used for determining how early disordered agents die
                 if ident == None:
                     self.ident = self.genome.ident
                 else:
                     self.ident = ident
             if type(self.genome) == tg.health_genome:
-                if self.genome.health_status:
-                    self.data = self.solver.net.blobs['data'].data
-                    self.stm_input = self.solver.net.blobs['stm_input'].data
+                self.g = self.genome.disorder_count + 1
             else:
-                self.data = self.solver.net.blobs['data'].data
-                self.stm_input = self.solver.net.blobs['stm_input'].data
+                self.g = 1
+            self.data = self.solver.net.blobs['data'].data
+            self.stm_input = self.solver.net.blobs['stm_input'].data
         
     #gen_type can be "Diverse", "Plain", or "Haploid"
     #Diverse = diploid, two chromosomes are different
@@ -267,7 +262,8 @@ class Tako(Widget):
                 if hla_genes > 0 or binary_health > 0:
                     default_genome = tg.health_genome(layersa, layersb,
                                                       weightsa, weightsb,
-                                                      healtha, healthb)
+                                                      healtha, healthb, None,
+                                                      [])
                 else:
                     default_genome = dgeann.genome(layersa, layersb,
                                                    weightsa, weightsb)
@@ -394,24 +390,22 @@ class Tako(Widget):
                 return ("amuse", -1)
         else:
             return ("amuse", -1)
-            Tako.mated_opcost(tak)
             Tako.mated_opcost(self)
 
     #creates the opportunity cost of mating
-    #occurs if top-down incest avoidances is turned on and an agent
+    #occurs if top-down incest avoidance is turned on and an agent
     #attempts to mate with a relative, for that agent only;
     #also occurs under all settings if an agent fails an attempt to mate
-    #with another agent, for both agents
-    #essentially moves them back the desire function curve (in the first half)
-    #or forward along it (in the second half)
+    #with another agent
+    #essentially moves it down the desire function curve
     def mated_opcost(tak):
         if tak.dez < 502:
-            tak.dez -= 300
+            tak.dez -= 100
             if tak.dez < 0:
                 tak.dez += 1000
         else:
-            if tak.dez >= 999:
-                tak.dez -= 300
+            if tak.dez >= 799:
+                tak.dez -= 100
             else:
                 tak.dez = 698
 
@@ -561,13 +555,15 @@ class Tako(Widget):
     #this number was based on Tako starvation time
     #by comparing ratios of starvation time/average lifespan
     #across a few species
+    #self.g is the count of genetic disorders the agent has + 1
     def check_death(self):
-        if self.age + (self.accum_pain) > 130000 or self.age > 130000:
+        if self.age + (self.accum_pain) > (130000/self.g) or \
+           self.age > (130000/self.g):
             self.cod = "old age"
             self.dead = True
         else:
             chance = self.skew_norm_pdf(self.age + self.accum_pain,
-                                        115000, 10000.0, -4)
+                                        (115000/self.g), (10000.0/self.g), -4)
             r = random.random()
             if r < chance:
                 self.cod = "natural"
