@@ -141,7 +141,10 @@ class Tako(Widget):
                 else:
                     self.ident = ident
             if type(self.genome) == tg.health_genome:
-                self.g = self.genome.disorder_count + 1
+                if self.genome.disorder_count > 0:
+                    self.g = self.genome.disorder_count * 3
+                else:
+                    self.g = 1
             else:
                 self.g = 1
             self.data = self.solver.net.blobs['data'].data
@@ -177,21 +180,21 @@ class Tako(Widget):
                     #carrier
                     if r < carrier_percentage:
                         if random.randint(1, 2) == 1:
-                            healtha.append(tg.binary_gene(1, False, False,
-                                                          0, "*B"))
-                            healthb.append(tg.binary_gene(5, False, False,
-                                                          0, "*A"))
+                            healtha.append(tg.binary_gene(1, True, False,
+                                                          0.01, "*B"))
+                            healthb.append(tg.binary_gene(5, True, False,
+                                                          0.01, "*A"))
                         else:
-                            healthb.append(tg.binary_gene(1, False, False,
-                                                          0, "*B"))
-                            healtha.append(tg.binary_gene(5, False, False,
-                                                          0, "*A"))
+                            healthb.append(tg.binary_gene(1, True, False,
+                                                          0.01, "*B"))
+                            healtha.append(tg.binary_gene(5, True, False,
+                                                          0.01, "*A"))
                     #not a carrier, homozygous for dominant
                     else:
-                        healtha.append(tg.binary_gene(5, False, False,
-                                                          0, "*A"))
-                        healthb.append(tg.binary_gene(5, False, False,
-                                                          0, "*A"))
+                        healtha.append(tg.binary_gene(5, True, False,
+                                                          0.01, "*A"))
+                        healthb.append(tg.binary_gene(5, True, False,
+                                                          0.01, "*A"))
         #now all the genes for the network structure
         data = dgeann.layer_gene(5, False, False, 0, "data",
                                         [], 12, "input")
@@ -555,15 +558,16 @@ class Tako(Widget):
     #this number was based on Tako starvation time
     #by comparing ratios of starvation time/average lifespan
     #across a few species
-    #self.g is the count of genetic disorders the agent has + 1
+    #self.g is the count of genetic disorders the agent has * 3
     def check_death(self):
-        if self.age + (self.accum_pain) > (130000/self.g) or \
-           self.age > (130000/self.g):
+        if self.age + (self.accum_pain) > (130000/(self.g**2)) or \
+           self.age > (130000/(self.g ** 2)):
             self.cod = "old age"
             self.dead = True
         else:
             chance = self.skew_norm_pdf(self.age + self.accum_pain,
-                                        (115000/self.g), (10000.0/self.g), -4)
+                                        (115000/(self.g**2)),
+                                        (10000.0/(self.g**2)), -4)
             r = random.random()
             if r < chance:
                 self.cod = "natural"

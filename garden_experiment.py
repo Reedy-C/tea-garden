@@ -159,8 +159,7 @@ class garden_game:
                 tako.update()
             if not display_off:
                 self.graphics_loop(scroll, font)
-            self.stepid += 1
-            
+            self.stepid += 1      
     
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
@@ -246,7 +245,7 @@ def write_csv(filename, i, q):
                                    tako.accum_pain, tako.cod, l[1],
                                    tako.genome.mut_record, tako.parent_degree,
                                    tako.parent_genoverlap,
-                                   tako.g - 1,
+                                   tako.genome.disorder_count,
                                    healthchr_a, healthchr_b])
                 else:
                     writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
@@ -255,7 +254,7 @@ def write_csv(filename, i, q):
                                    tako.accum_pain, tako.cod, l[1],
                                    tako.genome.mut_record, tako.parent_degree,
                                    tako.parent_genoverlap,
-                                   tako.g - 1,
+                                   tako.genome.disorder_count,
                                    healthchr_a, healthchr_b])
                 j += 1
             
