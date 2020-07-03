@@ -29,13 +29,5 @@ inbreed_lim: 1.1
 hla_genes: 0
 binary_health: 0
 carrier_percentage: 40
-#blank line can separate multiple experiments with different attribute values
-#defaults are reset each time!
-
-x_loops: 1
-tako_number: 5
-filename: default file 2
-
-x_loops: 2
-seeds: ticktock
-filename: default file 3
+#a blank line separates multiple experiment sets that can be run with different attribute values
+#defaults are reset for each experiment set!
