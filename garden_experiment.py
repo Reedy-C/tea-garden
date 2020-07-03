@@ -15,7 +15,8 @@ import tako_genetics as tg
 class garden_game:
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
                  display_off, learning_on, genetic_mode, rand_nets, garden_mode,
-                 filename, export_all, family_mod, family_detection, seed=None):
+                 filename, export_all, family_mod, family_detection,
+                 two_envs, migration_rate, seed=None):
         pygame.init()
         global scroll
         if not display_off:
@@ -156,6 +157,7 @@ class garden_game:
             if not display_off:
                 self.graphics_loop(scroll, font)
             self.stepid += 1
+            
     
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
@@ -219,7 +221,7 @@ def load_image(name, colorkey=None):
     return image, image.get_rect()
 
 #records data about an agent to a csv file on the agent's death
-def write_csv(filename, i, q):  
+def write_csv(filename, i, q, env_num=1):  
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
             j = 0
@@ -235,22 +237,23 @@ def write_csv(filename, i, q):
                     for b in tako.genome.healthchr_b:
                         healthchr_b.append(b.ident)
                 if type(tako.parents[0]) != str:
-                    writ.writerow([i, tako.ident, tako.parents[0].ident,
+                    writ.writerow([i, env_num, tako.ident, tako.parents[0].ident,
                                    tako.parents[1].ident, tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
                                    tako.accum_pain, tako.cod, l[1],
                                    tako.genome.mut_record, tako.parent_degree,
                                    tako.parent_genoverlap,
-                                   tako.genome.disorder_count,
+                                   tako.g - 1,
                                    healthchr_a, healthchr_b])
                 else:
-                    writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
+                    writ.writerow([i, env_num,tako.ident, tako.parents[0],
+                                   tako.parents[1],
                                    tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
                                    tako.accum_pain, tako.cod, l[1],
                                    tako.genome.mut_record, tako.parent_degree,
                                    tako.parent_genoverlap,
-                                   tako.genome.disorder_count,
+                                   tako.g - 1,
                                    healthchr_a, healthchr_b])
                 j += 1
             
@@ -393,6 +396,11 @@ def make_headers():
 #                          b/w parents of an agent
 #inbred_lim (float): if set to b/w 0 and 1, will only allow agents to live if
 #                    the genetic relationship b/w parents is < inbred_lim
+#hla_genes (int):
+#binary_health (int):
+#carrier_percentage (int):
+#two_envs (bool):
+#migration_rate (int): 
 def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    tako_number=1, pop_max=30, max_width=1800, max_height=900,
                    collect_data=True, export_all=False, rand_nets=False,
@@ -400,7 +408,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    seeds=None, garden_mode="Diverse Static",
                    family_detection=None, family_mod=0, record_inbreeding=True,
                    inbreed_lim = 1.1, hla_genes=0, binary_health=0,
-                   carrier_percentage=40, filename=""):
+                   carrier_percentage=40, two_envs=False,
+                   migration_rate=0, filename=""):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -425,8 +434,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                 with open(os.path.join("Data", filename), 'a', newline='') as\
                      csvfile:
                     writ = csv.writer(csvfile)
-                    writ.writerow(['iteration', 'ID', 'parent1', 'parent2',
-                                   'age', 'generation', '# children',
+                    writ.writerow(['iteration', 'env #', 'ID', 'parent1',
+                                   'parent2', 'age', 'generation', '# children',
                                    'mating attempts', 'accum pain',
                                    'cause of death', 'timestep', 'mutations',
                                    'parent_degree', 'parent_genoverlap',
@@ -474,12 +483,14 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                             max_height, display_off, learning_on, genetic_mode,
                             rand_nets, garden_mode, filename,
                             export_all, family_mod, family_detection,
+                            two_envs, migration_rate,
                             seeds[i])
         else:
             g = garden_game(garden_size, tako_number, pop_max, max_width,
                             max_height, display_off, learning_on, genetic_mode,
                             rand_nets, garden_mode, filename, export_all,
-                            family_mod, family_detection)
+                            family_mod, family_detection, two_envs,
+                            migration_rate)
         if not display_off:
             main_window = g
             main_window.main_loop(max_ticks, max_gen, display_off,
@@ -498,7 +509,8 @@ def run_from_file(f):
     rand_nets=False;max_gen=2;genetic_mode="Plain";learning_on=False
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
     record_inbreeding=True;inbreed_lim=1.1;filename="default file"
-    hla_genes=0;binary_health=0;carrier_percentage=40
+    hla_genes=0;binary_health=0;carrier_percentage=40;two_envs=False;
+    migration_rate=0
 
     
     atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
@@ -513,15 +525,17 @@ def run_from_file(f):
                 "record_inbreeding": record_inbreeding,
                 "inbreed_lim": inbreed_lim, "filename": filename,
                 "hla_genes": hla_genes, "binary_health": binary_health,
-                "carrier_percentage": carrier_percentage}
+                "carrier_percentage": carrier_percentage,
+                "two_envs": two_envs,
+                "migration_rate": migration_rate}
     
     ints = ["x_loops", "max_ticks", "garden_size", "tako_number", "pop_max",
             "max_width", "max_height", "max_gen", "hla_genes",
-            "binary_health", "carrier_percentage"]
+            "binary_health", "carrier_percentage", "migration_rate"]
     floats = ["family_mod", "inbreed_lim"]
     strs = ["genetic_mode", "garden_mode", "filename"]
     bools = ["display_off", "collect_data", "export_all", "rand_nets",
-             "learning_on", "record_inbreeding"]
+             "learning_on", "record_inbreeding", "two_envs"]
     
     with open(f) as exp_file:
         for line in exp_file:
@@ -546,7 +560,9 @@ def run_from_file(f):
                                atr_dict["inbreed_lim"],
                                atr_dict["hla_genes"], atr_dict["binary_health"],
                                atr_dict["carrier_percentage"],
-                               atr_dict["filename"])
+                               atr_dict["filename"],
+                               atr_dict["two_envs"],
+                               atr_dict["migration_rate"])
                 #reset defaults
                 atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
                     "display_off": display_off, "garden_size": garden_size,
@@ -556,11 +572,13 @@ def run_from_file(f):
                     "rand_nets": rand_nets, "max_gen": max_gen,
                     "genetic_mode": genetic_mode, "learning_on": learning_on,
                     "seeds": seeds, "garden_mode": garden_mode,
-                    "family_detection": family_detection, "family_mod": family_mod,
+                    "family_detection": family_detection,
+                    "family_mod": family_mod,
                     "record_inbreeding": record_inbreeding,
                     "inbreed_lim": inbreed_lim, "filename": filename,
                     "hla_genes": hla_genes, "binary_health": binary_health,
-                    "carrier_percentage": carrier_percentage}
+                    "carrier_percentage": carrier_percentage,
+                    "two_envs": two_envs, "migration_rate": migration_rate}
             else:
                 #get rid of newline character
                 line = line[:-1]
@@ -596,6 +614,7 @@ def run_from_file(f):
                    atr_dict["record_inbreeding"],
                    atr_dict["inbreed_lim"], atr_dict["hla_genes"],
                    atr_dict["binary_health"], atr_dict["carrier_percentage"],
+                   atr_dict["two_envs"], atr_dict["migration_rate"],
                    atr_dict["filename"])
     
        
