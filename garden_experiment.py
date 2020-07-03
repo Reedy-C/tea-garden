@@ -46,12 +46,25 @@ class garden_game:
         
         self.clock = pygame.time.Clock()
 
-        global env
-        env = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
+        global env0
+        env0 = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
                      seed, display_off, garden_mode)
+        env0.env_id = 0
+        self.env_list = [env0]
+
+        if two_envs:
+            env1 = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
+                         seed, display_off, garden_mode)
+            env1.env_id = 1
+            self.env_list.append(env1)
             
-        global task
-        task = gt.garden_task(env, learning_on)
+        #global task0
+        task0 = gt.garden_task(env0, learning_on)
+        self.task_list = [task0]
+        if two_envs:
+            task1 = gt.garden_task(env1, learning_on)
+            self.task_list.append(task1)
+            
         self.filename = filename
         self.export_all = export_all
 
@@ -73,7 +86,7 @@ class garden_game:
             if max_ticks > 0:
                 if self.stepid > max_ticks:
                     if collect_data or self.export_all:
-                        for tako in env.tako_list:
+                        for tako in env0.tako_list:
                             dead_tako.append([tako, self.stepid])
                         if self.export_all:
                             export(dead_tako, self.filename)
@@ -81,9 +94,9 @@ class garden_game:
                             write_csv(self.filename, i, dead_tako)
                     return
             if max_gen > 0:
-                if env.highest_gen > max_gen:
+                if env0.highest_gen > max_gen:
                     if collect_data or self.export_all:
-                        for tako in env.tako_list:
+                        for tako in env0.tako_list:
                             dead_tako.append([tako, self.stepid])
                         if self.export_all:
                             export(dead_tako, self.filename)
@@ -102,7 +115,7 @@ class garden_game:
                                     for spr in self.all_sprites:
                                         spr.move_rect(1, 0)
                             elif event.key == K_RIGHT:
-                                if self.cam[0] < env.size - spr_width:
+                                if self.cam[0] < env0.size - spr_width:
                                     self.cam[0] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(-1, 0)
@@ -112,36 +125,45 @@ class garden_game:
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, 1)
                             elif event.key == K_DOWN:
-                                if self.cam[1] < env.size - spr_height:
+                                if self.cam[1] < env0.size - spr_height:
                                     self.cam[1] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, -1)
             #see if all are dead
-            if len(env.tako_list) == 0:
-                if self.export_all:
-                    export(dead_tako, self.filename)
-                if collect_data:
-                    if len(dead_tako) > 0:
-                        write_csv(self.filename, i, dead_tako)
-                print("Tako are dead :(")
-                return
+            end = False
+            for env in self.env_list:
+                if len(env.tako_list) == 0:
+                    end = True
+            if end == True:
+                for env in self.env_list:
+                    if self.export_all:
+                        export(dead_tako, self.filename)
+                    if collect_data:
+                        if len(dead_tako) > 0:
+                            write_csv(self.filename, i, dead_tako)
+                    print("Tako are dead :(")
+                    return
             #let experiment go a step
-            task.interact_and_learn()
+            for task in self.task_list:
+                task.interact_and_learn()
             if garden_mode == "Changing":
                 if self.stepid > 0 and self.stepid % 100000 == 0:
-                    env.switch_grasses()
+                    for env in self.env_list:
+                        env.switch_grasses()
             elif garden_mode == "Nutrition":
                 if self.stepid > 0 and self.stepid % 40000 == 0:
-                    env.switch_nutrition()
+                    for env in self.env_list:
+                        env.switch_nutrition()
             # see if any are dead
-            for tako in env.tako_list:
-                if tako.dead == True:
-                    env.garden_map[tako.y][tako.x] = Dirt(display_off,
-                                                          tako.x, tako.y)
-                    env.tako_list.remove(tako)
-                    if collect_data or self.export_all:
-                        dead_tako.append([tako, self.stepid])
-                    tako.kill()
+            for env in self.env_list:
+                for tako in env.tako_list:
+                    if tako.dead == True:
+                        env.garden_map[tako.y][tako.x] = Dirt(display_off,
+                                                              tako.x, tako.y)
+                        env.tako_list.remove(tako)
+                        if collect_data or self.export_all:
+                            dead_tako.append([tako, self.stepid, env.env_id])
+                        tako.kill()
             #check for data collection
             if self.stepid % 3000 == 0:
                 if self.export_all:
@@ -149,11 +171,13 @@ class garden_game:
                 if collect_data:
                     write_csv(self.filename, i, dead_tako)
             #now, update sprites, then draw them if using graphics
-            if env.new_sprites != []:
+            #TODO two_envs is currently not compatible with graphics
+            if env0.new_sprites != []:
                 self.get_new()
             self.widget_sprites.update()
-            for tako in env.tako_list:
-                tako.update()
+            for env in self.env_list:
+                for tako in env.tako_list:
+                    tako.update()
             if not display_off:
                 self.graphics_loop(scroll, font)
             self.stepid += 1
@@ -161,26 +185,26 @@ class garden_game:
     
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
-        for x in range(env.size):
-            for y in range(env.size):
-                if type(env.garden_map[y][x]) != tako.Tako:
-                    if type(env.garden_map[y][x]) != Dirt:
-                        self.widget_sprites.add(env.garden_map[y][x])
-        env.new_sprites = pygame.sprite.Group()
+        for x in range(env0.size):
+            for y in range(env0.size):
+                if type(env0.garden_map[y][x]) != tako.Tako:
+                    if type(env0.garden_map[y][x]) != Dirt:
+                        self.widget_sprites.add(env0.garden_map[y][x])
+        env0.new_sprites = pygame.sprite.Group()
         self.all_sprites = pygame.sprite.Group()
-        for tak in env.tako_list:
+        for tak in env0.tako_list:
             self.all_sprites.add(tak)
         for sprite in self.widget_sprites:
             self.all_sprites.add(sprite)
 
     def get_new(self):
-        for sprite in env.new_sprites:
+        for sprite in env0.new_sprites:
             if not isinstance(sprite, Dirt):
                 if not isinstance(sprite, tako.Tako):
                     self.widget_sprites.add(sprite)
                 else:
                     self.all_sprites.add(sprite)
-            env.new_sprites.remove(sprite)
+            env0.new_sprites.remove(sprite)
 
     def draw_onscreen(self):
         for spr in self.all_sprites:
@@ -189,8 +213,8 @@ class garden_game:
                     self.screen.blit(spr.image, spr.rect)
 
     def make_background(self):
-        for x in range(env.size):
-            for y in range(env.size):
+        for x in range(env0.size):
+            for y in range(env0.size):
                 img, rect = load_image("dirt.png")
                 self.background.blit(img, (x*50, y*50))
                 
@@ -221,7 +245,9 @@ def load_image(name, colorkey=None):
     return image, image.get_rect()
 
 #records data about an agent to a csv file on the agent's death
-def write_csv(filename, i, q, env_num=1):  
+#i = current iteration
+#q = queue of agents to write to csv in format [agent, step_id, env_id]
+def write_csv(filename, i, q):  
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
             j = 0
@@ -237,7 +263,7 @@ def write_csv(filename, i, q, env_num=1):
                     for b in tako.genome.healthchr_b:
                         healthchr_b.append(b.ident)
                 if type(tako.parents[0]) != str:
-                    writ.writerow([i, env_num, tako.ident, tako.parents[0].ident,
+                    writ.writerow([i, l[2], tako.ident, tako.parents[0].ident,
                                    tako.parents[1].ident, tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
                                    tako.accum_pain, tako.cod, l[1],
@@ -246,7 +272,7 @@ def write_csv(filename, i, q, env_num=1):
                                    tako.g - 1,
                                    healthchr_a, healthchr_b])
                 else:
-                    writ.writerow([i, env_num,tako.ident, tako.parents[0],
+                    writ.writerow([i, l[2], tako.ident, tako.parents[0],
                                    tako.parents[1],
                                    tako.age, tako.gen,
                                    len(tako.children), tako.mating_attempts,
@@ -434,7 +460,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                 with open(os.path.join("Data", filename), 'a', newline='') as\
                      csvfile:
                     writ = csv.writer(csvfile)
-                    writ.writerow(['iteration', 'env #', 'ID', 'parent1',
+                    writ.writerow(['iteration', 'env0 #', 'ID', 'parent1',
                                    'parent2', 'age', 'generation', '# children',
                                    'mating attempts', 'accum pain',
                                    'cause of death', 'timestep', 'mutations',
