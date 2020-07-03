@@ -54,10 +54,6 @@ class garden_game:
         self.filename = filename
         self.export_all = export_all
 
-        self.selected_Tako = None
-        self.neur = None
-        self.selected_Neuron = None
-
         self.stepid = 0
 
     def main_loop(self, max_ticks, max_gen, display_off, collect_data,
@@ -159,7 +155,7 @@ class garden_game:
                 tako.update()
             if not display_off:
                 self.graphics_loop(scroll, font)
-            self.stepid += 1      
+            self.stepid += 1
     
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
