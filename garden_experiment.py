@@ -52,12 +52,14 @@ class garden_game:
         env0.env_id = 0
         self.env_list = [env0]
 
+        ###TODO
+        ###figure out if I need to/how to fix the seed issue
         if two_envs:
             env1 = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
                          seed, display_off, garden_mode)
             env1.env_id = 1
             self.env_list.append(env1)
-            
+
         #global task0
         task0 = gt.garden_task(env0, learning_on)
         self.task_list = [task0]
@@ -86,23 +88,19 @@ class garden_game:
             if max_ticks > 0:
                 if self.stepid > max_ticks:
                     if collect_data or self.export_all:
-                        for tako in env0.tako_list:
-                            dead_tako.append([tako, self.stepid])
-                        if self.export_all:
-                            export(dead_tako, self.filename)
-                        if collect_data:
-                            write_csv(self.filename, i, dead_tako)
+                        for env in self.env_list:
+                            for tako in env.tako_list:
+                                dead_tako.append([tako, self.stepid, env.env_id])
+                            if self.export_all:
+                                export(dead_tako, self.filename)
+                            if collect_data:
+                                write_csv(self.filename, i, dead_tako)
                     return
+            end = False
             if max_gen > 0:
-                if env0.highest_gen > max_gen:
-                    if collect_data or self.export_all:
-                        for tako in env0.tako_list:
-                            dead_tako.append([tako, self.stepid])
-                        if self.export_all:
-                            export(dead_tako, self.filename)
-                        if collect_data:
-                            write_csv(self.filename, i, dead_tako)
-                    return
+                for env in self.env_list:
+                    if env.highest_gen > max_gen:
+                        end = True
             if not display_off:
                 for event in pygame.event.get():
                     if event.type == QUIT:
@@ -130,7 +128,6 @@ class garden_game:
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, -1)
             #see if all are dead
-            end = False
             for env in self.env_list:
                 if len(env.tako_list) == 0:
                     end = True
