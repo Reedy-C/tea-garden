@@ -11,6 +11,7 @@ from pygame.locals import *
 import csv
 from collections import deque
 import tako_genetics as tg
+import random
 
 class garden_game:
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
@@ -45,6 +46,8 @@ class garden_game:
             scroll = False
         
         self.clock = pygame.time.Clock()
+        self.two_envs = two_envs
+        self.migration_rate = migration_rate
 
         global env0
         env0 = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
@@ -54,7 +57,7 @@ class garden_game:
 
         ###TODO
         ###figure out if I need to/how to fix the seed issue
-        if two_envs:
+        if self.two_envs:
             env1 = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
                          seed, display_off, garden_mode)
             env1.env_id = 1
@@ -63,7 +66,7 @@ class garden_game:
         #global task0
         task0 = gt.garden_task(env0, learning_on)
         self.task_list = [task0]
-        if two_envs:
+        if self.two_envs:
             task1 = gt.garden_task(env1, learning_on)
             self.task_list.append(task1)
             
@@ -151,7 +154,7 @@ class garden_game:
                 if self.stepid > 0 and self.stepid % 40000 == 0:
                     for env in self.env_list:
                         env.switch_nutrition()
-            # see if any are dead
+            #see if any are dead
             for env in self.env_list:
                 for tako in env.tako_list:
                     if tako.dead == True:
@@ -161,6 +164,11 @@ class garden_game:
                         if collect_data or self.export_all:
                             dead_tako.append([tako, self.stepid, env.env_id])
                         tako.kill()
+            #then check for migration
+            if self.two_envs:
+                if self.migration_rate > 0 and self.stepid > 0:
+                    if self.stepid % 50000 == 0:
+                        self.migrate()
             #check for data collection
             if self.stepid % 3000 == 0:
                 if self.export_all:
@@ -231,12 +239,27 @@ class garden_game:
         #cap at x fps
         self.clock.tick(10)
 
+    #migrates agents between the two environments
+    def migrate(self):
+        from_0 = random.sample(self.env_list[0].tako_list,
+                               int(self.migration_rate * len(
+                                   self.env_list[0].tako_list)))
+        from_1 = random.sample(self.env_list[1].tako_list,
+                       int(self.migration_rate*len(
+                           self.env_list[1].tako_list)))
+        for i in from_0:
+            self.env_list[0].tako_list.remove(i)
+            self.env_list[1].tako_list.append(i)
+        for i in from_1:
+            self.env_list[1].tako_list.remove(i)
+            self.env_list[0].tako_list.append(i)
+
 def load_image(name, colorkey=None):
     fullname = os.path.join('img', name)
     image = pygame.image.load(fullname)
     image = image.convert()
     if colorkey is not None:
-        if colorkey is -1:
+        if colorkey == -1:
             colorkey = image.get_at((0,0))
         image.set_colorkey(colorkey, RLEACCEL)
     return image, image.get_rect()
@@ -554,8 +577,8 @@ def run_from_file(f):
     
     ints = ["x_loops", "max_ticks", "garden_size", "tako_number", "pop_max",
             "max_width", "max_height", "max_gen", "hla_genes",
-            "binary_health", "carrier_percentage", "migration_rate"]
-    floats = ["family_mod", "inbreed_lim"]
+            "binary_health", "carrier_percentage"]
+    floats = ["family_mod", "inbreed_lim", "migration_rate"]
     strs = ["genetic_mode", "garden_mode", "filename"]
     bools = ["display_off", "collect_data", "export_all", "rand_nets",
              "learning_on", "record_inbreeding", "two_envs"]
