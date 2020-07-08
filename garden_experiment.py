@@ -17,7 +17,7 @@ class garden_game:
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
                  display_off, learning_on, genetic_mode, rand_nets, garden_mode,
                  filename, export_all, family_mod, family_detection,
-                 two_envs, migration_rate, seed=None):
+                 two_envs, diff_envs, migration_rate, seed=None):
         pygame.init()
         global scroll
         if not display_off:
@@ -47,19 +47,28 @@ class garden_game:
         
         self.clock = pygame.time.Clock()
         self.two_envs = two_envs
+        self.diff_envs = diff_envs
         self.migration_rate = migration_rate
 
-        global env0
-        env0 = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
-                     seed, display_off, garden_mode)
+        #global env0
+        if self.diff_envs:
+            env0 = Garden(garden_size, tako_number, pop_max, genetic_mode,
+                          rand_nets, seed, display_off, garden_mode, food=0)
+        else:
+            env0 = Garden(garden_size, tako_number, pop_max, genetic_mode,
+                          rand_nets, seed, display_off, garden_mode)
         env0.env_id = 0
         self.env_list = [env0]
 
         ###TODO
         ###figure out if I need to/how to fix the seed issue
         if self.two_envs:
-            env1 = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
-                         seed, display_off, garden_mode)
+            if self.diff_envs:
+                env1 = Garden(garden_size, tako_number, pop_max, genetic_mode,
+                              rand_nets, seed, display_off, garden_mode, food=1)
+            else:
+                env1 = Garden(garden_size, tako_number, pop_max, genetic_mode,
+                              rand_nets, seed, display_off, garden_mode, food=1)
             env1.env_id = 1
             self.env_list.append(env1)
 
@@ -177,8 +186,9 @@ class garden_game:
                     write_csv(self.filename, i, dead_tako)
             #now, update sprites, then draw them if using graphics
             #TODO two_envs is currently not compatible with graphics
-            if env0.new_sprites != []:
-                self.get_new()
+            for env in self.env_list:
+                if env.new_sprites != []:
+                    self.get_new(env)
             self.widget_sprites.update()
             for env in self.env_list:
                 for tako in env.tako_list:
@@ -190,26 +200,27 @@ class garden_game:
     
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
-        for x in range(env0.size):
-            for y in range(env0.size):
-                if type(env0.garden_map[y][x]) != tako.Tako:
-                    if type(env0.garden_map[y][x]) != Dirt:
-                        self.widget_sprites.add(env0.garden_map[y][x])
-        env0.new_sprites = pygame.sprite.Group()
-        self.all_sprites = pygame.sprite.Group()
-        for tak in env0.tako_list:
-            self.all_sprites.add(tak)
-        for sprite in self.widget_sprites:
-            self.all_sprites.add(sprite)
+        for env in self.env_list:
+            for x in range(env.size):
+                for y in range(env.size):
+                    if type(env.garden_map[y][x]) != tako.Tako:
+                        if type(env.garden_map[y][x]) != Dirt:
+                            self.widget_sprites.add(env.garden_map[y][x])
+            env.new_sprites = pygame.sprite.Group()
+            self.all_sprites = pygame.sprite.Group()
+            for tak in env.tako_list:
+                self.all_sprites.add(tak)
+            for sprite in self.widget_sprites:
+                self.all_sprites.add(sprite)
 
-    def get_new(self):
-        for sprite in env0.new_sprites:
+    def get_new(self, env):
+        for sprite in env.new_sprites:
             if not isinstance(sprite, Dirt):
                 if not isinstance(sprite, tako.Tako):
                     self.widget_sprites.add(sprite)
                 else:
                     self.all_sprites.add(sprite)
-            env0.new_sprites.remove(sprite)
+            env.new_sprites.remove(sprite)
 
     def draw_onscreen(self):
         for spr in self.all_sprites:
@@ -218,8 +229,8 @@ class garden_game:
                     self.screen.blit(spr.image, spr.rect)
 
     def make_background(self):
-        for x in range(env0.size):
-            for y in range(env0.size):
+        for x in range(self.env_list[0].size):
+            for y in range(self.env_list[0].size):
                 img, rect = load_image("dirt.png")
                 self.background.blit(img, (x*50, y*50))
                 
@@ -446,7 +457,8 @@ def make_headers():
 #binary_health (int):
 #carrier_percentage (int):
 #two_envs (bool):
-#migration_rate (int): 
+#diff_envs (bools):
+#migration_rate (int):
 def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    tako_number=1, pop_max=30, max_width=1800, max_height=900,
                    collect_data=True, export_all=False, rand_nets=False,
@@ -454,7 +466,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    seeds=None, garden_mode="Diverse Static",
                    family_detection=None, family_mod=0, record_inbreeding=True,
                    inbreed_lim = 1.1, hla_genes=0, binary_health=0,
-                   carrier_percentage=40, two_envs=False,
+                   carrier_percentage=40, two_envs=False, diff_envs=False,
                    migration_rate=0, filename=""):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
@@ -529,13 +541,13 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                             max_height, display_off, learning_on, genetic_mode,
                             rand_nets, garden_mode, filename,
                             export_all, family_mod, family_detection,
-                            two_envs, migration_rate,
+                            two_envs, diff_envs, migration_rate,
                             seeds[i])
         else:
             g = garden_game(garden_size, tako_number, pop_max, max_width,
                             max_height, display_off, learning_on, genetic_mode,
                             rand_nets, garden_mode, filename, export_all,
-                            family_mod, family_detection, two_envs,
+                            family_mod, family_detection, two_envs, diff_envs,
                             migration_rate)
         if not display_off:
             main_window = g
@@ -556,7 +568,7 @@ def run_from_file(f):
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
     record_inbreeding=True;inbreed_lim=1.1;filename="default file"
     hla_genes=0;binary_health=0;carrier_percentage=40;two_envs=False;
-    migration_rate=0
+    diff_envs=False;migration_rate=0
 
     
     atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
@@ -572,7 +584,7 @@ def run_from_file(f):
                 "inbreed_lim": inbreed_lim, "filename": filename,
                 "hla_genes": hla_genes, "binary_health": binary_health,
                 "carrier_percentage": carrier_percentage,
-                "two_envs": two_envs,
+                "two_envs": two_envs, "diff_envs": diff_envs,
                 "migration_rate": migration_rate}
     
     ints = ["x_loops", "max_ticks", "garden_size", "tako_number", "pop_max",
@@ -581,7 +593,7 @@ def run_from_file(f):
     floats = ["family_mod", "inbreed_lim", "migration_rate"]
     strs = ["genetic_mode", "garden_mode", "filename"]
     bools = ["display_off", "collect_data", "export_all", "rand_nets",
-             "learning_on", "record_inbreeding", "two_envs"]
+             "learning_on", "record_inbreeding", "two_envs", "diff_envs"]
     
     with open(f) as exp_file:
         for line in exp_file:
@@ -608,6 +620,7 @@ def run_from_file(f):
                                atr_dict["carrier_percentage"],
                                atr_dict["filename"],
                                atr_dict["two_envs"],
+                               atr_dict["diff_envs"],
                                atr_dict["migration_rate"])
                 #reset defaults
                 atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
@@ -624,7 +637,8 @@ def run_from_file(f):
                     "inbreed_lim": inbreed_lim, "filename": filename,
                     "hla_genes": hla_genes, "binary_health": binary_health,
                     "carrier_percentage": carrier_percentage,
-                    "two_envs": two_envs, "migration_rate": migration_rate}
+                    "two_envs": two_envs, "diff_envs": diff_envs,
+                    "migration_rate": migration_rate}
             else:
                 #get rid of newline character
                 line = line[:-1]
@@ -660,7 +674,8 @@ def run_from_file(f):
                    atr_dict["record_inbreeding"],
                    atr_dict["inbreed_lim"], atr_dict["hla_genes"],
                    atr_dict["binary_health"], atr_dict["carrier_percentage"],
-                   atr_dict["two_envs"], atr_dict["migration_rate"],
+                   atr_dict["two_envs"], atr_dict["diff_envs"],
+                   atr_dict["migration_rate"],
                    atr_dict["filename"])
     
        
