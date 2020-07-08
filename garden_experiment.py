@@ -251,6 +251,7 @@ class garden_game:
         self.clock.tick(10)
 
     #migrates agents between the two environments
+    #run every 50k ticks
     def migrate(self):
         from_0 = random.sample(self.env_list[0].tako_list,
                                int(self.migration_rate * len(
@@ -453,12 +454,15 @@ def make_headers():
 #                          b/w parents of an agent
 #inbred_lim (float): if set to b/w 0 and 1, will only allow agents to live if
 #                    the genetic relationship b/w parents is < inbred_lim
-#hla_genes (int):
-#binary_health (int):
-#carrier_percentage (int):
-#two_envs (bool):
-#diff_envs (bools):
-#migration_rate (int):
+#hla_genes (int): # of HLA-inspired genes in health chromosomes
+#binary_health (int): # of binary genetic disorder genes in health chromosomes
+#carrier_percentage (int): % chance for an initial agent to be a disorder
+#                           carrier for every given health gene (binary only)
+#two_envs (bool): when True, two separate environments are created
+#diff_envs (bools): when True and when two_envs is True, each env has
+#                   a different food source
+#migration_rate (float): when True and when two_envs is true, the migration
+#                       rate b/w the two environments (done every 50k ticks)
 def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    tako_number=1, pop_max=30, max_width=1800, max_height=900,
                    collect_data=True, export_all=False, rand_nets=False,
