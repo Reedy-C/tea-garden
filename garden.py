@@ -81,15 +81,18 @@ class Garden:
         item.update_rect()
         self.new_sprites.add(item)
 
-    def add_creature(self):
+    def add_creature(self, t=None):
         while True:
             x = random.randrange(0, (self.size))
             y = random.randrange(0, (self.size))
             if isinstance(self.garden_map[y][x], Dirt):
                 break
         direction = random.randrange(0,3)
-        Tak = tako.Tako.default_tako(direction, self.display_off, x, y,
-                                self.genetic_type, self.rand_net)
+        if t != None:
+            Tak = t
+        else:
+            Tak = tako.Tako.default_tako(direction, self.display_off, x, y,
+                                    self.genetic_type, self.rand_net)
         self.garden_map[y][x].kill()
         self.garden_map[y][x] = Tak
         self.tako_list.append(Tak)

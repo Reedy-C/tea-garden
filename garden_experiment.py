@@ -50,7 +50,6 @@ class garden_game:
         self.diff_envs = diff_envs
         self.migration_rate = migration_rate
 
-        #global env0
         if self.diff_envs:
             env0 = Garden(garden_size, tako_number, pop_max, genetic_mode,
                           rand_nets, seed, display_off, garden_mode, food=0)
@@ -72,7 +71,6 @@ class garden_game:
             env1.env_id = 1
             self.env_list.append(env1)
 
-        #global task0
         task0 = gt.garden_task(env0, learning_on)
         self.task_list = [task0]
         if self.two_envs:
@@ -177,7 +175,7 @@ class garden_game:
             if self.two_envs:
                 if self.migration_rate > 0 and self.stepid > 0:
                     if self.stepid % 50000 == 0:
-                        self.migrate()
+                        self.migrate(display_off)
             #check for data collection
             if self.stepid % 3000 == 0:
                 if self.export_all:
@@ -252,19 +250,23 @@ class garden_game:
 
     #migrates agents between the two environments
     #run every 50k ticks
-    def migrate(self):
+    def migrate(self, display_off):
         from_0 = random.sample(self.env_list[0].tako_list,
                                int(self.migration_rate * len(
                                    self.env_list[0].tako_list)))
         from_1 = random.sample(self.env_list[1].tako_list,
                        int(self.migration_rate*len(
                            self.env_list[1].tako_list)))
-        for i in from_0:
-            self.env_list[0].tako_list.remove(i)
-            self.env_list[1].tako_list.append(i)
-        for i in from_1:
-            self.env_list[1].tako_list.remove(i)
-            self.env_list[0].tako_list.append(i)
+        for t in from_0:
+            self.env_list[0].tako_list.remove(t)
+            self.env_list[1].garden_map[tako.y][tako.x] = Dirt(display_off,
+                                                              t.x, t.y)
+            self.env_list[1].add_creature(t)
+        for t in from_1:
+            self.env_list[1].tako_list.remove(t)
+            self.env_list[0].garden_map[tako.y][tako.x] = Dirt(display_off,
+                                                              t.x, t.y)
+            self.env_list[0].add_creature(t)
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('img', name)
