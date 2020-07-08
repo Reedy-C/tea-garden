@@ -86,6 +86,7 @@ class garden_game:
                   garden_mode, i):
         if not display_off:
             self.make_background()
+            self.current_env = 0
         self.load_sprites()
         if not display_off:
             pygame.display.flip()
@@ -116,6 +117,13 @@ class garden_game:
                     if event.type == QUIT:
                         return
                     elif event.type == KEYDOWN:
+                        if self.two_envs:
+                            if event.key == K_s:
+                                if self.current_env == 0:
+                                    self.current_env = 1
+                                else:
+                                    self.current_env = 0
+                                self.load_sprites()
                         if scroll:
                             if event.key == K_LEFT:
                                 if self.cam[0] > 0:
@@ -183,7 +191,6 @@ class garden_game:
                 if collect_data:
                     write_csv(self.filename, i, dead_tako)
             #now, update sprites, then draw them if using graphics
-            #TODO two_envs is currently not compatible with graphics
             for env in self.env_list:
                 if env.new_sprites != []:
                     self.get_new(env)
@@ -198,18 +205,18 @@ class garden_game:
     
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
-        for env in self.env_list:
-            for x in range(env.size):
-                for y in range(env.size):
-                    if type(env.garden_map[y][x]) != tako.Tako:
-                        if type(env.garden_map[y][x]) != Dirt:
-                            self.widget_sprites.add(env.garden_map[y][x])
-            env.new_sprites = pygame.sprite.Group()
-            self.all_sprites = pygame.sprite.Group()
-            for tak in env.tako_list:
-                self.all_sprites.add(tak)
-            for sprite in self.widget_sprites:
-                self.all_sprites.add(sprite)
+        env = self.env_list[self.current_env]
+        for x in range(env.size):
+            for y in range(env.size):
+                if type(env.garden_map[y][x]) != tako.Tako:
+                    if type(env.garden_map[y][x]) != Dirt:
+                        self.widget_sprites.add(env.garden_map[y][x])
+        env.new_sprites = pygame.sprite.Group()
+        self.all_sprites = pygame.sprite.Group()
+        for tak in env.tako_list:
+            self.all_sprites.add(tak)
+        for sprite in self.widget_sprites:
+            self.all_sprites.add(sprite)
 
     def get_new(self, env):
         for sprite in env.new_sprites:
@@ -241,8 +248,8 @@ class garden_game:
         #oh, and display which step we're on
         if pygame.font:
             text = font.render(str(self.stepid), 1, (255, 255, 255))
-            textpos = text.get_rect(centerx=
-                                    (self.screen.get_width() * 0.5))
+            textpos = text.get_rect(centerx = int(
+                                        (self.screen.get_width() * 0.5)))
             self.screen.blit(text, textpos)
         pygame.display.flip()
         #cap at x fps
