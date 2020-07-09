@@ -86,7 +86,7 @@ class garden_game:
                   garden_mode, i):
         if not display_off:
             self.make_background()
-            self.current_env = 0
+        self.current_env = 0
         self.load_sprites()
         if not display_off:
             pygame.display.flip()
@@ -310,7 +310,7 @@ def write_csv(filename, i, q):
                                    tako.accum_pain, tako.cod, l[1],
                                    tako.genome.mut_record, tako.parent_degree,
                                    tako.parent_genoverlap,
-                                   tako.g - 1,
+                                   tako.genome.disorder_count,
                                    healthchr_a, healthchr_b])
                 else:
                     writ.writerow([i, l[2], tako.ident, tako.parents[0],
@@ -320,7 +320,7 @@ def write_csv(filename, i, q):
                                    tako.accum_pain, tako.cod, l[1],
                                    tako.genome.mut_record, tako.parent_degree,
                                    tako.parent_genoverlap,
-                                   tako.g - 1,
+                                   tako.genome.disorder_count,
                                    healthchr_a, healthchr_b])
                 j += 1
             
