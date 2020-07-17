@@ -295,33 +295,42 @@ def write_csv(filename, i, q):
             k = len(q)
             while j < k:
                 l = q.popleft()
-                tako = l[0]
+                tak = l[0]
                 healthchr_a = []
                 healthchr_b = []
-                if type(tako.genome) == tg.health_genome:
-                    for a in tako.genome.healthchr_a:
+                if isinstance(tak.genome, tg.health_genome):
+                    for a in tak.genome.healthchr_a:
                         healthchr_a.append(a.ident)
-                    for b in tako.genome.healthchr_b:
+                    for b in tak.genome.healthchr_b:
                         healthchr_b.append(b.ident)
-                if type(tako.parents[0]) != str:
-                    writ.writerow([i, l[2], tako.ident, tako.parents[0].ident,
-                                   tako.parents[1].ident, tako.age, tako.gen,
-                                   len(tako.children), tako.mating_attempts,
-                                   tako.accum_pain, tako.cod, l[1],
-                                   tako.genome.mut_record, tako.parent_degree,
-                                   tako.parent_genoverlap,
-                                   tako.genome.disorder_count,
-                                   healthchr_a, healthchr_b])
+                pref = None
+                if isinstance(tak.genome, tg.phen_genome):
+                    pref = [tak.genome.phen_gene_a.weight,
+                            tak.genome.phen_gene_b.weight,
+                            tak.pref]
+                if type(tak.parents[0]) != str:
+                    writ.writerow([i, l[2], tak.ident, tak.parents[0].ident,
+                                   tak.parents[1].ident, tak.age, tak.gen,
+                                   len(tak.children), tak.mating_attempts,
+                                   tak.accum_pain, tak.cod, l[1],
+                                   tak.genome.mut_record, tak.parent_degree,
+                                   tak.parent_genoverlap,
+                                   (tak.genome.disorder_count if \
+                                    isinstance(tak.genome, tg.health_genome)\
+                                    else ""),
+                                   healthchr_a, healthchr_b, pref])
                 else:
-                    writ.writerow([i, l[2], tako.ident, tako.parents[0],
-                                   tako.parents[1],
-                                   tako.age, tako.gen,
-                                   len(tako.children), tako.mating_attempts,
-                                   tako.accum_pain, tako.cod, l[1],
-                                   tako.genome.mut_record, tako.parent_degree,
-                                   tako.parent_genoverlap,
-                                   tako.genome.disorder_count,
-                                   healthchr_a, healthchr_b])
+                    writ.writerow([i, l[2], tak.ident, tak.parents[0],
+                                   tak.parents[1],
+                                   tak.age, tak.gen,
+                                   len(tak.children), tak.mating_attempts,
+                                   tak.accum_pain, tak.cod, l[1],
+                                   tak.genome.mut_record, tak.parent_degree,
+                                   tak.parent_genoverlap,
+                                   (tak.genome.disorder_count if \
+                                    isinstance(tak.genome, tg.health_genome)\
+                                    else ""),
+                                   healthchr_a, healthchr_b, pref])
                 j += 1
             
 
@@ -472,6 +481,8 @@ def make_headers():
 #                   a different food source
 #migration_rate (float): when True and when two_envs is true, the migration
 #                       rate b/w the two environments (done every 50k ticks)
+#phen_pref (bool): when True, gives agents evolving phenotype
+#                       match preference
 def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    tako_number=1, pop_max=30, max_width=1800, max_height=900,
                    collect_data=True, export_all=False, rand_nets=False,
@@ -480,7 +491,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    family_detection=None, family_mod=0, record_inbreeding=True,
                    inbreed_lim = 1.1, hla_genes=0, binary_health=0,
                    carrier_percentage=40, two_envs=False, diff_envs=False,
-                   migration_rate=0, filename=""):
+                   migration_rate=0, phen_pref=False, filename=""):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
@@ -505,13 +516,13 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                 with open(os.path.join("Data", filename), 'a', newline='') as\
                      csvfile:
                     writ = csv.writer(csvfile)
-                    writ.writerow(['iteration', 'env0 #', 'ID', 'parent1',
+                    writ.writerow(['iteration', 'env #', 'ID', 'parent1',
                                    'parent2', 'age', 'generation', '# children',
                                    'mating attempts', 'accum pain',
                                    'cause of death', 'timestep', 'mutations',
                                    'parent_degree', 'parent_genoverlap',
                                    '# disorders',
-                                   'health a', 'health b'])
+                                   'health a', 'health b', 'preference'])
             else:
                 with open(os.path.join("Data", filename), newline='') as\
                       csvfile:
@@ -538,6 +549,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
     tako.hla_genes = hla_genes
     tako.binary_health = binary_health
     tako.carrier_percentage = carrier_percentage
+    tako.phen_pref = phen_pref
     
     loop_limit = x_loops
     if loop_limit < 1:
@@ -581,7 +593,7 @@ def run_from_file(f):
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
     record_inbreeding=True;inbreed_lim=1.1;filename="default file"
     hla_genes=0;binary_health=0;carrier_percentage=40;two_envs=False;
-    diff_envs=False;migration_rate=0
+    diff_envs=False;migration_rate=0;phen_pref=False
 
     
     atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
@@ -598,7 +610,7 @@ def run_from_file(f):
                 "hla_genes": hla_genes, "binary_health": binary_health,
                 "carrier_percentage": carrier_percentage,
                 "two_envs": two_envs, "diff_envs": diff_envs,
-                "migration_rate": migration_rate}
+                "migration_rate": migration_rate, "phen_pref": phen_pref}
     
     ints = ["x_loops", "max_ticks", "garden_size", "tako_number", "pop_max",
             "max_width", "max_height", "max_gen", "hla_genes",
@@ -606,7 +618,8 @@ def run_from_file(f):
     floats = ["family_mod", "inbreed_lim", "migration_rate"]
     strs = ["genetic_mode", "garden_mode", "filename"]
     bools = ["display_off", "collect_data", "export_all", "rand_nets",
-             "learning_on", "record_inbreeding", "two_envs", "diff_envs"]
+             "learning_on", "record_inbreeding", "two_envs", "diff_envs",
+             "phen_pref"]
     
     with open(f) as exp_file:
         for line in exp_file:
@@ -634,7 +647,8 @@ def run_from_file(f):
                                atr_dict["filename"],
                                atr_dict["two_envs"],
                                atr_dict["diff_envs"],
-                               atr_dict["migration_rate"])
+                               atr_dict["migration_rate"],
+                               atr_dict["phen_pref"])
                 #reset defaults
                 atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
                     "display_off": display_off, "garden_size": garden_size,
@@ -651,7 +665,7 @@ def run_from_file(f):
                     "hla_genes": hla_genes, "binary_health": binary_health,
                     "carrier_percentage": carrier_percentage,
                     "two_envs": two_envs, "diff_envs": diff_envs,
-                    "migration_rate": migration_rate}
+                    "migration_rate": migration_rate, "phen_pref": phen_pref}
             else:
                 #get rid of newline character
                 line = line[:-1]
@@ -688,7 +702,7 @@ def run_from_file(f):
                    atr_dict["inbreed_lim"], atr_dict["hla_genes"],
                    atr_dict["binary_health"], atr_dict["carrier_percentage"],
                    atr_dict["two_envs"], atr_dict["diff_envs"],
-                   atr_dict["migration_rate"],
+                   atr_dict["migration_rate"], atr_dict["phen_pref"],
                    atr_dict["filename"])
     
        
