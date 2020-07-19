@@ -266,12 +266,12 @@ class garden_game:
                            self.env_list[1].tako_list)))
         for t in from_0:
             self.env_list[0].tako_list.remove(t)
-            self.env_list[1].garden_map[tako.y][tako.x] = Dirt(display_off,
+            self.env_list[1].garden_map[t.y][t.x] = Dirt(display_off,
                                                               t.x, t.y)
             self.env_list[1].add_creature(t)
         for t in from_1:
             self.env_list[1].tako_list.remove(t)
-            self.env_list[0].garden_map[tako.y][tako.x] = Dirt(display_off,
+            self.env_list[0].garden_map[t.y][t.x] = Dirt(display_off,
                                                               t.x, t.y)
             self.env_list[0].add_creature(t)
 
