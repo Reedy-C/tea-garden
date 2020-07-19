@@ -6,6 +6,7 @@ import numpy
 
 
 family_detection = None
+phen_pref = False
 
 class garden_task:
 
@@ -77,6 +78,9 @@ class garden_task:
             #find how related they are if need be
             if family_detection != None:
                 nobs.append(tako.check_relations(other_tako))
+            #or how closely matched their phenotypes are
+            elif phen_pref:
+                nobs.append(tako.compare_phenotypes(other_tako))
             else:
                 nobs.append(0)
         else:

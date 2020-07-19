@@ -550,6 +550,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
     tako.binary_health = binary_health
     tako.carrier_percentage = carrier_percentage
     tako.phen_pref = phen_pref
+    gt.phen_pref = phen_pref
     
     loop_limit = x_loops
     if loop_limit < 1:

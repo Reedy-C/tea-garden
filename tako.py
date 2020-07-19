@@ -155,6 +155,7 @@ class Tako(Widget):
                 self.pref = None
             if phen_pref:
                 self.expressed = None
+                self.phen_dict = {}
             self.data = self.solver.net.blobs['data'].data
             self.stm_input = self.solver.net.blobs['stm_input'].data
         
@@ -413,10 +414,6 @@ class Tako(Widget):
             if self.desire >= 100:
                 #if phenotype matching preferences are on
                 if phen_pref:
-                    if self.expressed == None:
-                        self.get_expressed()
-                    if tak.expressed == None:
-                        tak.get_expressed()
                     match = self.compare_phenotypes(tak)
                     chance = 0.5+(0.5*(-1 + match*2)*self.pref)
                     if random.random() <= chance:
@@ -428,9 +425,7 @@ class Tako(Widget):
                         return [("amuse", 45), ("fullness", -10),
                                 ("desire", -150)]
                     else:
-                        #TODO; opcost too harsh?
                         return ("amuse", -1)
-                        Tako.mated_opcost(self)
                 #else just go as normal
                 else:
                     self.dez = 0
@@ -626,12 +621,21 @@ class Tako(Widget):
     #helper function for mated when phenotype matching preferences is True
     #simply gets the percentage overlap between the two phenotypes
     def compare_phenotypes(self, tak):
+        if self.expressed == None:
+            self.get_expressed()
+        if tak.expressed == None:
+            tak.get_expressed()
+        if tak.ident in self.phen_dict:
+            return self.phen_dict[tak.ident]
         matches = 0
         for i in range(len(self.expressed)):
             if self.expressed[i] == tak.expressed[i]:
                 matches += 1
         #120 sets of weight genes + # health genes + 1 pref gene
-        return matches/(120 + hla_genes + binary_health + 1)
+        m = matches/(120 + hla_genes + binary_health + 1)
+        self.phen_dict[tak.ident] = m
+        tak.phen_dict[self.ident] = m
+        return m
 
     #I didn't want to assign a death age at birth
     #and wanted a skewed normal distribution (as humans have)
