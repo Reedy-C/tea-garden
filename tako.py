@@ -675,15 +675,16 @@ class STMlayer(caffe.Layer):
         top[0].reshape(*bottom[0].data.shape)
         self.act = bottom[0].data[0]
         self.ftop = top[0].data[0]
+        self.action = 0
 
     def forward(self, bottom, top):
         #action # is fed directly in
-        action = self.act[0]
+        #action = self.act[0]
         #this was used for learning
         #currently not used
         #if action >= 0:
         for n in (0, 1, 2, 3, 4, 5):
-            if n == action:
+            if n == self.action:
                 #means that this was the selected action
                 self.ftop[n] += 1
             else:

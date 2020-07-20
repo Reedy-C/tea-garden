@@ -100,7 +100,8 @@ class garden_task:
                 tako.data[...] = observation
                 if self.learning_on:
                     tako.solver.net.blobs['reward'].data[...] = 0
-                tako.stm_input[...] = tako.last_action
+                #tako.stm_input[...] = tako.last_action
+                tako.solver.net.layers[1].action = tako.last_action
                 #forward and get action
                 act = tako.solver.net.forward()['action'][0]
                 action = self.find_action(act)
