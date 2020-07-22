@@ -467,6 +467,7 @@ def preferences(fs, keep_inbreds):
     colors = prop_cycle.by_key()['color']
     count=0
     #create graphs
+    #first scatter
     for f in fs:
         lab = f[leading_remove:-4]
         name = f[leading_remove:]
@@ -477,14 +478,37 @@ def preferences(fs, keep_inbreds):
             name = name + " 0"
         plt.scatter(scatter_x, scatter_y, s = 25, label=lab,
                     color=colors[count])
+        count += 1
+        if separate_envs and len(f) > 1:
+            plt.scatter(scatter_x_1, scatter_y_1, s = 25,
+                        label=lab_1, color=colors[count])
+            count += 1
+    plt.xticks(np.arange(0, gen_limit + 1, 5))
+    plt.yticks(np.arange(-1, 1.1, .2))
+    plt.xlabel("Preferences by gen, inbreds kept = " +
+               str(keep_inbreds))
+    plt.ylabel("Preference")
+    plt.legend(facecolor="white", edgecolor="black",
+               framealpha=1, frameon=True)
+    plt.savefig("Preference, inbreds kept " + str(keep_inbreds)
+                + ".png")
+    plt.clf()
+    count=0
+    #next averages
+    for f in fs:
+        lab = f[leading_remove:-4]
+        name = f[leading_remove:]
+        if separate_envs:
+            lab_1 = lab + " 1"
+            name_1 = name + " 1"
+            lab = lab + " 0"
+            name = name + " 0"
         plt.plot(np.arange(0, gen_limit+1, 1), results[name],
                  color='black', linewidth=4)
         plt.plot(np.arange(0, gen_limit+1, 1), results[name],
                  label=lab, color=colors[count], linewidth=2)
         count += 1
         if separate_envs and len(f) > 1:
-            plt.scatter(scatter_x_1, scatter_y_1, s = 25,
-                        label=lab_1, color=colors[count])
             plt.plot(np.arange(0, gen_limit+1, 1), results_1[name_1],
                      color='black', linewidth=4)
             plt.plot(np.arange(0, gen_limit+1, 1), results_1[name_1],
@@ -492,21 +516,21 @@ def preferences(fs, keep_inbreds):
             count += 1
     plt.xticks(np.arange(0, gen_limit + 1, 5))
     plt.yticks(np.arange(-1, 1.1, .2))
-    plt.xlabel("Preference by gen, inbreds kept = " +
+    plt.xlabel("Avg. preference by gen, inbreds kept = " +
                str(keep_inbreds))
-    plt.ylabel("Pref gene")
+    plt.ylabel("Avg. preference")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Preference, inbreds kept " + str(keep_inbreds)
+    plt.savefig("Average preference, inbreds kept " + str(keep_inbreds)
                 + ".png")
     plt.clf()
 
-##nums(file_list, True)
-##lifespan(file_list, True)
-##mas(file_list, True)
-##surv(file_list, True)
-##parent_overlaps(file_list, False)
-##nei_diversity(file_list, True)
-##disorders(file_list, True)
+nums(file_list, True)
+lifespan(file_list, True)
+mas(file_list, True)
+surv(file_list, True)
+parent_overlaps(file_list, False)
+nei_diversity(file_list, True)
+disorders(file_list, True)
 preferences(file_list, True)
 print("Finished producing graphs")
