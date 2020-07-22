@@ -400,24 +400,48 @@ def preferences(fs, keep_inbreds):
     results = {}
     scatter_x = []
     scatter_y = []
+    if separate_envs:
+        results_1 = {}
+        scatter_x_1 = []
+        scatter_y_1 = []
     for f in fs:
         pref_dict = {}
+        if separate_envs:
+            pref_dict_1 = {}
         for a in np.arange(0, gen_limit+1):
             pref_dict[a] = []
+            if separate_envs:
+                pref_dict_1[a] = []
+        #collect data
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
                 if row["iteration"] == its_dict[f]:
                     if int(row["generation"]) <= gen_limit:
-                        if not keep_inbreds:
-                            if row["cause of death"] != "Inbred":
-                                r = float(row["preference"].split(",")[2][1:-2])
-                                pref_dict[int(row["generation"])].append(r)
+                        if separate_envs and row["env #"] == 1:
+                            if not keep_inbreds:
+                                if row["cause of death"] != "Inbred":
+                                    r = float(row["preference"].split(\
+                                        ",")[2][1:-1])
+                                    pref_dict_1[int(row["generation"])].append(\
+                                        r)
+                            else:
+                                r = float(row["preference"].split(",")[2][1:-1])
+                                pref_dict_1[int(row["generation"])].append(r)
                         else:
-                            r = float(row["preference"].split(",")[2][1:-2])
-                            pref_dict[int(row["generation"])].append(r)
+                            if not keep_inbreds:
+                                if row["cause of death"] != "Inbred":
+                                    r = float(row["preference"].split(\
+                                        ",")[2][1:-1])
+                                    pref_dict[int(row["generation"])].append(r)
+                            else:
+                                r = float(row["preference"].split(",")[2][1:-1])
+                                pref_dict[int(row["generation"])].append(r)
 
         avgs = []
+        if separate_envs:
+            avgs_1 = []
+        #compute averages and make scatterplot coordinates
         for a in np.arange(0, gen_limit+1):
             if len(pref_dict[a]) != 0:
                 avgs.append(sum(pref_dict[a])/len(pref_dict[a]))
@@ -426,25 +450,52 @@ def preferences(fs, keep_inbreds):
                     scatter_y.append(g)
             else:
                 avgs.append(0)
-        results[f[leading_remove:]] = avgs
+            if separate_envs:
+                if len(pref_dict_1[a]) != 0:
+                    avgs.append(sum(pref_dict_1[a])/len(pref_dict_1[a]))
+                    for g in pref_dict_1[a]:
+                        scatter_x_1.append(a)
+                        scatter_y_1.append(g)
+                else:
+                    avgs_1.append(0)
+        if not separate_envs:
+            results[f[leading_remove:]] = avgs
+        else:
+            results[f[leading_remove:] + " 0"] = avgs
+            results_1[f[leading_remove:] + " 1"] = avgs
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
     count=0
+    #create graphs
     for f in fs:
-        plt.scatter(scatter_x, scatter_y, label=f[leading_remove:-4],
-                    color=colors[count])
-        plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
+        lab = f[leading_remove:-4]
+        name = f[leading_remove:]
+        if separate_envs:
+            lab_1 = lab + " 1"
+            name_1 = name + " 1"
+            lab = lab + " 0"
+            name = name + " 0"
+        plt.scatter(scatter_x, scatter_y, s = 25, label=lab, color=colors[count])
+        plt.plot(np.arange(0, gen_limit+1, 1), results[name],
                  color='black', linewidth=4)
-        plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
-                 label=f[leading_remove:-4], color=colors[count], linewidth=2)
-        count+=1
+        plt.plot(np.arange(0, gen_limit+1, 1), results[name],
+                 label=lab, color=colors[count], linewidth=2)
+        count += 1
+        if separate_envs and len(f) > 1:
+            plt.scatter(scatter_x_1, scatter_y_1, s = 25,
+                        label=lab_1, color=colors[count])
+            plt.plot(np.arange(0, gen_limit+1, 1), results_1[name_1],
+                     color='black', linewidth=4)
+            plt.plot(np.arange(0, gen_limit+1, 1), results_1[name_1],
+                     label=lab_1, color=colors[count], linewidth=2)
+            count += 1
     plt.xticks(np.arange(0, gen_limit + 1, 5))
-    plt.xlabel("Pref gene by gen, inbreds kept = " +
+    plt.xlabel("Preference by gen, inbreds kept = " +
                str(keep_inbreds))
     plt.ylabel("Pref gene")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Pref gene, inbreds kept " + str(keep_inbreds)
+    plt.savefig("Preference, inbreds kept " + str(keep_inbreds)
                 + ".png")
     plt.clf()
 
