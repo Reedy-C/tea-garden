@@ -125,13 +125,17 @@ class garden_game:
                                     self.current_env = 0
                                 self.load_sprites()
                         if scroll:
+                            #TODO this glitchy with two envs and switching
+                            #TODO... also seems to be some problems with agents
+                            #walking through items :/
                             if event.key == K_LEFT:
                                 if self.cam[0] > 0:
                                     self.cam[0] -= 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(1, 0)
                             elif event.key == K_RIGHT:
-                                if self.cam[0] < env0.size - spr_width:
+                                if self.cam[0] < (self.env_list[0].size -
+                                                  spr_width):
                                     self.cam[0] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(-1, 0)
@@ -141,7 +145,8 @@ class garden_game:
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, 1)
                             elif event.key == K_DOWN:
-                                if self.cam[1] < env0.size - spr_height:
+                                if self.cam[1] < (self.env_list[0].size -
+                                                  spr_height):
                                     self.cam[1] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, -1)
@@ -497,7 +502,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
 
-    
+    i = 0
     #create csv files
     if collect_data or export_all:
         if filename == "":
@@ -510,7 +515,6 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
         if not os.path.exists("Data"):
             os.makedirs("Data")
 
-        i = 0
         if collect_data:
             if not os.path.exists(os.path.join("Data", filename)):
                 with open(os.path.join("Data", filename), 'a', newline='') as\
