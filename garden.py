@@ -6,7 +6,7 @@ from pygame import sprite
 class Garden:
 
     def __init__(self, size, num_tako, pop_max, genetic_type, rand_net, seed,
-                 display_off, garden_mode):
+                 display_off, garden_mode, food=None):
         #create the map and add toy, grass, rock, creature
         if size < 3:
             raise ValueError
@@ -21,9 +21,9 @@ class Garden:
             random.seed(seed)
         self.display_off = display_off
         self.garden_mode = garden_mode
-        self.reset()
+        self.reset(food)
  
-    def reset(self):
+    def reset(self, food):
         self.garden_map = [[Dirt(self.display_off) for x in range(self.size)]
                            for x in range(self.size)]
         self.tako_list = []
@@ -37,8 +37,15 @@ class Garden:
             ball += 1
         gras = 0
         while (gras <= (.25 * (self.size**2))):
+            #for use with two separate environments
+            if food == 0:
+                self.add_item(Grass(self.display_off))
+                gras += 1
+            elif food == 1:
+                self.add_item(Grass2(self.display_off, poison=False))
+                gras += 1               
             #two types of grass
-            if (self.garden_mode == "Diverse Static" or
+            elif (self.garden_mode == "Diverse Static" or
                 self.garden_mode == "Nutrition"):
                 l = random.randint(0, 1)
                 if l == 1:
@@ -74,15 +81,18 @@ class Garden:
         item.update_rect()
         self.new_sprites.add(item)
 
-    def add_creature(self):
+    def add_creature(self, t=None):
         while True:
             x = random.randrange(0, (self.size))
             y = random.randrange(0, (self.size))
             if isinstance(self.garden_map[y][x], Dirt):
                 break
         direction = random.randrange(0,3)
-        Tak = tako.Tako.default_tako(direction, self.display_off, x, y,
-                                self.genetic_type, self.rand_net)
+        if t != None:
+            Tak = t
+        else:
+            Tak = tako.Tako.default_tako(direction, self.display_off, x, y,
+                                    self.genetic_type, self.rand_net)
         self.garden_map[y][x].kill()
         self.garden_map[y][x] = Tak
         self.tako_list.append(Tak)

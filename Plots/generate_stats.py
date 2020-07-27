@@ -12,6 +12,9 @@ gen_limit = 50
 #iteration/run used per file
 its = ["0", "0", "0", "0", "0",
        "0", "0", "0", "0", "0"]
+#used for plotting where two_envs has been turned on
+#will separate env 0 and env 1
+separate_envs = True
 
 its_dict = {}
 file_list = []
@@ -148,6 +151,45 @@ def mas(fs, keep_inbreds):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("avg mating attempts, inbreds kept " + str(keep_inbreds)
+                + ".png")
+    plt.clf()
+
+#avg. # disorders by generation
+def disorders(fs, keep_inbreds):
+    results = {}
+    for f in fs:
+        mas_dict = {}
+        for a in np.arange(0, gen_limit+1):
+            mas_dict[a] = []
+        with open(f) as file:
+            r = csv.DictReader(file)
+            for row in r:
+                if row["iteration"] == its_dict[f]:
+                    if int(row["generation"]) <= gen_limit:
+                        if not keep_inbreds:
+                            if row["cause of death"] != "Inbred":
+                                mas_dict[int(row["generation"])].append(
+                                            int(row["# disorders"]))
+                        else:
+                             mas_dict[int(row["generation"])].append(
+                                 int(row["# disorders"]))
+        avgs = []
+        for a in np.arange(0, gen_limit+1):
+            if len(mas_dict[a]) != 0:
+                avgs.append(sum(mas_dict[a])/len(mas_dict[a]))
+            else:
+                avgs.append(0)
+        results[f[leading_remove:]] = avgs
+    for f in fs:
+        plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
+                 label=f[leading_remove:-4])
+    plt.xticks(np.arange(0, gen_limit + 1, 5))
+    plt.xlabel("Avg # disorders by gen, inbreds kept = " +
+               str(keep_inbreds))
+    plt.ylabel("Avg # disorders")
+    plt.legend(facecolor="white", edgecolor="black",
+               framealpha=1, frameon=True)
+    plt.savefig("avg # disorders, inbreds kept " + str(keep_inbreds)
                 + ".png")
     plt.clf()
 
@@ -351,12 +393,141 @@ def collect_fields(fields, row2, tot, gen):
             fields[gen][key][val] = 1
     tot[gen] += 1                                         
     return(fields, tot)
-                
 
-nums(file_list, True)
-lifespan(file_list, True)
-mas(file_list, True)
-surv(file_list, True)
-parent_overlaps(file_list, True)
-nei_diversity(file_list, True)
+#phenotype matching preferences
+#all by gen + average
+def preferences(fs, keep_inbreds):
+    results = {}
+    if separate_envs:
+        results_1 = {}
+    for f in fs:
+        pref_dict = {}
+        scatter_x = []
+        scatter_y = []
+        if separate_envs:
+            pref_dict_1 = {}
+            scatter_x_1 = []
+            scatter_y_1 = []
+        for a in np.arange(0, gen_limit+1):
+            pref_dict[a] = []
+            if separate_envs:
+                pref_dict_1[a] = []
+        #collect data
+        with open(f) as file:
+            r = csv.DictReader(file)
+            for row in r:
+                if row["iteration"] == its_dict[f]:
+                    if int(row["generation"]) <= gen_limit:
+                        if separate_envs and row["env #"] == "1":
+                            if not keep_inbreds:
+                                if row["cause of death"] != "Inbred":
+                                    r = float(row["preference"].split(\
+                                        ",")[2][1:-1])
+                                    pref_dict_1[int(row["generation"])].append(\
+                                        r)
+                            else:
+                                r = float(row["preference"].split(",")[2][1:-1])
+                                pref_dict_1[int(row["generation"])].append(r)
+                        else:
+                            if not keep_inbreds:
+                                if row["cause of death"] != "Inbred":
+                                    r = float(row["preference"].split(\
+                                        ",")[2][1:-1])
+                                    pref_dict[int(row["generation"])].append(r)
+                            else:
+                                r = float(row["preference"].split(",")[2][1:-1])
+                                pref_dict[int(row["generation"])].append(r)
+
+        avgs = []
+        if separate_envs:
+            avgs_1 = []
+        #compute averages and make scatterplot coordinates
+        for a in np.arange(0, gen_limit+1):
+            if len(pref_dict[a]) != 0:
+                avgs.append(sum(pref_dict[a])/len(pref_dict[a]))
+                for g in pref_dict[a]:
+                    scatter_x.append(a)
+                    scatter_y.append(g)
+            else:
+                avgs.append(0)
+            if separate_envs:
+                if len(pref_dict_1[a]) != 0:
+                    avgs_1.append(sum(pref_dict_1[a])/len(pref_dict_1[a]))
+                    for g in pref_dict_1[a]:
+                        scatter_x_1.append(a)
+                        scatter_y_1.append(g)
+                else:
+                    avgs_1.append(0)
+        if not separate_envs:
+            results[f[leading_remove:]] = [avgs, scatter_x, scatter_y]
+        else:
+            results[f[leading_remove:] + " 0"] = [avgs, scatter_x, scatter_y]
+            results_1[f[leading_remove:] + " 1"] = [avgs_1, scatter_x_1,
+                                                    scatter_y_1]
+    prop_cycle = plt.rcParams['axes.prop_cycle']
+    colors = prop_cycle.by_key()['color']
+    count=0
+    #create graphs
+    #first scatter
+    for f in fs:
+        lab = f[leading_remove:-4]
+        name = f[leading_remove:]
+        if separate_envs:
+            lab_1 = lab + " 1"
+            name_1 = name + " 1"
+            lab = lab + " 0"
+            name = name + " 0"
+        plt.scatter(results[name][1], results[name][2], s = 20, label=lab,
+                    color=colors[count])
+        count += 1
+        if separate_envs and len(f) > 1:
+            plt.scatter(results_1[name_1][1], results_1[name_1][2], s = 20,
+                        label=lab_1, color=colors[count])
+            count += 1
+    plt.xticks(np.arange(0, gen_limit + 1, 5))
+    plt.yticks(np.arange(-1, 1.1, .2))
+    plt.xlabel("Preferences by gen, inbreds kept = " +
+               str(keep_inbreds))
+    plt.ylabel("Preference")
+    plt.legend(facecolor="white", edgecolor="black",
+               framealpha=1, frameon=True)
+    plt.savefig("Preference, inbreds kept " + str(keep_inbreds)
+                + ".png")
+    plt.clf()
+    count=0
+    #next averages
+    for f in fs:
+        lab = f[leading_remove:-4]
+        name = f[leading_remove:]
+        if separate_envs:
+            lab_1 = lab + " 1"
+            name_1 = name + " 1"
+            lab = lab + " 0"
+            name = name + " 0"
+        plt.plot(np.arange(0, gen_limit+1, 1), results[name][0],
+                 label=lab, color=colors[count], linewidth=3)
+        count += 1
+        if separate_envs and len(f) > 1:
+            plt.plot(np.arange(0, gen_limit+1, 1), results_1[name_1][0],
+                     label=lab_1, color=colors[count], linewidth=3)
+            count += 1
+    plt.xticks(np.arange(0, gen_limit + 1, 5))
+    plt.yticks(np.arange(-1, 1.1, .2))
+    plt.xlabel("Avg. preference by gen, inbreds kept = " +
+               str(keep_inbreds))
+    plt.ylabel("Avg. preference")
+    plt.legend(facecolor="white", edgecolor="black",
+               framealpha=1, frameon=True)
+    plt.savefig("Average preference, inbreds kept " + str(keep_inbreds)
+                + ".png")
+    plt.clf()
+
+##nums(file_list, True)
+##lifespan(file_list, True)
+##mas(file_list, True)
+##surv(file_list, True)
+##parent_overlaps(file_list, False)
+##nei_diversity(file_list, True)
+##disorders(file_list, True)
+preferences(file_list, True)
 print("Finished producing graphs")

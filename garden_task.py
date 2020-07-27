@@ -6,6 +6,7 @@ import numpy
 
 
 family_detection = None
+phen_pref = False
 
 class garden_task:
 
@@ -77,6 +78,9 @@ class garden_task:
             #find how related they are if need be
             if family_detection != None:
                 nobs.append(tako.check_relations(other_tako))
+            #or how closely matched their phenotypes are
+            elif phen_pref:
+                nobs.append(tako.compare_phenotypes(other_tako))
             else:
                 nobs.append(0)
         else:
@@ -96,7 +100,8 @@ class garden_task:
                 tako.data[...] = observation
                 if self.learning_on:
                     tako.solver.net.blobs['reward'].data[...] = 0
-                tako.stm_input[...] = tako.last_action
+                #tako.stm_input[...] = tako.last_action
+                tako.solver.net.layers[1].action = tako.last_action
                 #forward and get action
                 act = tako.solver.net.forward()['action'][0]
                 action = self.find_action(act)

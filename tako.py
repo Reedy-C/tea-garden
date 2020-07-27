@@ -54,6 +54,8 @@ binary_health = 0
 #set from 0 to 100
 #control number of carriers for each recessive binary health gene if in use
 carrier_percentage = 40
+#sets whether evolving phenotype match is on or not
+phen_pref = False
 
 def set_seed(seed):
     random.seed(seed)
@@ -140,13 +142,20 @@ class Tako(Widget):
                     self.ident = self.genome.ident
                 else:
                     self.ident = ident
-            if type(self.genome) == tg.health_genome:
+            if isinstance(self.genome, tg.health_genome):
                 if self.genome.disorder_count > 0:
                     self.g = self.genome.disorder_count * 3
                 else:
                     self.g = 1
             else:
                 self.g = 1
+            if isinstance(self.genome, tg.phen_genome):
+                self.pref = self.genome.pref
+            else:
+                self.pref = None
+            if phen_pref:
+                self.expressed = None
+                self.phen_dict = {}
             self.data = self.solver.net.blobs['data'].data
             self.stm_input = self.solver.net.blobs['stm_input'].data
         
@@ -195,6 +204,14 @@ class Tako(Widget):
                                                           0.01, "*A"))
                         healthb.append(tg.binary_gene(5, True, False,
                                                           0.01, "*A"))
+        #do phenotype preference gene if necessary
+        if phen_pref:
+            a = round(random.uniform(-1, 1), 2)
+            b = round(random.uniform(-1, 1), 2)
+            phen_gene_a = tg.phen_gene(random.randint(1, 5), True, False,
+                                       0.01, a, str(a))
+            phen_gene_b = tg.phen_gene(random.randint(1, 5), True, False,
+                                       0.01, b, str(b))
         #now all the genes for the network structure
         data = dgeann.layer_gene(5, False, False, 0, "data",
                                         [], 12, "input")
@@ -262,7 +279,18 @@ class Tako(Widget):
                                            row['in_layer'], row['out_layer'])
                         weightsb.append(w)
             if gen_type != "Haploid":
-                if hla_genes > 0 or binary_health > 0:
+                if phen_pref and hla_genes == 0 and binary_health == 0:
+                    default_genome = tg.phen_genome(layersa, layersb,
+                                                    weightsa, weightsb,
+                                                    phen_gene_a, phen_gene_b,
+                                                    None, [])
+                elif phen_pref and (hla_genes > 0 or binary_health > 0):
+                    default_genome = tg.health_phen_genome(layersa, layersb,
+                                                      weightsa, weightsb,
+                                                      healtha, healthb,
+                                                      phen_gene_a, phen_gene_b,
+                                                      None,[])
+                elif not phen_pref and (hla_genes > 0 or binary_health > 0):
                     default_genome = tg.health_genome(layersa, layersb,
                                                       weightsa, weightsb,
                                                       healtha, healthb, None,
@@ -384,11 +412,27 @@ class Tako(Widget):
                 return[("amuse", -30)]
         if tak.desire >= 100:
             if self.desire >= 100:
-                self.dez = 0
-                self.desire = 0
-                tak.dez = 0
-                tak.desire = 0
-                return [("amuse", 45), ("fullness", -10), ("desire", -150)]
+                #if phenotype matching preferences are on
+                if phen_pref:
+                    match = self.compare_phenotypes(tak)
+                    chance = 0.5+(0.5*(-1 + match*2)*self.pref)
+                    if random.random() <= chance:
+                        #success!
+                        self.dez = 0
+                        self.desire = 0
+                        tak.dez = 0
+                        tak.desire = 0
+                        return [("amuse", 45), ("fullness", -10),
+                                ("desire", -150)]
+                    else:
+                        return ("amuse", -1)
+                #else just go as normal
+                else:
+                    self.dez = 0
+                    self.desire = 0
+                    tak.dez = 0
+                    tak.desire = 0
+                    return [("amuse", 45), ("fullness", -10), ("desire", -150)]
             else:
                 return ("amuse", -1)
         else:
@@ -412,6 +456,7 @@ class Tako(Widget):
             else:
                 tak.dez = 698
 
+    #helper function for mated
     #returns a relatedness percentage dependent on detection mode
     def check_relations(self, tak):
         if tak.ident in self.fam_dict.keys():
@@ -550,6 +595,48 @@ class Tako(Widget):
             tot += 2
         return (overlap/tot)
 
+    #helper function for mated when phenotype matching preferences is True
+    #gets all expressions of weight/health/pref
+    #(not the underlying genes!)
+    def get_expressed(self):
+        e = []
+        #easiest to grab weights directly from net
+        for i in range(5):
+            for j in range(18):
+                e.append(round(self.solver.net.params["evo"][0].data[i][j], 2))
+        for i in range(6):
+            for j in range(5):
+                e.append(round(self.solver.net.params["action"][0].data[i][j],
+                               2))
+        #next health if applicable
+        if hla_genes > 0 or binary_health > 0:
+            for i in range(len(self.genome.healthchr_a)):
+                e.append(self.genome.healthchr_a[i].read(None,
+                                                self.genome.healthchr_b[i],
+                                                         None))
+        #can only get here if phen_genes exist, so add that in any case
+        e.append(self.pref)
+        self.expressed = e
+            
+    #helper function for mated when phenotype matching preferences is True
+    #simply gets the percentage overlap between the two phenotypes
+    def compare_phenotypes(self, tak):
+        if self.expressed == None:
+            self.get_expressed()
+        if tak.expressed == None:
+            tak.get_expressed()
+        if tak.ident in self.phen_dict:
+            return self.phen_dict[tak.ident]
+        matches = 0
+        for i in range(len(self.expressed)):
+            if self.expressed[i] == tak.expressed[i]:
+                matches += 1
+        #120 sets of weight genes + # health genes + 1 pref gene
+        m = matches/(120 + hla_genes + binary_health + 1)
+        self.phen_dict[tak.ident] = m
+        tak.phen_dict[self.ident] = m
+        return m
+
     #I didn't want to assign a death age at birth
     #and wanted a skewed normal distribution (as humans have)
     #(possibly other animals, but for some reason
@@ -588,15 +675,16 @@ class STMlayer(caffe.Layer):
         top[0].reshape(*bottom[0].data.shape)
         self.act = bottom[0].data[0]
         self.ftop = top[0].data[0]
+        self.action = 0
 
     def forward(self, bottom, top):
         #action # is fed directly in
-        action = self.act[0]
+        #action = self.act[0]
         #this was used for learning
         #currently not used
         #if action >= 0:
         for n in (0, 1, 2, 3, 4, 5):
-            if n == action:
+            if n == self.action:
                 #means that this was the selected action
                 self.ftop[n] += 1
             else:

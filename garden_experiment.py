@@ -11,11 +11,13 @@ from pygame.locals import *
 import csv
 from collections import deque
 import tako_genetics as tg
+import random
 
 class garden_game:
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
                  display_off, learning_on, genetic_mode, rand_nets, garden_mode,
-                 filename, export_all, family_mod, family_detection, seed=None):
+                 filename, export_all, family_mod, family_detection,
+                 two_envs, diff_envs, migration_rate, seed=None):
         pygame.init()
         global scroll
         if not display_off:
@@ -44,13 +46,37 @@ class garden_game:
             scroll = False
         
         self.clock = pygame.time.Clock()
+        self.two_envs = two_envs
+        self.diff_envs = diff_envs
+        self.migration_rate = migration_rate
 
-        global env
-        env = Garden(garden_size, tako_number, pop_max, genetic_mode, rand_nets,
-                     seed, display_off, garden_mode)
+        if self.diff_envs:
+            env0 = Garden(garden_size, tako_number, pop_max, genetic_mode,
+                          rand_nets, seed, display_off, garden_mode, food=0)
+        else:
+            env0 = Garden(garden_size, tako_number, pop_max, genetic_mode,
+                          rand_nets, seed, display_off, garden_mode)
+        env0.env_id = 0
+        self.env_list = [env0]
+
+        ###TODO
+        ###figure out if I need to/how to fix the seed issue
+        if self.two_envs:
+            if self.diff_envs:
+                env1 = Garden(garden_size, tako_number, pop_max, genetic_mode,
+                              rand_nets, seed, display_off, garden_mode, food=1)
+            else:
+                env1 = Garden(garden_size, tako_number, pop_max, genetic_mode,
+                              rand_nets, seed, display_off, garden_mode, food=1)
+            env1.env_id = 1
+            self.env_list.append(env1)
+
+        task0 = gt.garden_task(env0, learning_on)
+        self.task_list = [task0]
+        if self.two_envs:
+            task1 = gt.garden_task(env1, learning_on)
+            self.task_list.append(task1)
             
-        global task
-        task = gt.garden_task(env, learning_on)
         self.filename = filename
         self.export_all = export_all
 
@@ -60,6 +86,7 @@ class garden_game:
                   garden_mode, i):
         if not display_off:
             self.make_background()
+        self.current_env = 0
         self.load_sprites()
         if not display_off:
             pygame.display.flip()
@@ -72,36 +99,43 @@ class garden_game:
             if max_ticks > 0:
                 if self.stepid > max_ticks:
                     if collect_data or self.export_all:
-                        for tako in env.tako_list:
-                            dead_tako.append([tako, self.stepid])
-                        if self.export_all:
-                            export(dead_tako, self.filename)
-                        if collect_data:
-                            write_csv(self.filename, i, dead_tako)
+                        for env in self.env_list:
+                            for tako in env.tako_list:
+                                dead_tako.append([tako, self.stepid, env.env_id])
+                            if self.export_all:
+                                export(dead_tako, self.filename)
+                            if collect_data:
+                                write_csv(self.filename, i, dead_tako)
                     return
+            end = False
             if max_gen > 0:
-                if env.highest_gen > max_gen:
-                    if collect_data or self.export_all:
-                        for tako in env.tako_list:
-                            dead_tako.append([tako, self.stepid])
-                        if self.export_all:
-                            export(dead_tako, self.filename)
-                        if collect_data:
-                            write_csv(self.filename, i, dead_tako)
-                    return
+                for env in self.env_list:
+                    if env.highest_gen > max_gen:
+                        end = True
             if not display_off:
                 for event in pygame.event.get():
                     if event.type == QUIT:
                         return
                     elif event.type == KEYDOWN:
+                        if self.two_envs:
+                            if event.key == K_s:
+                                if self.current_env == 0:
+                                    self.current_env = 1
+                                else:
+                                    self.current_env = 0
+                                self.load_sprites()
                         if scroll:
+                            #TODO this glitchy with two envs and switching
+                            #TODO... also seems to be some problems with agents
+                            #walking through items :/
                             if event.key == K_LEFT:
                                 if self.cam[0] > 0:
                                     self.cam[0] -= 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(1, 0)
                             elif event.key == K_RIGHT:
-                                if self.cam[0] < env.size - spr_width:
+                                if self.cam[0] < (self.env_list[0].size -
+                                                  spr_width):
                                     self.cam[0] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(-1, 0)
@@ -111,36 +145,50 @@ class garden_game:
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, 1)
                             elif event.key == K_DOWN:
-                                if self.cam[1] < env.size - spr_height:
+                                if self.cam[1] < (self.env_list[0].size -
+                                                  spr_height):
                                     self.cam[1] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, -1)
             #see if all are dead
-            if len(env.tako_list) == 0:
-                if self.export_all:
-                    export(dead_tako, self.filename)
-                if collect_data:
-                    if len(dead_tako) > 0:
-                        write_csv(self.filename, i, dead_tako)
-                print("Tako are dead :(")
-                return
+            for env in self.env_list:
+                if len(env.tako_list) == 0:
+                    end = True
+            if end == True:
+                for env in self.env_list:
+                    if self.export_all:
+                        export(dead_tako, self.filename)
+                    if collect_data:
+                        if len(dead_tako) > 0:
+                            write_csv(self.filename, i, dead_tako)
+                    print("Tako are dead :(")
+                    return
             #let experiment go a step
-            task.interact_and_learn()
+            for task in self.task_list:
+                task.interact_and_learn()
             if garden_mode == "Changing":
                 if self.stepid > 0 and self.stepid % 100000 == 0:
-                    env.switch_grasses()
+                    for env in self.env_list:
+                        env.switch_grasses()
             elif garden_mode == "Nutrition":
                 if self.stepid > 0 and self.stepid % 40000 == 0:
-                    env.switch_nutrition()
-            # see if any are dead
-            for tako in env.tako_list:
-                if tako.dead == True:
-                    env.garden_map[tako.y][tako.x] = Dirt(display_off,
-                                                          tako.x, tako.y)
-                    env.tako_list.remove(tako)
-                    if collect_data or self.export_all:
-                        dead_tako.append([tako, self.stepid])
-                    tako.kill()
+                    for env in self.env_list:
+                        env.switch_nutrition()
+            #see if any are dead
+            for env in self.env_list:
+                for tako in env.tako_list:
+                    if tako.dead == True:
+                        env.garden_map[tako.y][tako.x] = Dirt(display_off,
+                                                              tako.x, tako.y)
+                        env.tako_list.remove(tako)
+                        if collect_data or self.export_all:
+                            dead_tako.append([tako, self.stepid, env.env_id])
+                        tako.kill()
+            #then check for migration
+            if self.two_envs:
+                if self.migration_rate > 0 and self.stepid > 0:
+                    if self.stepid % 50000 == 0:
+                        self.migrate(display_off)
             #check for data collection
             if self.stepid % 3000 == 0:
                 if self.export_all:
@@ -148,17 +196,21 @@ class garden_game:
                 if collect_data:
                     write_csv(self.filename, i, dead_tako)
             #now, update sprites, then draw them if using graphics
-            if env.new_sprites != []:
-                self.get_new()
+            for env in self.env_list:
+                if env.new_sprites != []:
+                    self.get_new(env)
             self.widget_sprites.update()
-            for tako in env.tako_list:
-                tako.update()
+            for env in self.env_list:
+                for tako in env.tako_list:
+                    tako.update()
             if not display_off:
                 self.graphics_loop(scroll, font)
             self.stepid += 1
+            
     
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
+        env = self.env_list[self.current_env]
         for x in range(env.size):
             for y in range(env.size):
                 if type(env.garden_map[y][x]) != tako.Tako:
@@ -171,7 +223,7 @@ class garden_game:
         for sprite in self.widget_sprites:
             self.all_sprites.add(sprite)
 
-    def get_new(self):
+    def get_new(self, env):
         for sprite in env.new_sprites:
             if not isinstance(sprite, Dirt):
                 if not isinstance(sprite, tako.Tako):
@@ -187,8 +239,8 @@ class garden_game:
                     self.screen.blit(spr.image, spr.rect)
 
     def make_background(self):
-        for x in range(env.size):
-            for y in range(env.size):
+        for x in range(self.env_list[0].size):
+            for y in range(self.env_list[0].size):
                 img, rect = load_image("dirt.png")
                 self.background.blit(img, (x*50, y*50))
                 
@@ -201,24 +253,46 @@ class garden_game:
         #oh, and display which step we're on
         if pygame.font:
             text = font.render(str(self.stepid), 1, (255, 255, 255))
-            textpos = text.get_rect(centerx=
-                                    (self.screen.get_width() * 0.5))
+            textpos = text.get_rect(centerx = int(
+                                        (self.screen.get_width() * 0.5)))
             self.screen.blit(text, textpos)
         pygame.display.flip()
         #cap at x fps
         self.clock.tick(10)
+
+    #migrates agents between the two environments
+    #run every 50k ticks
+    def migrate(self, display_off):
+        from_0 = random.sample(self.env_list[0].tako_list,
+                               int(self.migration_rate * len(
+                                   self.env_list[0].tako_list)))
+        from_1 = random.sample(self.env_list[1].tako_list,
+                       int(self.migration_rate*len(
+                           self.env_list[1].tako_list)))
+        for t in from_0:
+            self.env_list[0].tako_list.remove(t)
+            self.env_list[1].garden_map[t.y][t.x] = Dirt(display_off,
+                                                              t.x, t.y)
+            self.env_list[1].add_creature(t)
+        for t in from_1:
+            self.env_list[1].tako_list.remove(t)
+            self.env_list[0].garden_map[t.y][t.x] = Dirt(display_off,
+                                                              t.x, t.y)
+            self.env_list[0].add_creature(t)
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('img', name)
     image = pygame.image.load(fullname)
     image = image.convert()
     if colorkey is not None:
-        if colorkey is -1:
+        if colorkey == -1:
             colorkey = image.get_at((0,0))
         image.set_colorkey(colorkey, RLEACCEL)
     return image, image.get_rect()
 
 #records data about an agent to a csv file on the agent's death
+#i = current iteration
+#q = queue of agents to write to csv in format [agent, step_id, env_id]
 def write_csv(filename, i, q):  
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
@@ -226,32 +300,42 @@ def write_csv(filename, i, q):
             k = len(q)
             while j < k:
                 l = q.popleft()
-                tako = l[0]
+                tak = l[0]
                 healthchr_a = []
                 healthchr_b = []
-                if type(tako.genome) == tg.health_genome:
-                    for a in tako.genome.healthchr_a:
+                if isinstance(tak.genome, tg.health_genome):
+                    for a in tak.genome.healthchr_a:
                         healthchr_a.append(a.ident)
-                    for b in tako.genome.healthchr_b:
+                    for b in tak.genome.healthchr_b:
                         healthchr_b.append(b.ident)
-                if type(tako.parents[0]) != str:
-                    writ.writerow([i, tako.ident, tako.parents[0].ident,
-                                   tako.parents[1].ident, tako.age, tako.gen,
-                                   len(tako.children), tako.mating_attempts,
-                                   tako.accum_pain, tako.cod, l[1],
-                                   tako.genome.mut_record, tako.parent_degree,
-                                   tako.parent_genoverlap,
-                                   tako.genome.disorder_count,
-                                   healthchr_a, healthchr_b])
+                pref = None
+                if isinstance(tak.genome, tg.phen_genome):
+                    pref = [tak.genome.phen_gene_a.weight,
+                            tak.genome.phen_gene_b.weight,
+                            tak.pref]
+                if type(tak.parents[0]) != str:
+                    writ.writerow([i, l[2], tak.ident, tak.parents[0].ident,
+                                   tak.parents[1].ident, tak.age, tak.gen,
+                                   len(tak.children), tak.mating_attempts,
+                                   tak.accum_pain, tak.cod, l[1],
+                                   tak.genome.mut_record, tak.parent_degree,
+                                   tak.parent_genoverlap,
+                                   (tak.genome.disorder_count if \
+                                    isinstance(tak.genome, tg.health_genome)\
+                                    else ""),
+                                   healthchr_a, healthchr_b, pref])
                 else:
-                    writ.writerow([i, tako.ident, tako.parents[0], tako.parents[1],
-                                   tako.age, tako.gen,
-                                   len(tako.children), tako.mating_attempts,
-                                   tako.accum_pain, tako.cod, l[1],
-                                   tako.genome.mut_record, tako.parent_degree,
-                                   tako.parent_genoverlap,
-                                   tako.genome.disorder_count,
-                                   healthchr_a, healthchr_b])
+                    writ.writerow([i, l[2], tak.ident, tak.parents[0],
+                                   tak.parents[1],
+                                   tak.age, tak.gen,
+                                   len(tak.children), tak.mating_attempts,
+                                   tak.accum_pain, tak.cod, l[1],
+                                   tak.genome.mut_record, tak.parent_degree,
+                                   tak.parent_genoverlap,
+                                   (tak.genome.disorder_count if \
+                                    isinstance(tak.genome, tg.health_genome)\
+                                    else ""),
+                                   healthchr_a, healthchr_b, pref])
                 j += 1
             
 
@@ -393,6 +477,17 @@ def make_headers():
 #                          b/w parents of an agent
 #inbred_lim (float): if set to b/w 0 and 1, will only allow agents to live if
 #                    the genetic relationship b/w parents is < inbred_lim
+#hla_genes (int): # of HLA-inspired genes in health chromosomes
+#binary_health (int): # of binary genetic disorder genes in health chromosomes
+#carrier_percentage (int): % chance for an initial agent to be a disorder
+#                           carrier for every given health gene (binary only)
+#two_envs (bool): when True, two separate environments are created
+#diff_envs (bools): when True and when two_envs is True, each env has
+#                   a different food source
+#migration_rate (float): when True and when two_envs is true, the migration
+#                       rate b/w the two environments (done every 50k ticks)
+#phen_pref (bool): when True, gives agents evolving phenotype
+#                       match preference
 def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    tako_number=1, pop_max=30, max_width=1800, max_height=900,
                    collect_data=True, export_all=False, rand_nets=False,
@@ -400,13 +495,14 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    seeds=None, garden_mode="Diverse Static",
                    family_detection=None, family_mod=0, record_inbreeding=True,
                    inbreed_lim = 1.1, hla_genes=0, binary_health=0,
-                   carrier_percentage=40, filename=""):
+                   carrier_percentage=40, two_envs=False, diff_envs=False,
+                   migration_rate=0, phen_pref=False, filename=""):
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
 
-    
+    i = 0
     #create csv files
     if collect_data or export_all:
         if filename == "":
@@ -419,19 +515,18 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
         if not os.path.exists("Data"):
             os.makedirs("Data")
 
-        i = 0
         if collect_data:
             if not os.path.exists(os.path.join("Data", filename)):
                 with open(os.path.join("Data", filename), 'a', newline='') as\
                      csvfile:
                     writ = csv.writer(csvfile)
-                    writ.writerow(['iteration', 'ID', 'parent1', 'parent2',
-                                   'age', 'generation', '# children',
+                    writ.writerow(['iteration', 'env #', 'ID', 'parent1',
+                                   'parent2', 'age', 'generation', '# children',
                                    'mating attempts', 'accum pain',
                                    'cause of death', 'timestep', 'mutations',
                                    'parent_degree', 'parent_genoverlap',
                                    '# disorders',
-                                   'health a', 'health b'])
+                                   'health a', 'health b', 'preference'])
             else:
                 with open(os.path.join("Data", filename), newline='') as\
                       csvfile:
@@ -458,6 +553,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
     tako.hla_genes = hla_genes
     tako.binary_health = binary_health
     tako.carrier_percentage = carrier_percentage
+    tako.phen_pref = phen_pref
+    gt.phen_pref = phen_pref
     
     loop_limit = x_loops
     if loop_limit < 1:
@@ -474,12 +571,14 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                             max_height, display_off, learning_on, genetic_mode,
                             rand_nets, garden_mode, filename,
                             export_all, family_mod, family_detection,
+                            two_envs, diff_envs, migration_rate,
                             seeds[i])
         else:
             g = garden_game(garden_size, tako_number, pop_max, max_width,
                             max_height, display_off, learning_on, genetic_mode,
                             rand_nets, garden_mode, filename, export_all,
-                            family_mod, family_detection)
+                            family_mod, family_detection, two_envs, diff_envs,
+                            migration_rate)
         if not display_off:
             main_window = g
             main_window.main_loop(max_ticks, max_gen, display_off,
@@ -498,7 +597,8 @@ def run_from_file(f):
     rand_nets=False;max_gen=2;genetic_mode="Plain";learning_on=False
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
     record_inbreeding=True;inbreed_lim=1.1;filename="default file"
-    hla_genes=0;binary_health=0;carrier_percentage=40
+    hla_genes=0;binary_health=0;carrier_percentage=40;two_envs=False;
+    diff_envs=False;migration_rate=0;phen_pref=False
 
     
     atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
@@ -513,15 +613,18 @@ def run_from_file(f):
                 "record_inbreeding": record_inbreeding,
                 "inbreed_lim": inbreed_lim, "filename": filename,
                 "hla_genes": hla_genes, "binary_health": binary_health,
-                "carrier_percentage": carrier_percentage}
+                "carrier_percentage": carrier_percentage,
+                "two_envs": two_envs, "diff_envs": diff_envs,
+                "migration_rate": migration_rate, "phen_pref": phen_pref}
     
     ints = ["x_loops", "max_ticks", "garden_size", "tako_number", "pop_max",
             "max_width", "max_height", "max_gen", "hla_genes",
             "binary_health", "carrier_percentage"]
-    floats = ["family_mod", "inbreed_lim"]
+    floats = ["family_mod", "inbreed_lim", "migration_rate"]
     strs = ["genetic_mode", "garden_mode", "filename"]
     bools = ["display_off", "collect_data", "export_all", "rand_nets",
-             "learning_on", "record_inbreeding"]
+             "learning_on", "record_inbreeding", "two_envs", "diff_envs",
+             "phen_pref"]
     
     with open(f) as exp_file:
         for line in exp_file:
@@ -546,7 +649,11 @@ def run_from_file(f):
                                atr_dict["inbreed_lim"],
                                atr_dict["hla_genes"], atr_dict["binary_health"],
                                atr_dict["carrier_percentage"],
-                               atr_dict["filename"])
+                               atr_dict["filename"],
+                               atr_dict["two_envs"],
+                               atr_dict["diff_envs"],
+                               atr_dict["migration_rate"],
+                               atr_dict["phen_pref"])
                 #reset defaults
                 atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
                     "display_off": display_off, "garden_size": garden_size,
@@ -556,11 +663,14 @@ def run_from_file(f):
                     "rand_nets": rand_nets, "max_gen": max_gen,
                     "genetic_mode": genetic_mode, "learning_on": learning_on,
                     "seeds": seeds, "garden_mode": garden_mode,
-                    "family_detection": family_detection, "family_mod": family_mod,
+                    "family_detection": family_detection,
+                    "family_mod": family_mod,
                     "record_inbreeding": record_inbreeding,
                     "inbreed_lim": inbreed_lim, "filename": filename,
                     "hla_genes": hla_genes, "binary_health": binary_health,
-                    "carrier_percentage": carrier_percentage}
+                    "carrier_percentage": carrier_percentage,
+                    "two_envs": two_envs, "diff_envs": diff_envs,
+                    "migration_rate": migration_rate, "phen_pref": phen_pref}
             else:
                 #get rid of newline character
                 line = line[:-1]
@@ -596,6 +706,8 @@ def run_from_file(f):
                    atr_dict["record_inbreeding"],
                    atr_dict["inbreed_lim"], atr_dict["hla_genes"],
                    atr_dict["binary_health"], atr_dict["carrier_percentage"],
+                   atr_dict["two_envs"], atr_dict["diff_envs"],
+                   atr_dict["migration_rate"], atr_dict["phen_pref"],
                    atr_dict["filename"])
     
        
