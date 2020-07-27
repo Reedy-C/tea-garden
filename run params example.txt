@@ -29,12 +29,9 @@ inbreed_lim: 1.1
 hla_genes: 0
 binary_health: 0
 carrier_percentage: 40
-<<<<<<< HEAD
-=======
 two_envs: False
 diff_envs: False
 migration_rate: 0
 phen_pref: False
->>>>>>> migration
 #a blank line separates multiple experiment sets that can be run with different attribute values
 #defaults are reset for each experiment set!
