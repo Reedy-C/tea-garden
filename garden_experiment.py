@@ -112,6 +112,7 @@ class garden_game:
                 for env in self.env_list:
                     if env.highest_gen > max_gen:
                         end = True
+            #if we have not met the predefined end conditions, begin main loop
             if not display_off:
                 for event in pygame.event.get():
                     if event.type == QUIT:
@@ -336,50 +337,9 @@ def write_csv(filename, i, q):
                                     isinstance(tak.genome, tg.health_genome)\
                                     else ""),
                                    healthchr_a, healthchr_b, pref])
-                j += 1
+                j += 1   
             
-
-#export the genome of a tako to a csv file
-#will use the same filename as write_csv as a subfolder name at the moment
-#depreciated function, not recommended for mass use
-def export_old(tako, filename):
-    #if not os.path.exists('Exported Genomes'):
-    #    os.makedirs('Exported Genomes')
-    path = "Exported Genomes"
-    if filename != "":
-        path = os.path.join(path, filename)
-        path = path[:-4]
-    if not os.path.exists(path):
-        os.makedirs(path)
-    w = tako.ident + "_weights.csv"
-    lay = tako.ident + "_layers.csv"
-    with open(os.path.join(path, w), "a", newline="") as file:
-        writ = csv.writer(file)
-        writ.writerow(['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
-                      'weight', 'in_node', 'out_node', 'in_layer', 'out_layer',
-                       'chromosome'])
-        for gen in tako.genome.weightchr_a:
-            writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
-                           gen.ident, gen.weight, gen.in_node, gen.out_node,
-                           gen.in_layer, gen.out_layer, "a"])
-        for gen in tako.genome.weightchr_b:
-            writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
-                           gen.ident, gen.weight, gen.in_node, gen.out_node,
-                           gen.in_layer, gen.out_layer, "b"])
-    with open(os.path.join(path, lay), "a", newline="") as file:
-        writ = csv.writer(file)
-        writ.writerow(['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
-                       'inputs', 'nodes', 'layer_type', 'chromosome'])
-        for gen in tako.genome.layerchr_a:
-            writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
-                           gen.ident, gen.inputs, gen.nodes, gen.layer_type,
-                           "a"])
-        for gen in tako.genome.layerchr_a:
-            writ.writerow([gen.dom, gen.can_mut, gen.can_dup, gen.mut_rate,
-                           gen.ident, gen.inputs, gen.nodes, gen.layer_type,
-                           "b"])
-            
-#exports condensed version of weight genes to a single csv file in \Data
+#exports condensed version of weight genes to a collective csv file in \Data
 #one line for haploid agents, two for diploid
 #each row contains the variable info for each of the agent's weight genes
 #n.b. expects a standard genome to work properly
