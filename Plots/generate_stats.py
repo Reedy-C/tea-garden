@@ -9,7 +9,11 @@ plt.style.use("seaborn")
 leading_remove = 0
 #maximum generation
 gen_limit = 50
-#iteration/run used per file
+#if set to True, will run through all iterations up to the limit found in the
+#first file and publish graphs based on each one
+compare_all_its = True
+
+#iteration/run used per file if compare_all_its == False
 its = ["0", "0", "0", "0", "0",
        "0", "0", "0", "0", "0"]
 #used for plotting where two_envs has been turned on
@@ -34,7 +38,11 @@ for f in range(len(file_list)):
 #being too inbred
 
 #agent number in two graphs: total by file and total by generation
-def nums(fs, keep_inbreds):
+def nums(fs, keep_inbreds, itera=None):
+    if compare_all_its == True:
+        cont = False
+        if itera == None:
+            itera = 0
     results_gen = {}
     results_tot = {}
     for f in fs:
@@ -45,7 +53,8 @@ def nums(fs, keep_inbreds):
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
-                if row["iteration"] == its_dict[f]:
+                if (itera == None and row["iteration"] == its_dict[f]) or\
+                   (itera != None and int(row["iteration"]) == itera):
                     if int(row["generation"]) <= gen_limit:
                         if not keep_inbreds:
                             if row["cause of death"] != "Inbred":
@@ -54,13 +63,21 @@ def nums(fs, keep_inbreds):
                         else:
                              gen_dict[int(row["generation"])] += 1
                              tot += 1
+                else:
+                    if compare_all_its == True and cont == False:
+                        if int(row["iteration"]) == itera + 1:
+                            cont = True
         results_gen[f[leading_remove:]] = gen_dict
         results_tot[f[leading_remove:]] = tot
+    if itera == None:
+        plotend = ".png"
+    else:
+        plotend = " " + str(itera) + ".png"
     plt.bar(results_tot.keys(), results_tot.values())
     plt.xlabel("# of total agents, inbreds kept = " +
            str(keep_inbreds))
     plt.ylabel("# of agents")
-    plt.savefig("# agents total, inbreds kept " + str(keep_inbreds) + ".png")
+    plt.savefig("# agents total, inbreds kept " + str(keep_inbreds) + plotend)
     plt.clf()
     for f in fs:
         plt.plot(list(results_gen[f[leading_remove:]].keys()),
@@ -72,11 +89,18 @@ def nums(fs, keep_inbreds):
     plt.ylabel("# of agents")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("# agents by gen, inbreds kept " + str(keep_inbreds) + ".png")
+    plt.savefig("# agents by gen, inbreds kept " + str(keep_inbreds) + plotend)
     plt.clf()
+    if compare_all_its:
+        if cont:
+            nums(fs, keep_inbreds, itera+1)
 
 #avg. lifespan by generation
-def lifespan(fs, keep_inbreds):
+def lifespan(fs, keep_inbreds, itera=None):
+    if compare_all_its == True:
+        cont = False
+        if itera == None:
+            itera = 0
     results = {}
     for f in fs:
         life_dict = {}
@@ -85,7 +109,8 @@ def lifespan(fs, keep_inbreds):
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
-                if row["iteration"] == its_dict[f]:
+                if (itera == None and row["iteration"] == its_dict[f]) or\
+                   (itera != None and int(row["iteration"]) == itera):
                     if int(row["generation"]) <= gen_limit:
                         if not keep_inbreds:
                             if row["cause of death"] != "Inbred":
@@ -94,6 +119,10 @@ def lifespan(fs, keep_inbreds):
                         else:
                              life_dict[int(row["generation"])].append(
                                  int(row["age"]))
+                else:
+                    if compare_all_its == True and cont == False:
+                        if int(row["iteration"]) == itera + 1:
+                            cont = True
         avgs = []
         for a in np.arange(0, gen_limit+1):
             if len(life_dict[a]) != 0:
@@ -101,6 +130,10 @@ def lifespan(fs, keep_inbreds):
             else:
                 avgs.append(0)
         results[f[leading_remove:]] = avgs
+    if itera == None:
+        plotend = ".png"
+    else:
+        plotend = " " + str(itera) + ".png"
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
                  label=f[leading_remove:-4])
@@ -112,11 +145,18 @@ def lifespan(fs, keep_inbreds):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("avg age at death, inbreds kept " + str(keep_inbreds)
-                + ".png")
+                + plotend)
     plt.clf()
+    if compare_all_its:
+        if cont:
+            lifespan(fs, keep_inbreds, itera+1)
 
 #avg. mating attempts by generation
-def mas(fs, keep_inbreds):
+def mas(fs, keep_inbreds, itera=None):
+    if compare_all_its == True:
+        cont = False
+        if itera == None:
+            itera = 0
     results = {}
     for f in fs:
         mas_dict = {}
@@ -125,7 +165,8 @@ def mas(fs, keep_inbreds):
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
-                if row["iteration"] == its_dict[f]:
+                if (itera == None and row["iteration"] == its_dict[f]) or\
+                   (itera != None and int(row["iteration"]) == itera):
                     if int(row["generation"]) <= gen_limit:
                         if not keep_inbreds:
                             if row["cause of death"] != "Inbred":
@@ -134,6 +175,10 @@ def mas(fs, keep_inbreds):
                         else:
                              mas_dict[int(row["generation"])].append(
                                  int(row["mating attempts"]))
+                else:
+                    if compare_all_its == True and cont == False:
+                        if int(row["iteration"]) == itera + 1:
+                            cont = True
         avgs = []
         for a in np.arange(0, gen_limit+1):
             if len(mas_dict[a]) != 0:
@@ -141,6 +186,10 @@ def mas(fs, keep_inbreds):
             else:
                 avgs.append(0)
         results[f[leading_remove:]] = avgs
+    if itera == None:
+        plotend = ".png"
+    else:
+        plotend = " " + str(itera) + ".png"
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
                  label=f[leading_remove:-4])
@@ -151,11 +200,18 @@ def mas(fs, keep_inbreds):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("avg mating attempts, inbreds kept " + str(keep_inbreds)
-                + ".png")
+                + plotend)
     plt.clf()
+    if compare_all_its:
+        if cont:
+            mas(fs, keep_inbreds, itera+1)
 
 #avg. # disorders by generation
-def disorders(fs, keep_inbreds):
+def disorders(fs, keep_inbreds, itera=None):
+    if compare_all_its == True:
+        cont = False
+        if itera == None:
+            itera = 0
     results = {}
     for f in fs:
         mas_dict = {}
@@ -164,15 +220,17 @@ def disorders(fs, keep_inbreds):
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
-                if row["iteration"] == its_dict[f]:
+                if (itera == None and row["iteration"] == its_dict[f]) or\
+                   (itera != None and int(row["iteration"]) == itera):
                     if int(row["generation"]) <= gen_limit:
                         if not keep_inbreds:
                             if row["cause of death"] != "Inbred":
                                 mas_dict[int(row["generation"])].append(
                                             int(row["# disorders"]))
-                        else:
-                             mas_dict[int(row["generation"])].append(
-                                 int(row["# disorders"]))
+                else:
+                    if compare_all_its == True and cont == False:
+                        if int(row["iteration"]) == itera + 1:
+                            cont = True
         avgs = []
         for a in np.arange(0, gen_limit+1):
             if len(mas_dict[a]) != 0:
@@ -180,6 +238,10 @@ def disorders(fs, keep_inbreds):
             else:
                 avgs.append(0)
         results[f[leading_remove:]] = avgs
+    if itera == None:
+        plotend = ".png"
+    else:
+        plotend = " " + str(itera) + ".png"
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
                  label=f[leading_remove:-4])
@@ -190,11 +252,18 @@ def disorders(fs, keep_inbreds):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("avg # disorders, inbreds kept " + str(keep_inbreds)
-                + ".png")
+                + plotend)
     plt.clf()
+    if compare_all_its:
+        if cont:
+            disorders(fs, keep_inbreds, itera+1)
 
 #percent of agents who survived to a threshold value by generation
-def surv(fs, keep_inbreds, thresh=500):
+def surv(fs, keep_inbreds, thresh=500, itera=None):
+    if compare_all_its == True:
+        cont = False
+        if itera == None:
+            itera = 0
     results = {}
     for f in fs:
         surv_gen = {}
@@ -206,7 +275,8 @@ def surv(fs, keep_inbreds, thresh=500):
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
-                if row["iteration"] == its_dict[f]:
+                if (itera == None and row["iteration"] == its_dict[f]) or\
+                   (itera != None and int(row["iteration"]) == itera):
                     if int(row["generation"]) <= gen_limit:
                         if not keep_inbreds:
                             if row["cause of death"] != "Inbred":
@@ -217,6 +287,10 @@ def surv(fs, keep_inbreds, thresh=500):
                              tot_gen[int(row["generation"])] += 1
                              if int(row["age"]) > thresh:
                                  surv_gen[int(row["generation"])] += 1
+            else:
+                if compare_all_its == True and cont == False:
+                    if int(row["iteration"]) == itera + 1:
+                        cont = True
         #save plots
         survs = []
         for a in np.arange(0, gen_limit+1):
@@ -225,6 +299,10 @@ def surv(fs, keep_inbreds, thresh=500):
             else:
                 survs.append(0)
         results[f[leading_remove:]] = survs
+    if itera == None:
+        plotend = ".png"
+    else:
+        plotend = " " + str(itera) + ".png"
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
                  label=f[leading_remove:-4])
@@ -236,11 +314,18 @@ def surv(fs, keep_inbreds, thresh=500):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("percent survival to " + str(thresh) + " ticks, inbreds kept "
-                + str(keep_inbreds) + ".png")
+                + str(keep_inbreds) + plotend)
     plt.clf()
-
+    if compare_all_its:
+        if cont:
+            surv(fs, keep_inbreds, thresh, itera+1)
+            
 #avg. parent relatedness in two graphs: genetic overlap and degree of relation
-def parent_overlaps(fs, keep_inbreds):
+def parent_overlaps(fs, keep_inbreds, itera=None):
+    if compare_all_its == True:
+        cont = False
+        if itera == None:
+            itera = 0
     result_overlaps = {}
     result_degrees = {}
     for f in fs:
@@ -252,7 +337,8 @@ def parent_overlaps(fs, keep_inbreds):
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
-                if row["iteration"] == its_dict[f]:
+                if (itera == None and row["iteration"] == its_dict[f]) or\
+                   (itera != None and int(row["iteration"]) == itera):
                     if int(row["generation"]) > 0 and\
                         int(row["generation"]) <= gen_limit:
                         if not keep_inbreds:
@@ -266,6 +352,10 @@ def parent_overlaps(fs, keep_inbreds):
                                 float(row["parent_genoverlap"]))
                             degree_dict[int(row["generation"])].append(
                                 float(row["parent_degree"]))
+                else:
+                    if compare_all_its == True and cont == False:
+                        if int(row["iteration"]) == itera + 1:
+                            cont = True
         #save plots
         overlap_avgs = []
         degree_avgs = []
@@ -282,6 +372,10 @@ def parent_overlaps(fs, keep_inbreds):
         plt.plot(np.arange(0, gen_limit+1, 1),
                  result_overlaps[f[leading_remove:]],
                  label=f[leading_remove:-4])
+    if itera == None:
+        plotend = ".png"
+    else:
+        plotend = " " + str(itera) + ".png"
     plt.xticks(np.arange(0, gen_limit + 1, 5))
     plt.xlabel("Genetic overlap by gen, inbreds kept = " + str(keep_inbreds))
     plt.yticks(np.arange(0, 1.01, .1))
@@ -289,7 +383,7 @@ def parent_overlaps(fs, keep_inbreds):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("avg parent genoverlap, inbreds kept " + str(keep_inbreds)
-                + ".png")
+                + plotend)
     plt.clf()
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1),
@@ -303,53 +397,67 @@ def parent_overlaps(fs, keep_inbreds):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("avg parent degree relatedness, inbreds kept " + str(keep_inbreds)
-                + ".png")
+                + plotend)
     plt.clf()
-    
+    if compare_all_its:
+        if cont:
+            parent_overlaps(fs, keep_inbreds, itera+1)
+            
 #Nei's genetic diversity by generation
 #may take a while to run
-def nei_diversity(fs, keep_inbreds):
+def nei_diversity(fs, keep_inbreds, itera=None):
+    if compare_all_its == True:
+        cont = False
+        if itera == None:
+            itera = 0
     results = {}
     for f in fs:
+        tot0 = 0
         fields = {}
         hjs = {}
         H = {}
         tot = [0 for a in np.arange(0, gen_limit+1, 1)]
-        f2 = f[:-4] + " gene data.csv"
+        fgen = f[:-4] + " gene data.csv"
         for a in np.arange(0, gen_limit+1, 1):
             hjs[a] = []
             H[a] = 0
             fields[a] = {}
-        with open(f2) as file:
-            r = csv.DictReader(file)
-            for n in r.fieldnames:
+        with open(fgen) as filegen2:
+            rgen = csv.DictReader(filegen2)
+            for n in rgen.fieldnames:
                 if n[-6:] == "weight":
                     for a in np.arange(0, gen_limit+1, 1):
                         fields[a][n] = {}
-        with open(f) as file:
-            r = csv.DictReader(file)
-            with open(f2) as file2:
-                    r2 = csv.DictReader(file2)
-                    file.seek(0)
-                    row = next(r)
-                    for row2 in r2:
-                        while row2["agent_ident"] != row["ID"]:
-                            try:
-                                row = next(r)
-                            except StopIteration:
-                                file.seek(0)
+        with open(f) as filegen:
+            r = csv.DictReader(filegen)
+            with open(fgen) as filegen2:
+                rgen = csv.DictReader(filegen2)
+                filegen.seek(0)
+                for row in r:
+                    if (itera == None and row["iteration"] == its_dict[f]) or\
+                       (itera != None and int(row["iteration"]) == itera):
                         if not keep_inbreds or \
-                           row["cause of death"] != "Inbred":
+                               row["cause of death"] != "Inbred":
                             if int(row["generation"]) <= gen_limit:
+                                row2 = next(rgen)
+                                while row2["agent_ident"] != row["ID"]:
+                                    try:
+                                        row2 = next(rgen)
+                                        row2 = next(rgen)
+                                    except StopIteration:
+                                        filegen.seek(0)
                                 fields, tot = collect_fields(fields, row2,
                                                              tot,
                                                              int(row[
                                                                  "generation"]))
-                                row2 = next(r2)
                                 fields, tot = collect_fields(fields, row2,
                                                              tot,
                                                              int(row[
                                                                  "generation"]))
+                    else:
+                        if compare_all_its == True and cont == False:
+                            if int(row["iteration"]) == itera + 1:
+                                cont = True
         tot_loci = len(fields[0].keys())
         for gen in fields:
             if tot[gen] == 0:
@@ -367,6 +475,10 @@ def nei_diversity(fs, keep_inbreds):
                 #H = SUM(hj/TOTNUMloci)
                 H[gen] = sum(vals)
         results[f[leading_remove:]] = H
+    if itera == None:
+        plotend = ".png"
+    else:
+        plotend = " " + str(itera) + ".png"
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1),
                  list(results[f[leading_remove:]].values()),
@@ -379,8 +491,11 @@ def nei_diversity(fs, keep_inbreds):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("nei's genetic diversity, inbreds kept " + str(keep_inbreds)
-                + ".png")
+                + plotend)
     plt.clf()
+    if compare_all_its:
+        if cont:
+            nei_diversity(fs, keep_inbreds, itera+1)
 
 #helper function for nei_diversity
 #collects alleles from one chromosome
@@ -396,7 +511,11 @@ def collect_fields(fields, row2, tot, gen):
 
 #phenotype matching preferences
 #all by gen + average
-def preferences(fs, keep_inbreds):
+def preferences(fs, keep_inbreds, itera=None):
+    if compare_all_its == True:
+        cont = False
+        if itera == None:
+            itera = 0
     results = {}
     if separate_envs:
         results_1 = {}
@@ -416,7 +535,8 @@ def preferences(fs, keep_inbreds):
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
-                if row["iteration"] == its_dict[f]:
+                if (itera == None and row["iteration"] == its_dict[f]) or\
+                   (itera != None and int(row["iteration"]) == itera):
                     if int(row["generation"]) <= gen_limit:
                         if separate_envs and row["env #"] == "1":
                             if not keep_inbreds:
@@ -437,7 +557,10 @@ def preferences(fs, keep_inbreds):
                             else:
                                 r = float(row["preference"].split(",")[2][1:-1])
                                 pref_dict[int(row["generation"])].append(r)
-
+                else:
+                    if compare_all_its == True and cont == False:
+                        if int(row["iteration"]) == itera + 1:
+                            cont = True
         avgs = []
         if separate_envs:
             avgs_1 = []
@@ -467,6 +590,10 @@ def preferences(fs, keep_inbreds):
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
     count=0
+    if itera == None:
+        plotend = ".png"
+    else:
+        plotend = " " + str(itera) + ".png"
     #create graphs
     #first scatter
     for f in fs:
@@ -491,8 +618,10 @@ def preferences(fs, keep_inbreds):
     plt.ylabel("Preference")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Preference, inbreds kept " + str(keep_inbreds)
-                + ".png")
+    #default is too small resolution to see much
+    fig = plt.gcf()
+    fig.set_size_inches(18, 12)
+    plt.savefig("Preference, inbreds kept " + str(keep_inbreds) + plotend)
     plt.clf()
     count=0
     #next averages
@@ -519,15 +648,19 @@ def preferences(fs, keep_inbreds):
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     plt.savefig("Average preference, inbreds kept " + str(keep_inbreds)
-                + ".png")
+                + plotend)
     plt.clf()
+    if compare_all_its:
+        if cont:
+            preferences(fs, keep_inbreds, itera+1)
 
-##nums(file_list, True)
-##lifespan(file_list, True)
-##mas(file_list, True)
-##surv(file_list, True)
-##parent_overlaps(file_list, False)
-##nei_diversity(file_list, True)
-##disorders(file_list, True)
+            
+nums(file_list, True)
+lifespan(file_list, True)
+mas(file_list, True)
+disorders(file_list, True)
+surv(file_list, True)
+parent_overlaps(file_list, False)
+nei_diversity(file_list, True)
 preferences(file_list, True)
 print("Finished producing graphs")
