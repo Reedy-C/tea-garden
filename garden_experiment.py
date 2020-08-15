@@ -101,7 +101,8 @@ class garden_game:
                     if collect_data or self.export_all:
                         for env in self.env_list:
                             for tako in env.tako_list:
-                                dead_tako.append([tako, self.stepid, env.env_id])
+                                dead_tako.append([tako, self.stepid,
+                                                  env.env_id])
                             if self.export_all:
                                 export(dead_tako, self.filename)
                             if collect_data:
@@ -112,6 +113,10 @@ class garden_game:
                 for env in self.env_list:
                     if env.highest_gen > max_gen:
                         end = True
+                        for env in self.env_list:
+                            for tako in env.tako_list:
+                                dead_tako.append([tako, self.stepid,
+                                                  env.env_id])
             #if we have not met the predefined end conditions, begin main loop
             if not display_off:
                 for event in pygame.event.get():
@@ -155,6 +160,7 @@ class garden_game:
             for env in self.env_list:
                 if len(env.tako_list) == 0:
                     end = True
+                    print("Tako are dead :(")
             if end == True:
                 for env in self.env_list:
                     if self.export_all:
@@ -162,7 +168,6 @@ class garden_game:
                     if collect_data:
                         if len(dead_tako) > 0:
                             write_csv(self.filename, i, dead_tako)
-                    print("Tako are dead :(")
                     return
             #let experiment go a step
             for task in self.task_list:
@@ -192,6 +197,7 @@ class garden_game:
                         self.migrate(display_off)
             #check for data collection
             if self.stepid % 3000 == 0:
+                print(self.stepid, len(dead_tako))
                 if self.export_all:
                     export(dead_tako, self.filename)
                 if collect_data:
@@ -554,7 +560,7 @@ def run_from_file(f):
     #set defaults
     x_loops=1;max_ticks=0;display_off=True;garden_size=13;tako_number=20
     pop_max=40;max_width=1800;max_height=900;collect_data=True;export_all=False
-    rand_nets=False;max_gen=2;genetic_mode="Plain";learning_on=False
+    rand_nets=False;max_gen=0;genetic_mode="Plain";learning_on=False
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
     record_inbreeding=True;inbreed_lim=1.1;filename="default file"
     hla_genes=0;binary_health=0;carrier_percentage=40;two_envs=False;
