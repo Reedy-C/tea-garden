@@ -144,7 +144,7 @@ def lifespan(fs, keep_inbreds, itera=None):
     plt.ylabel("Avg age at death")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("avg age at death, inbreds kept " + str(keep_inbreds)
+    plt.savefig("Average age at death, inbreds kept " + str(keep_inbreds)
                 + plotend)
     plt.clf()
     if compare_all_its:
@@ -199,7 +199,7 @@ def mas(fs, keep_inbreds, itera=None):
     plt.ylabel("Avg # mating attempts")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("avg mating attempts, inbreds kept " + str(keep_inbreds)
+    plt.savefig("Average mating attempts, inbreds kept " + str(keep_inbreds)
                 + plotend)
     plt.clf()
     if compare_all_its:
@@ -255,7 +255,7 @@ def disorders(fs, keep_inbreds, itera=None):
     plt.ylabel("Avg # disorders")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("avg # disorders, inbreds kept " + str(keep_inbreds)
+    plt.savefig("Average # disorders, inbreds kept " + str(keep_inbreds)
                 + plotend)
     plt.clf()
     if compare_all_its:
@@ -317,7 +317,7 @@ def surv(fs, keep_inbreds, thresh=500, itera=None):
     plt.ylabel("Percent survived to age " + str(thresh))
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("percent survival to " + str(thresh) + " ticks, inbreds kept "
+    plt.savefig("Percent survival to " + str(thresh) + " ticks, inbreds kept "
                 + str(keep_inbreds) + plotend)
     plt.clf()
     if compare_all_its:
@@ -386,7 +386,7 @@ def parent_overlaps(fs, keep_inbreds, itera=None):
     plt.ylabel("Avg % genetic overlap")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("avg parent genoverlap, inbreds kept " + str(keep_inbreds)
+    plt.savefig("Average parent genoverlap, inbreds kept " + str(keep_inbreds)
                 + plotend)
     plt.clf()
     for f in fs:
@@ -400,7 +400,7 @@ def parent_overlaps(fs, keep_inbreds, itera=None):
     plt.ylabel("Avg degree relatedness")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("avg parent degree relatedness, inbreds kept " + str(keep_inbreds)
+    plt.savefig("Average parent degree relatedness, inbreds kept " + str(keep_inbreds)
                 + plotend)
     plt.clf()
     if compare_all_its:
@@ -494,7 +494,7 @@ def nei_diversity(fs, keep_inbreds, itera=None):
     plt.ylabel("Nei's diversity")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("nei's genetic diversity, inbreds kept " + str(keep_inbreds)
+    plt.savefig("Nei's genetic diversity, inbreds kept " + str(keep_inbreds)
                 + plotend)
     plt.clf()
     if compare_all_its:
