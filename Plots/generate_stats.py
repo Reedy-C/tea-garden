@@ -587,8 +587,10 @@ def preferences(fs, keep_inbreds, itera=None):
             results[f[leading_remove:] + " 0"] = [avgs, scatter_x, scatter_y]
             results_1[f[leading_remove:] + " 1"] = [avgs_1, scatter_x_1,
                                                     scatter_y_1]
-    prop_cycle = plt.rcParams['axes.prop_cycle']
-    colors = prop_cycle.by_key()['color']
+    #ColorBrewer color scheme qualitative-12 # 1
+    #adapted slightly to darken some of the paler colors
+    colors = ['#77b4d4', '#1f78b4', '#a2d973', '#33a02c', '#f96e6c', '#e31a1c',
+              '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99', '#b15928']
     count=0
     if itera == None:
         plotend = ".png"
