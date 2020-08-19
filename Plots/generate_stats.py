@@ -214,9 +214,9 @@ def disorders(fs, keep_inbreds, itera=None):
             itera = 0
     results = {}
     for f in fs:
-        mas_dict = {}
+        dis_dict = {}
         for a in np.arange(0, gen_limit+1):
-            mas_dict[a] = []
+            dis_dict[a] = []
         with open(f) as file:
             r = csv.DictReader(file)
             for row in r:
@@ -225,7 +225,10 @@ def disorders(fs, keep_inbreds, itera=None):
                     if int(row["generation"]) <= gen_limit:
                         if not keep_inbreds:
                             if row["cause of death"] != "Inbred":
-                                mas_dict[int(row["generation"])].append(
+                                dis_dict[int(row["generation"])].append(
+                                            int(row["# disorders"]))
+                        else:
+                            dis_dict[int(row["generation"])].append(
                                             int(row["# disorders"]))
                 else:
                     if compare_all_its == True and cont == False:
@@ -233,8 +236,8 @@ def disorders(fs, keep_inbreds, itera=None):
                             cont = True
         avgs = []
         for a in np.arange(0, gen_limit+1):
-            if len(mas_dict[a]) != 0:
-                avgs.append(sum(mas_dict[a])/len(mas_dict[a]))
+            if len(dis_dict[a]) != 0:
+                avgs.append(sum(dis_dict[a])/len(dis_dict[a]))
             else:
                 avgs.append(0)
         results[f[leading_remove:]] = avgs
@@ -246,6 +249,7 @@ def disorders(fs, keep_inbreds, itera=None):
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
                  label=f[leading_remove:-4])
     plt.xticks(np.arange(0, gen_limit + 1, 5))
+    plt.yticks(np.arange(0, 1.3, 0.1))
     plt.xlabel("Avg # disorders by gen, inbreds kept = " +
                str(keep_inbreds))
     plt.ylabel("Avg # disorders")
