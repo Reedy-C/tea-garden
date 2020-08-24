@@ -27,6 +27,10 @@ dgeann.layer_dict["STMlayer"] = '''\
                                     }}
                                     '''
 
+#headers for inputting genes from files for first generation
+fields = ['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
+                      'weight', 'in_node', 'out_node', 'in_layer', 'out_layer']
+
 #used for family detection - moderates the chance of mating with relatives
 #should be between 0 and 1
 family_mod = 0
@@ -158,52 +162,22 @@ class Tako(Widget):
                 self.phen_dict = {}
             self.data = self.solver.net.blobs['data'].data
             self.stm_input = self.solver.net.blobs['stm_input'].data
-        
-    #gen_type can be "Diverse", "Plain", or "Haploid"
-    #Diverse = diploid, two chromosomes are different
-    #Plain = diploid, two chromosomes are the same
-    #rand_net (bool) overrides this and creates a genome from a random starting
-    #   network in the 'plain' style
+
+    #create the initial generation of agents
+    #direction: (int) 0~3, indicates which direction agent faces
+    #display_off: (bool) indicates whether graphics are on or not
+    #x, y: (int) position of agent
+    #gen_type: (str) can be "Diverse", "Plain", or "Haploid"
+    #           Diverse = diploid, two chromosomes are different
+    #           Plain = diploid, two chromosomes are the same
+    #rand_net: (bool) overrides gen_type
+    #           and creates a genome from a random starting network
+    #           in the 'plain' style
     @staticmethod
     def default_tako(direction, display_off, x, y, gen_type, rand_net):
-        parents = []
         #do health genes if necessary
         if hla_genes > 0 or binary_health > 0:
-            healtha = []
-            healthb = []
-            #currently going with six alleles for HLA
-            if hla_genes > 0:
-                healthdict = {1: "A", 2: "B", 3: "C", 4: "D", 5: "E", 6: "F"}
-                for i in range(hla_genes):
-                    r = random.randint(1, 6)
-                    aident = healthdict[r]
-                    bident = aident
-                    while bident == aident:
-                        r = random.randint(1, 6)
-                        bident = healthdict[r]
-                    healtha.append(tg.hla_gene(3, False, False, 0, aident))
-                    healthb.append(tg.hla_gene(3, False, False, 0, bident))
-            if binary_health > 0:
-                for i in range(binary_health):
-                    r = random.randint(1, 100)
-                    #carrier
-                    if r < carrier_percentage:
-                        if random.randint(1, 2) == 1:
-                            healtha.append(tg.binary_gene(1, True, False,
-                                                          0.01, "*B"))
-                            healthb.append(tg.binary_gene(5, True, False,
-                                                          0.01, "*A"))
-                        else:
-                            healthb.append(tg.binary_gene(1, True, False,
-                                                          0.01, "*B"))
-                            healtha.append(tg.binary_gene(5, True, False,
-                                                          0.01, "*A"))
-                    #not a carrier, homozygous for dominant
-                    else:
-                        healtha.append(tg.binary_gene(5, True, False,
-                                                          0.01, "*A"))
-                        healthb.append(tg.binary_gene(5, True, False,
-                                                          0.01, "*A"))
+            healtha, healthb = Tako.create_health_genes()
         #do phenotype preference gene if necessary
         if phen_pref:
             a = round(random.uniform(-1, 1), 2)
@@ -229,56 +203,10 @@ class Tako(Widget):
         weightsb = []
         #genes for network weights
         if not rand_net:
-            fields = ['dom', 'can_mut', 'can_dup', 'mut_rate', 'ident',
-                      'weight', 'in_node', 'out_node', 'in_layer', 'out_layer']
-            filenamea = random.randint(1, 26)
-            filenamea = os.path.join("Default Genetics", str(filenamea) + ".csv")
-            parents.append(filenamea[:-4])
-            filenameb = random.randint(1, 26)
-            filenameb = os.path.join("Default Genetics", str(filenameb) + ".csv")
-            with open(filenamea, newline="") as file:
-                r = csv.DictReader(file, fieldnames = fields)
-                for row in r:
-                    in_node = int(row['in_node'])
-                    w = dgeann.weight_gene(int(row['dom']),
-                                           bool(row['can_mut']),
-                                           bool(row['can_dup']),
-                                           float(row['mut_rate']),
-                                           row['ident'], float(row['weight']),
-                                           in_node, int(row['out_node']),
-                                           row['in_layer'], row['out_layer'])
-                    weightsa.append(w)
-            if gen_type == "Diverse":
-                parents.append(filenameb[:-4])
-                with open(filenameb, newline="") as file:
-                    r = csv.DictReader(file, fieldnames = fields)
-                    for row in r:
-                        in_node = int(row['in_node'])
-                        w = dgeann.weight_gene(int(row['dom']),
-                                               bool(row['can_mut']),
-                                               bool(row['can_dup']),
-                                               float(row['mut_rate']),
-                                               row['ident'], float(row['weight']),
-                                               in_node, int(row['out_node']),
-                                               row['in_layer'], row['out_layer'])
-                        weightsb.append(w)
-            elif gen_type == "Plain":
-                parents.append(filenamea[:-4])
-                #copy the first strand again
-                #slightly faster than a deepcopy
-                with open(filenamea, newline="") as file:
-                    r = csv.DictReader(file, fieldnames = fields)
-                    for row in r:
-                        in_node = int(row['in_node'])
-                        w = dgeann.weight_gene(int(row['dom']),
-                                           bool(row['can_mut']),
-                                           bool(row['can_dup']),
-                                           float(row['mut_rate']),
-                                           row['ident'], float(row['weight']),
-                                           in_node, int(row['out_node']),
-                                           row['in_layer'], row['out_layer'])
-                        weightsb.append(w)
+            weightsa, weightsb, parents = Tako.create_weight_genes(gen_type)
             if gen_type != "Haploid":
+                #depending on whether phen genes, health genes, both, or neither
+                #are turned on, use a different class
                 if phen_pref and hla_genes == 0 and binary_health == 0:
                     default_genome = tg.phen_genome(layersa, layersb,
                                                     weightsa, weightsb,
@@ -307,6 +235,85 @@ class Tako(Widget):
         tak = Tako(direction, display_off, x, y, default_genome,
                    default_genome.ident, solver=solver, parents=parents)
         return tak
+
+    #helper function for default_genome
+    #creates the array of health genes, assuming a diploid genome
+    def create_health_genes():
+        healtha = []
+        healthb = []
+        #currently going with six alleles for HLA
+        if hla_genes > 0:
+            healthdict = {1: "A", 2: "B", 3: "C", 4: "D", 5: "E", 6: "F"}
+            for i in range(hla_genes):
+                r = random.randint(1, 6)
+                aident = healthdict[r]
+                bident = aident
+                while bident == aident:
+                    r = random.randint(1, 6)
+                    bident = healthdict[r]
+                healtha.append(tg.hla_gene(3, False, False, 0, aident))
+                healthb.append(tg.hla_gene(3, False, False, 0, bident))
+        if binary_health > 0:
+            for i in range(binary_health):
+                r = random.randint(1, 100)
+                #carrier
+                if r < carrier_percentage:
+                    if random.randint(1, 2) == 1:
+                        healtha.append(tg.binary_gene(1, True, False,
+                                                      0.01, "*B"))
+                        healthb.append(tg.binary_gene(5, True, False,
+                                                      0.01, "*A"))
+                    else:
+                        healthb.append(tg.binary_gene(1, True, False,
+                                                      0.01, "*B"))
+                        healtha.append(tg.binary_gene(5, True, False,
+                                                      0.01, "*A"))
+                #not a carrier, homozygous for dominant
+                else:
+                    healtha.append(tg.binary_gene(5, True, False,
+                                                      0.01, "*A"))
+                    healthb.append(tg.binary_gene(5, True, False,
+                                                      0.01, "*A"))
+        return healtha, healthb
+
+    #helper function for default_genome
+    #creates the two strands of weight genes
+    def create_weight_genes(gen_type):
+        parents = []
+        filenamea = random.randint(1, 41)
+        filenamea = os.path.join("Default Genetics", str(filenamea) + ".csv")
+        parents.append(filenamea[:-4])
+        weightsa = Tako.input_genes(filenamea)
+        if gen_type == "Diverse":
+            filenameb = random.randint(1, 26)
+            filenameb = os.path.join("Default Genetics", str(filenameb) +
+                                     ".csv")
+            parents.append(filenameb[:-4])
+            weightsb = Tako.input_genes(filenameb)
+        elif gen_type == "Plain":
+            parents.append(filenamea[:-4])
+            #import the first strand again
+            #slightly faster than a deepcopy
+            weightsb = Tako.input_genes(filenamea)
+        return weightsa, weightsb, parents
+
+    #helper function for create_weight_genes
+    #does the work of turning the file info into a list of weight genes
+    def input_genes(filename):
+        weights = []
+        with open(filename, newline="") as file:
+            r = csv.DictReader(file, fieldnames = fields)
+            for row in r:
+                in_node = int(row['in_node'])
+                w = dgeann.weight_gene(int(row['dom']),
+                                       bool(row['can_mut']),
+                                       bool(row['can_dup']),
+                                       float(row['mut_rate']),
+                                       row['ident'], float(row['weight']),
+                                       in_node, int(row['out_node']),
+                                       row['in_layer'], row['out_layer'])
+                weights.append(w)
+        return weights
             
     #drives go DOWN over time
     #except for desire, which has a sine wave funtion
