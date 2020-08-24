@@ -59,8 +59,11 @@ class garden_game:
         env0.env_id = 0
         self.env_list = [env0]
 
-        ###TODO
-        ###figure out if I need to/how to fix the seed issue
+        #TODO
+        #figure out if I need to/how to fix the seed issue
+        #(which is that the same random seed is shared between the two
+        #Garden environments, so actions in one advance the seed for
+        #the other as well)
         if self.two_envs:
             if self.diff_envs:
                 env1 = Garden(garden_size, tako_number, pop_max, genetic_mode,
@@ -79,7 +82,6 @@ class garden_game:
             
         self.filename = filename
         self.export_all = export_all
-
         self.stepid = 0
 
     def main_loop(self, max_ticks, max_gen, display_off, collect_data,
@@ -195,9 +197,8 @@ class garden_game:
                 if self.migration_rate > 0 and self.stepid > 0:
                     if self.stepid % 50000 == 0:
                         self.migrate(display_off)
-            #check for data collection
+            #check if we are doing data collection output this tick
             if self.stepid % 3000 == 0:
-                print(self.stepid, len(dead_tako))
                 if self.export_all:
                     export(dead_tako, self.filename)
                 if collect_data:
@@ -214,7 +215,7 @@ class garden_game:
                 self.graphics_loop(scroll, font)
             self.stepid += 1
             
-    
+    #initializes pygame sprite groups at beginning of experiment
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
         env = self.env_list[self.current_env]
@@ -230,6 +231,7 @@ class garden_game:
         for sprite in self.widget_sprites:
             self.all_sprites.add(sprite)
 
+    #adds new sprites/objects to groups when environments make them
     def get_new(self, env):
         for sprite in env.new_sprites:
             if not isinstance(sprite, Dirt):
@@ -239,18 +241,14 @@ class garden_game:
                     self.all_sprites.add(sprite)
             env.new_sprites.remove(sprite)
 
-    def draw_onscreen(self):
-        for spr in self.all_sprites:
-            if spr.x >= self.cam[0] and spr.x <= (self.cam[0] + spr_width):
-                if spr.y >= self.cam[1] and spr.y <= (self.cam[1] + spr_height):
-                    self.screen.blit(spr.image, spr.rect)
-
+    #initializes a tiled background of dirt sprites when graphics are on
     def make_background(self):
         for x in range(self.env_list[0].size):
             for y in range(self.env_list[0].size):
                 img, rect = load_image("dirt.png")
                 self.background.blit(img, (x*50, y*50))
-                
+
+    #control loop for drawing all graphics & text when graphics are on
     def graphics_loop(self, scroll, font):
         self.screen.blit(self.background, (0, 0))
         if not scroll:
@@ -267,8 +265,15 @@ class garden_game:
         #cap at x fps
         self.clock.tick(10)
 
+    #draws graphics when they are turned on
+    def draw_onscreen(self):
+        for spr in self.all_sprites:
+            if spr.x >= self.cam[0] and spr.x <= (self.cam[0] + spr_width):
+                if spr.y >= self.cam[1] and spr.y <= (self.cam[1] + spr_height):
+                    self.screen.blit(spr.image, spr.rect)
+
     #migrates agents between the two environments
-    #run every 50k ticks
+    #runs every 50k ticks
     def migrate(self, display_off):
         from_0 = random.sample(self.env_list[0].tako_list,
                                int(self.migration_rate * len(
@@ -287,6 +292,7 @@ class garden_game:
                                                               t.x, t.y)
             self.env_list[0].add_creature(t)
 
+#pygame function to load pngs from the img folder
 def load_image(name, colorkey=None):
     fullname = os.path.join('img', name)
     image = pygame.image.load(fullname)
@@ -298,8 +304,10 @@ def load_image(name, colorkey=None):
     return image, image.get_rect()
 
 #records data about an agent to a csv file on the agent's death
-#i = current iteration
-#q = queue of agents to write to csv in format [agent, step_id, env_id]
+#filename: (str) previously defined filename for output
+#i: (int) current iteration
+#q: (queue) queue of agents to write to csv
+#   with entries in the format of a list: [agent, step_id, env_id]
 def write_csv(filename, i, q):  
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
             writ = csv.writer(csvfile)
@@ -308,6 +316,9 @@ def write_csv(filename, i, q):
             while j < k:
                 l = q.popleft()
                 tak = l[0]
+                #puts most important/salient points of info for health/phenotype
+                #genomes - ident for health genes, weight for phenotype genes -
+                #into lists for output
                 healthchr_a = []
                 healthchr_b = []
                 if isinstance(tak.genome, tg.health_genome):
@@ -320,35 +331,29 @@ def write_csv(filename, i, q):
                     pref = [tak.genome.phen_gene_a.weight,
                             tak.genome.phen_gene_b.weight,
                             tak.pref]
+                #first generation has 'str' parents rather than agent parents
+                #TODO - smoother way to handle this?
                 if type(tak.parents[0]) != str:
-                    writ.writerow([i, l[2], tak.ident, tak.parents[0].ident,
-                                   tak.parents[1].ident, tak.age, tak.gen,
-                                   len(tak.children), tak.mating_attempts,
-                                   tak.accum_pain, tak.cod, l[1],
-                                   tak.genome.mut_record, tak.parent_degree,
-                                   tak.parent_genoverlap,
-                                   (tak.genome.disorder_count if \
-                                    isinstance(tak.genome, tg.health_genome)\
-                                    else ""),
-                                   healthchr_a, healthchr_b, pref])
+                    parents0 = tak.parents[0].ident
+                    parents1 = tak.parents[1].ident
                 else:
-                    writ.writerow([i, l[2], tak.ident, tak.parents[0],
-                                   tak.parents[1],
-                                   tak.age, tak.gen,
-                                   len(tak.children), tak.mating_attempts,
-                                   tak.accum_pain, tak.cod, l[1],
-                                   tak.genome.mut_record, tak.parent_degree,
-                                   tak.parent_genoverlap,
-                                   (tak.genome.disorder_count if \
-                                    isinstance(tak.genome, tg.health_genome)\
-                                    else ""),
-                                   healthchr_a, healthchr_b, pref])
+                    parents0 = tak.parents[0]
+                    parents1 = tak.parents[1]
+                writ.writerow([i, l[2], tak.ident, parents0, parents1,
+                               tak.age, tak.gen, len(tak.children),
+                               tak.mating_attempts, tak.accum_pain, tak.cod,
+                               l[1], tak.genome.mut_record, tak.parent_degree,
+                               tak.parent_genoverlap,
+                               (tak.genome.disorder_count if \
+                                isinstance(tak.genome, tg.health_genome)\
+                                else ""),
+                               healthchr_a, healthchr_b, pref])
                 j += 1   
             
 #exports condensed version of weight genes to a collective csv file in \Data
 #one line for haploid agents, two for diploid
 #each row contains the variable info for each of the agent's weight genes
-#n.b. expects a standard genome to work properly
+#n.b. expects a standard genome layer layout to work properly
 def export(tako_list, filename):
     for tak in tako_list:
         tak = tak[0]
@@ -372,7 +377,7 @@ def export(tako_list, filename):
                 writ.writerow(l2)
 
 #helper function for export, run from __init__
-#makes the headers for the gene export CSV file
+#makes the headers for each gene in the genome for the gene export CSV file
 def make_headers():
     headers = ["agent_ident", "chro"]
     for i in range(10):
@@ -463,13 +468,14 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
                    inbreed_lim = 1.1, hla_genes=0, binary_health=0,
                    carrier_percentage=40, two_envs=False, diff_envs=False,
                    migration_rate=0, phen_pref=False, filename=""):
+    #round width/height down to nearest multiple of 50 if need be
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
     if max_height % 50 != 0:
         max_height = max_height - (max_height % 50)
 
     i = 0
-    #create csv files
+    #create csv files if they don't already exist
     if collect_data or export_all:
         if filename == "":
             filename = str(int(time.time())) + ".csv"
@@ -525,26 +531,23 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
     loop_limit = x_loops
     if loop_limit < 1:
         loop_limit = 1
-    
+
+    if seeds == None:
+        seeds = [None for i in range(x_loops)]
+
     while loop_limit > 0:
-        if seeds != None:
-            #check if seeds is long enough
-            if len(seeds) < loop_limit + i:
-                for i in range(loop_limit + i - len(seeds)):
-                    seeds.append(seeds[i])
+        #check if seeds is long enough
+        if len(seeds) < loop_limit + i:
+            for i in range(loop_limit + i - len(seeds)):
+                seeds.append(seeds[i])
+        if seeds[0] != None:
             tako.set_seed(seeds[i])
-            g = garden_game(garden_size, tako_number, pop_max, max_width,
-                            max_height, display_off, learning_on, genetic_mode,
-                            rand_nets, garden_mode, filename,
-                            export_all, family_mod, family_detection,
-                            two_envs, diff_envs, migration_rate,
-                            seeds[i])
-        else:
-            g = garden_game(garden_size, tako_number, pop_max, max_width,
-                            max_height, display_off, learning_on, genetic_mode,
-                            rand_nets, garden_mode, filename, export_all,
-                            family_mod, family_detection, two_envs, diff_envs,
-                            migration_rate)
+        g = garden_game(garden_size, tako_number, pop_max, max_width,
+                        max_height, display_off, learning_on, genetic_mode,
+                        rand_nets, garden_mode, filename,
+                        export_all, family_mod, family_detection,
+                        two_envs, diff_envs, migration_rate,
+                        seeds[i])
         if not display_off:
             main_window = g
             main_window.main_loop(max_ticks, max_gen, display_off,
@@ -555,7 +558,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
         loop_limit -= 1
         i += 1
 
-#runs a garden experiment from a file
+#takes a filename (f), uses it to set user settings, and runs the experiments
+#defined by f
 def run_from_file(f):
     #set defaults
     x_loops=1;max_ticks=0;display_off=True;garden_size=13;tako_number=20
@@ -591,7 +595,8 @@ def run_from_file(f):
     bools = ["display_off", "collect_data", "export_all", "rand_nets",
              "learning_on", "record_inbreeding", "two_envs", "diff_envs",
              "phen_pref"]
-    
+
+    #then sets all user-defined settings from the file f
     with open(f) as exp_file:
         for line in exp_file:
             #comments

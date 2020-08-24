@@ -40,7 +40,7 @@ class Widget(sprite.Sprite):
         img = image.load(fullname)
         img = img.convert()
         if colorkey is not None:
-            if colorkey is -1:
+            if colorkey != -1:
                 colorkey = img.get_at((0,0))
             img.set_colorkey(colorkey, RLEACCEL)
         return img, img.get_rect()
