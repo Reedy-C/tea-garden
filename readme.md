@@ -4,7 +4,7 @@ Garden is a research-focused artificial life simulator, designed and created by 
 
 ## Running Garden
 
-Garden requires PyCaffe, PyGame, and the separate [DGEANN module](https://github.com/Reedy-C/tea-garden), which runs the neural networks.
+Garden requires PyCaffe, PyGame, and the separate [DGEANN module](https://github.com/Reedy-C/dgeann), which runs the neural networks.
 
 The main file is garden\_experiment.py. While the program can be used by manually setting parameters with the run\_experiment() function, it is easier to set them with a text file (described below) and use run\_from\_file(f), which is run automatically, default to using parameters from 'run params example.txt', when garden\_experiment.py is run. Note: it may take a few seconds for the program to start up.
 
