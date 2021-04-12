@@ -15,12 +15,12 @@ import random
 
 class garden_game:
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
-                 display_off, learning_on, genetic_mode, rand_nets, garden_mode,
+                 display_on, learning_on, genetic_mode, rand_nets, garden_mode,
                  filename, export_all, family_mod, family_detection,
                  two_envs, diff_envs, migration_rate, seed=None):
         pygame.init()
         global scroll
-        if not display_off:
+        if display_on:
             scroll = True
 
             self.width = (garden_size * 50)
@@ -52,10 +52,10 @@ class garden_game:
 
         if self.diff_envs:
             env0 = Garden(garden_size, tako_number, pop_max, genetic_mode,
-                          rand_nets, seed, display_off, garden_mode, food=0)
+                          rand_nets, seed, display_on, garden_mode, food=0)
         else:
             env0 = Garden(garden_size, tako_number, pop_max, genetic_mode,
-                          rand_nets, seed, display_off, garden_mode)
+                          rand_nets, seed, display_on, garden_mode)
         env0.env_id = 0
         self.env_list = [env0]
 
@@ -67,10 +67,10 @@ class garden_game:
         if self.two_envs:
             if self.diff_envs:
                 env1 = Garden(garden_size, tako_number, pop_max, genetic_mode,
-                              rand_nets, seed, display_off, garden_mode, food=1)
+                              rand_nets, seed, display_on, garden_mode, food=1)
             else:
                 env1 = Garden(garden_size, tako_number, pop_max, genetic_mode,
-                              rand_nets, seed, display_off, garden_mode, food=1)
+                              rand_nets, seed, display_on, garden_mode, food=1)
             env1.env_id = 1
             self.env_list.append(env1)
 
@@ -84,13 +84,13 @@ class garden_game:
         self.export_all = export_all
         self.stepid = 0
 
-    def main_loop(self, max_ticks, max_gen, display_off, collect_data,
+    def main_loop(self, max_steps, max_gen, display_on, collect_data,
                   garden_mode, i):
-        if not display_off:
+        if display_on:
             self.make_background()
         self.current_env = 0
         self.load_sprites()
-        if not display_off:
+        if display_on:
             pygame.display.flip()
             self.cam = [0,0]
             font = pygame.font.Font(None, 18)
@@ -98,8 +98,8 @@ class garden_game:
             dead_tako = deque()
         while 1:
             #see if ending conditions have been met
-            if max_ticks > 0:
-                if self.stepid > max_ticks:
+            if max_steps > 0:
+                if self.stepid > max_steps:
                     if collect_data or self.export_all:
                         for env in self.env_list:
                             for tako in env.tako_list:
@@ -120,7 +120,7 @@ class garden_game:
                                 dead_tako.append([tako, self.stepid,
                                                   env.env_id])
             #if we have not met the predefined end conditions, begin main loop
-            if not display_off:
+            if display_on:
                 for event in pygame.event.get():
                     if event.type == QUIT:
                         return
@@ -186,7 +186,7 @@ class garden_game:
             for env in self.env_list:
                 for tako in env.tako_list:
                     if tako.dead == True:
-                        env.garden_map[tako.y][tako.x] = Dirt(display_off,
+                        env.garden_map[tako.y][tako.x] = Dirt(display_on,
                                                               tako.x, tako.y)
                         env.tako_list.remove(tako)
                         if collect_data or self.export_all:
@@ -196,7 +196,7 @@ class garden_game:
             if self.two_envs:
                 if self.migration_rate > 0 and self.stepid > 0:
                     if self.stepid % 50000 == 0:
-                        self.migrate(display_off)
+                        self.migrate(display_on)
             #check if we are doing data collection output this tick
             if self.stepid % 3000 == 0:
                 if self.export_all:
@@ -211,7 +211,7 @@ class garden_game:
             for env in self.env_list:
                 for tako in env.tako_list:
                     tako.update()
-            if not display_off:
+            if display_on:
                 self.graphics_loop(scroll, font)
             self.stepid += 1
             
@@ -273,8 +273,8 @@ class garden_game:
                     self.screen.blit(spr.image, spr.rect)
 
     #migrates agents between the two environments
-    #runs every 50k ticks
-    def migrate(self, display_off):
+    #runs every 50k time-steps
+    def migrate(self, display_on):
         from_0 = random.sample(self.env_list[0].tako_list,
                                int(self.migration_rate * len(
                                    self.env_list[0].tako_list)))
@@ -283,12 +283,12 @@ class garden_game:
                            self.env_list[1].tako_list)))
         for t in from_0:
             self.env_list[0].tako_list.remove(t)
-            self.env_list[1].garden_map[t.y][t.x] = Dirt(display_off,
+            self.env_list[1].garden_map[t.y][t.x] = Dirt(display_on,
                                                               t.x, t.y)
             self.env_list[1].add_creature(t)
         for t in from_1:
             self.env_list[1].tako_list.remove(t)
-            self.env_list[0].garden_map[t.y][t.x] = Dirt(display_off,
+            self.env_list[0].garden_map[t.y][t.x] = Dirt(display_on,
                                                               t.x, t.y)
             self.env_list[0].add_creature(t)
 
@@ -416,8 +416,8 @@ def make_headers():
     return headers
     
 #x_loops (int): run x times (<1 interpreted as 1)
-#max_ticks (int): limit to x ticks (<= 0 interpreted as 'until all dead')
-#display_off (bool): if true, does not display anything; otherwise, runs
+#max_steps (int): limit to x steps (<= 0 interpreted as 'until all dead')
+#display_on (bool): if false, does not display anything; otherwise, runs
 #                   a pygame display capped at 10FPS
 #garden_size (int): garden size in length/width in tiles
 #tako_number (int): number of creatures created in the garden at startup
@@ -456,10 +456,10 @@ def make_headers():
 #diff_envs (bools): when True and when two_envs is True, each env has
 #                   a different food source
 #migration_rate (float): when True and when two_envs is true, the migration
-#                       rate b/w the two environments (done every 50k ticks)
+#                       rate b/w the two environments (done every 50k steps)
 #phen_pref (bool): when True, gives agents evolving phenotype
 #                       match preference
-def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
+def run_experiment(x_loops=15, max_steps=0, display_on=True, garden_size=8,
                    tako_number=1, pop_max=30, max_width=1800, max_height=900,
                    collect_data=True, export_all=False, rand_nets=False,
                    max_gen = 505, genetic_mode="Plain", learning_on=False,
@@ -543,17 +543,17 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
         if seeds[0] != None:
             tako.set_seed(seeds[i])
         g = garden_game(garden_size, tako_number, pop_max, max_width,
-                        max_height, display_off, learning_on, genetic_mode,
+                        max_height, display_on, learning_on, genetic_mode,
                         rand_nets, garden_mode, filename,
                         export_all, family_mod, family_detection,
                         two_envs, diff_envs, migration_rate,
                         seeds[i])
-        if not display_off:
+        if display_on:
             main_window = g
-            main_window.main_loop(max_ticks, max_gen, display_off,
+            main_window.main_loop(max_steps, max_gen, display_on,
                                   collect_data, garden_mode, i)
         else:
-            g.main_loop(max_ticks, max_gen, display_off, collect_data,
+            g.main_loop(max_steps, max_gen, display_on, collect_data,
                         garden_mode, i)
         loop_limit -= 1
         i += 1
@@ -562,7 +562,7 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
 #defined by f
 def run_from_file(f):
     #set defaults
-    x_loops=1;max_ticks=0;display_off=True;garden_size=13;tako_number=20
+    x_loops=1;max_steps=0;display_on=True;garden_size=13;tako_number=20
     pop_max=40;max_width=1800;max_height=900;collect_data=True;export_all=False
     rand_nets=False;max_gen=0;genetic_mode="Plain";learning_on=False
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
@@ -571,8 +571,8 @@ def run_from_file(f):
     diff_envs=False;migration_rate=0;phen_pref=False
 
     
-    atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
-                "display_off": display_off, "garden_size": garden_size,
+    atr_dict = {"x_loops": x_loops, "max_steps": max_steps,
+                "display_on": display_on, "garden_size": garden_size,
                 "tako_number": tako_number, "pop_max": pop_max,
                 "max_width": max_width, "max_height": max_height,
                 "collect_data": collect_data, "export_all": export_all,
@@ -587,12 +587,12 @@ def run_from_file(f):
                 "two_envs": two_envs, "diff_envs": diff_envs,
                 "migration_rate": migration_rate, "phen_pref": phen_pref}
     
-    ints = ["x_loops", "max_ticks", "garden_size", "tako_number", "pop_max",
+    ints = ["x_loops", "max_steps", "garden_size", "tako_number", "pop_max",
             "max_width", "max_height", "max_gen", "hla_genes",
             "binary_health", "carrier_percentage"]
     floats = ["family_mod", "inbreed_lim", "migration_rate"]
     strs = ["genetic_mode", "garden_mode", "filename"]
-    bools = ["display_off", "collect_data", "export_all", "rand_nets",
+    bools = ["display_on", "collect_data", "export_all", "rand_nets",
              "learning_on", "record_inbreeding", "two_envs", "diff_envs",
              "phen_pref"]
 
@@ -605,8 +605,8 @@ def run_from_file(f):
             #blank line = run what we have, then continue
             #to read the file for a new set of parameters
             elif line == "\n":
-                run_experiment(atr_dict["x_loops"], atr_dict["max_ticks"],
-                               atr_dict["display_off"], atr_dict["garden_size"],
+                run_experiment(atr_dict["x_loops"], atr_dict["max_steps"],
+                               atr_dict["display_on"], atr_dict["garden_size"],
                                atr_dict["tako_number"], atr_dict["pop_max"],
                                atr_dict["max_width"], atr_dict["max_height"],
                                atr_dict["collect_data"], atr_dict["export_all"],
@@ -626,8 +626,8 @@ def run_from_file(f):
                                atr_dict["migration_rate"],
                                atr_dict["phen_pref"])
                 #reset defaults
-                atr_dict = {"x_loops": x_loops, "max_ticks": max_ticks,
-                    "display_off": display_off, "garden_size": garden_size,
+                atr_dict = {"x_loops": x_loops, "max_steps": max_steps,
+                    "display_on": display_on, "garden_size": garden_size,
                     "tako_number": tako_number, "pop_max": pop_max,
                     "max_width": max_width, "max_height": max_height,
                     "collect_data": collect_data, "export_all": export_all,
@@ -664,8 +664,8 @@ def run_from_file(f):
                     val = line[1].split(" ")
                 atr_dict[line[0]] = val
     #run the last one in the file
-    run_experiment(atr_dict["x_loops"], atr_dict["max_ticks"],
-                   atr_dict["display_off"], atr_dict["garden_size"],
+    run_experiment(atr_dict["x_loops"], atr_dict["max_steps"],
+                   atr_dict["display_on"], atr_dict["garden_size"],
                    atr_dict["tako_number"], atr_dict["pop_max"],
                    atr_dict["max_width"], atr_dict["max_height"],
                    atr_dict["collect_data"], atr_dict["export_all"],

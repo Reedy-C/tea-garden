@@ -75,15 +75,15 @@ class Tako(Widget):
     dir_map = {0: "north.png", 1: "east.png", 2: "south.png", 3: "west.png"}
 
     #gen is short for generation, not genome
-    def __init__(self, dire, display_off, x, y, genome, ident, solver=None,
+    def __init__(self, dire, display_on, x, y, genome, ident, solver=None,
                  parents=[], gen=0, parent_degree=None, parent_genoverlap=None):
         sprite.Sprite.__init__(self)
         self.direction = dire
         self.x = x
         self.y = y
         self.genome = genome
-        self.display_off = display_off
-        if not display_off:
+        self.display_on = display_on
+        if display_on:
             self.image, self.rect = self.load_image(self.dir_map[dire],
                                                 Color('#FF00FF'))
         self.rect = Rect(x*50, y*50, 50, 50)
@@ -165,7 +165,7 @@ class Tako(Widget):
 
     #create the initial generation of agents
     #direction: (int) 0~3, indicates which direction agent faces
-    #display_off: (bool) indicates whether graphics are on or not
+    #display_on: (bool) indicates whether graphics are on or not
     #x, y: (int) position of agent
     #gen_type: (str) can be "Diverse", "Plain", or "Haploid"
     #           Diverse = diploid, two chromosomes are different
@@ -174,7 +174,7 @@ class Tako(Widget):
     #           and creates a genome from a random starting network
     #           in the 'plain' style
     @staticmethod
-    def default_tako(direction, display_off, x, y, gen_type, rand_net):
+    def default_tako(direction, display_on, x, y, gen_type, rand_net):
         #do health genes if necessary
         if hla_genes > 0 or binary_health > 0:
             healtha, healthb = Tako.create_health_genes()
@@ -232,7 +232,7 @@ class Tako(Widget):
             default_genome = dgeann.genome(layersa, layersb, [], [])
             parents = ["random", "random"]
         solver = default_genome.build(delete=dele)
-        tak = Tako(direction, display_off, x, y, default_genome,
+        tak = Tako(direction, display_on, x, y, default_genome,
                    default_genome.ident, solver=solver, parents=parents)
         return tak
 
@@ -341,9 +341,9 @@ class Tako(Widget):
             self.dez += 1
             if self.dez == 1005.0:
                 self.dez = 0.0
-            #this makes a wave between 0 and 150 with a period of ~1005 ticks
+            #this makes a wave between 0 and 150 with a period of ~1005 steps
             self.desire = (math.sin((self.dez/160.0)+11.0)*75.0)+75.0
-            if not self.display_off:
+            if self.display_on:
                 self.update_sprite()
             self.accum_pain += self.pain
             self.accum_pain -= self.amuse/15
@@ -648,7 +648,7 @@ class Tako(Widget):
     #and wanted a skewed normal distribution (as humans have)
     #(possibly other animals, but for some reason
     #those stats are harder to find)
-    #average age at death should be somewhere near 100000 ticks
+    #average age at death should be somewhere near 100000 steps
     #this number was based on Tako starvation time
     #by comparing ratios of starvation time/average lifespan
     #across a few species

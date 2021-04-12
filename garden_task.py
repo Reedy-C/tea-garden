@@ -45,7 +45,7 @@ class garden_task:
             reward += 1
         return reward
 
-    #function that finds a tako's action for a given tick from its neural net
+    #function that finds a tako's action for a given step from its neural net
     #seems to be slightly faster than using max() + np.where()
     def find_action(self, action):
         highest = 0
@@ -90,7 +90,7 @@ class garden_task:
 
     #main garden_task function
     #handles each tako observing its environment
-    #and performing an action on each tick
+    #and performing an action on each step
     def interact_and_learn(self):
         #for each tako in env, get its observation
         for tako in self.env.tako_list:

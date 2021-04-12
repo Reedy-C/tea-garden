@@ -4,15 +4,15 @@ Garden is a research-focused artificial life simulator, designed and created by 
 
 ## Running Garden
 
-Garden requires PyCaffe, PyGame, and the separate DGEANN module, which runs the neural networks.
-https://github.com/Reedy-C/tea-garden
+Garden requires PyCaffe, PyGame, and the separate [DGEANN module](https://github.com/Reedy-C/tea-garden), which runs the neural networks.
+
 The main file is garden\_experiment.py. While the program can be used by manually setting parameters with the run\_experiment() function, it is easier to set them with a text file (described below) and use run\_from\_file(f), which is run automatically, default to using parameters from 'run params example.txt', when garden\_experiment.py is run. Note: it may take a few seconds for the program to start up.
 
-Garden can be run with or without visualization; it is off by default. The agents are always trying to perform some action, even if it looks like they are sitting there when visualization is turned on. In visual mode, the simulation runs at 10 ticks/second, but this can be changed by changing the number in 'self.clock.tick(10)' in the MainLoop function of garden_experiment.py, or turned off to run as fast as possible by commenting out that line.
+Garden can be run with or without visualization; it is off by default. The agents are always trying to perform some action, even if it looks like they are sitting there when visualization is turned on. In visual mode, the simulation runs at 10 steps/second, but this can be changed by changing the number in 'self.clock.tick(10)' in the MainLoop function of garden_experiment.py, or turned off to run as fast as possible by commenting out that line. If the simulation area is larger than can be displayed in the given window size, it may be scrolled around using the arrow keys. If two environments are being used, currently only one is displayed at a time, but they can be switched between using the 's' key.
 
 During each time step, the creatures are given an array of twelve numbers as input. The first six numbers represent what the creature sees. The creatures can only see what is directly in front of them, and they are told by the simulation exactly what kind of object they are looking at. Each type of object corresponds to a position in the array - this is what the 'node' property of each Widget sub-class refers to. For example, the Dirt objects, which have node set to 0, correspond to the first space of the input array.
 
-The next four numbers are the creature's drives. In order, they are fullness, amusement, pain, and desire, and the first three decrease over time. If a creature's fullness reaches 0, it will starve to death. This happens in 300 ticks. Accumulated pain acts like stress, shortening an agent's life; retaining a high level of amusement moderates this effect and can help the agent live a bit longer. Desire rises and falls on its own, with a period of 1004 ticks; agents are only able to mate when it is in a certain ranger, and mating attempts will lower it, though failed ones by a lesser amount. The drives can also changed by interaction with the objects; for example, attempting to eat a rock increases pain.
+The next four numbers are the creature's drives. In order, they are fullness, amusement, pain, and desire, and the first three decrease over time. If a creature's fullness reaches 0, it will starve to death. This happens in 300 time-steps. Accumulated pain acts like stress, shortening an agent's life; retaining a high level of amusement moderates this effect and can help the agent live a bit longer. Desire rises and falls on its own, with a period of 1004 steps; agents are only able to mate when it is in a certain ranger, and mating attempts will lower it, though failed ones by a lesser amount. The drives can also changed by interaction with the objects; for example, attempting to eat a rock increases pain.
 
 The last two numbers are only used if an agent is looking at another agent. The first number indicates if the other agent is currently able to mate. The second is only used if family detection is on, indicating relatedness to the other agent, or if phenotype preferences are on, indicated how similar their phenotypes are.
 
@@ -28,8 +28,8 @@ Agents have an age-related chance of dying naturally. Higher amounts of accumula
 
 The main parameters are (defaults show in parentheses):
 * x\_loops (1): How many times the simulation will be re-run
-* max\_ticks (100000): Maximum number of time-steps the simulation will be allowed to run
-* display\_off (False): If True, no visualization is used (much faster)
+* max\_steps (100000): Maximum number of time-steps the simulation will be allowed to run
+* display\_on (True): If False, no visualization is used (much faster)
 * garden\_size (13): Sets the size of the simulation area as X by X squares
 * tako\_number (20): Initial number of agents
 * pop\_max (25): Maximum population size; at this limit, breeding will no longer produce more agents until some die

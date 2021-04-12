@@ -4,8 +4,8 @@
 #(default for seeds is none)
 #for more info on attributes, see the readme
 x_loops: 1
-max_ticks: 0
-display_off: False
+max_steps: 0
+display_on: True
 garden_size: 13
 tako_number: 20
 pop_max: 25

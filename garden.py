@@ -6,7 +6,7 @@ from pygame import sprite
 class Garden:
 
     def __init__(self, size, num_tako, pop_max, genetic_type, rand_net, seed,
-                 display_off, garden_mode, food=None):
+                 display_on, garden_mode, food=None):
         #create the map and add toy, grass, rock, creature
         if size < 3:
             raise ValueError
@@ -19,46 +19,46 @@ class Garden:
         self.rand_net = rand_net
         if seed is not None:
             random.seed(seed)
-        self.display_off = display_off
+        self.display_on = display_on
         self.garden_mode = garden_mode
         self.reset(food)
  
     def reset(self, food):
-        self.garden_map = [[Dirt(self.display_off) for x in range(self.size)]
+        self.garden_map = [[Dirt(self.display_on) for x in range(self.size)]
                            for x in range(self.size)]
         self.tako_list = []
         rock = 0
         while rock < (0.02 * (self.size**2)):
-            self.add_item(Rock(self.display_off))
+            self.add_item(Rock(self.display_on))
             rock += 1
         ball = 0
         while ball < (0.04 * (self.size**2)):
-            self.add_item(Ball(self.display_off))
+            self.add_item(Ball(self.display_on))
             ball += 1
         gras = 0
         while (gras <= (.25 * (self.size**2))):
             #for use with two separate environments
             if food == 0:
-                self.add_item(Grass(self.display_off))
+                self.add_item(Grass(self.display_on))
                 gras += 1
             elif food == 1:
-                self.add_item(Grass2(self.display_off, poison=False))
+                self.add_item(Grass2(self.display_on, poison=False))
                 gras += 1               
             #two types of grass
             elif (self.garden_mode == "Diverse Static" or
                 self.garden_mode == "Nutrition"):
                 l = random.randint(0, 1)
                 if l == 1:
-                    self.add_item(Grass(self.display_off))
+                    self.add_item(Grass(self.display_on))
                 else:
                     if self.garden_mode == "Nutrition":
-                        self.add_item(Grass2(self.display_off, poison=True))
+                        self.add_item(Grass2(self.display_on, poison=True))
                     else:
-                        self.add_item(Grass2(self.display_off, poison=False))
+                        self.add_item(Grass2(self.display_on, poison=False))
                 gras += 1
             #one type of grass
             else:
-                self.add_item(Grass(self.display_off))
+                self.add_item(Grass(self.display_on))
                 gras += 1
         while (len(self.tako_list)) < self.num_tako:
             self.add_creature()
@@ -91,7 +91,7 @@ class Garden:
         if t != None:
             Tak = t
         else:
-            Tak = tako.Tako.default_tako(direction, self.display_off, x, y,
+            Tak = tako.Tako.default_tako(direction, self.display_on, x, y,
                                     self.genetic_type, self.rand_net)
         self.garden_map[y][x].kill()
         self.garden_map[y][x] = Tak
@@ -116,12 +116,12 @@ class Garden:
             for x in range(self.size):
                 if isinstance(self.garden_map[y][x], Grass):
                     self.garden_map[y][x].kill()
-                    g = Grass2(self.display_off, x, y, poison=False)
+                    g = Grass2(self.display_on, x, y, poison=False)
                     self.garden_map[y][x] = g
                     self.new_sprites.add(g)
                 elif isinstance(self.garden_map[y][x], Grass2):
                     self.garden_map[y][x].kill()
-                    g = Grass(self.display_off, x, y)
+                    g = Grass(self.display_on, x, y)
                     self.garden_map[y][x] = g
                     self.new_sprites.add(g)
         
@@ -141,7 +141,7 @@ class Garden:
         result = targ.intersected()
         #check if it's dirt
         if result is None:
-            new = Dirt(self.display_off, tak.x, tak.y)
+            new = Dirt(self.display_on, tak.x, tak.y)
             self.garden_map[tak.y][tak.x] = new
             self.new_sprites.add(new)
             self.garden_map[target[1]][target[0]].kill()
@@ -217,13 +217,13 @@ class Garden:
                 if (tako.family_detection != None or
                     tako.record_inbreeding == True or
                     tako.inbreed_lim < 1.1):
-                    new_tak = tako.Tako(direction, self.display_off, x, y,
+                    new_tak = tako.Tako(direction, self.display_on, x, y,
                                         new_genome, None, None, [tak, v],
                                         (max(tak.gen, v.gen) + 1),
                                         tak.degree_detection(v),
                                         tak.genoverlap(v))
                 else:
-                    new_tak = tako.Tako(direction, self.display_off, x, y,
+                    new_tak = tako.Tako(direction, self.display_on, x, y,
                                         new_genome, None, None, [tak, v],
                                         (max(tak.gen, v.gen) + 1), None, None)
                 self.garden_map[y][x].kill()

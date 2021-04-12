@@ -7,14 +7,14 @@ import os
 
 class Widget(sprite.Sprite):
     #a widget has a position
-    def __init__(self, display_off, x=None, y=None):
+    def __init__(self, display_on, x=None, y=None):
         sprite.Sprite.__init__(self)
-        if not display_off:
-            self.image, self.rect = self.load_image(self.display, display_off,
+        if display_on:
+            self.image, self.rect = self.load_image(self.display, display_on,
                                                     Color('#FF00FF'))
         self.x = x
         self.y = y
-        if not display_off:
+        if display_on:
             if self.x is not None:
                 if self.y is not None:
                     self.rect = Rect(x*50, y*50, 50, 50)
@@ -34,8 +34,8 @@ class Widget(sprite.Sprite):
     def mated(self, tako):
         return ("amuse", -1)
 
-    #display_off (bool): whether images are being displayed
-    def load_image(self, name, display_off, colorkey=None):
+    #display_on (bool): whether images are being displayed
+    def load_image(self, name, display_on, colorkey=None):
         fullname = os.path.join('img', name)
         img = image.load(fullname)
         img = img.convert()
@@ -65,8 +65,8 @@ class Grass(Widget):
     node = 1
     display = "grass.png"
 
-    def __init__(self, display_off, x=0, y=0, poison=False):
-        super().__init__(display_off, x, y)
+    def __init__(self, display_on, x=0, y=0, poison=False):
+        super().__init__(display_on, x, y)
         self.poison = poison
         
     def eaten(self):
@@ -97,8 +97,8 @@ class Grass2(Widget):
     node = 5
     display = "grass2.png"
 
-    def __init__(self, display_off, x=0, y=0, poison=True):
-        super().__init__(display_off, x, y)
+    def __init__(self, display_on, x=0, y=0, poison=True):
+        super().__init__(display_on, x, y)
         self.poison = poison
 
     def eaten(self):
