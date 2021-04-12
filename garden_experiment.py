@@ -538,8 +538,8 @@ def run_experiment(x_loops=15, max_ticks=0, display_off=True, garden_size=8,
     while loop_limit > 0:
         #check if seeds is long enough
         if len(seeds) < loop_limit + i:
-            for i in range(loop_limit + i - len(seeds)):
-                seeds.append(seeds[i])
+            for j in range(loop_limit + i - len(seeds)):
+                seeds.append(seeds[j])
         if seeds[0] != None:
             tako.set_seed(seeds[i])
         g = garden_game(garden_size, tako_number, pop_max, max_width,
@@ -659,6 +659,7 @@ def run_from_file(f):
                         val = None
                     else:
                         val = line[1]
+                #TODO: may not like colons? broke on 1W~oJoQFVXCk@yPIe{;:
                 elif line[0] == "seeds":
                     val = line[1].split(" ")
                 atr_dict[line[0]] = val
