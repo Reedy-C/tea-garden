@@ -64,4 +64,5 @@ Garden also has a number of parameters that can used for running different kinds
 * widget.py defines the objects that exist in the Garden environment (the agents are a special type of object).
 * garden\_task.py defines the processing layer that goes between the simulation, environment, and the neural network of the agents. It handles the process of the agents taking input from the environment, deciding what action a agent takes, and sending actions to the environment to be performed.
 * tako\_genetics.py defines particular DGEANN genetics variations used for agents when some parameters are turned on.
-* genetics tests.py contains some genetics tests peculiar to this use of DGEANN.
+* genetics\_tests.py contains some genetics tests peculiar to this use of DGEANN.
+* generate\_graphs.py will make graphs; there are settings in the file, but by default it will graph data files in the Plots folder

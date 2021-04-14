@@ -5,32 +5,60 @@ import numpy as np
 
 plt.style.use("seaborn")
 
-#remove x characters at the beginning of file names to make plots more readable
+#SETTINGS
+#remove x characters at the beginning of file names on graph keys
+#useful to make plots more readable
 leading_remove = 0
-#maximum generation
+#maximum generation to be plotted
 gen_limit = 50
-#if set to True, will run through all iterations up to the limit found in the
-#first file and publish graphs based on each one
+#if set to True, will run through all iterations/runs
+#up to the limit found in the first file
+#and publish graphs based on each one
 compare_all_its = True
+#when grpahic all iterations, each graph will be labeled with the iteration #
 
-#iteration/run used per file if compare_all_its == False
+#iteration/run used per file for up to ten files if compare_all_its == False
 its = ["0", "0", "0", "0", "0",
        "0", "0", "0", "0", "0"]
+
 #used for plotting where two_envs has been turned on
-#will separate env 0 and env 1
+#will separate env 0 and env 1 into different plots
 separate_envs = True
+
+#sub-folder to dig up files from
+#if set to "", defaults to current folder
+retrieval_directory = "Plots"
+
+#sub-folder to save files into
+#if set to "", defaults to current folder
+save_directory = "Plots"
+
+#if run was made with inbreed_lim set below 1, too-inbred agents die at birth
+#this setting will include them if True and not if False
+#(has no effect in inbreed_lim was not used)
+keep_inbred_agents = True
+
+#end of settings
 
 its_dict = {}
 file_list = []
 
-for f in os.listdir():
+def gather_files():
     if not f.startswith('.'):
         if f[-4:] == ".csv":
             if not f[-13:] == "gene data.csv":
-                file_list.append(f)
+                file_list.append(os.path.join(retrieval_directory, f))
+
+if retrieval_directory == "":
+    for f in os.listdir():
+        gather_files()
+else:
+    for f in os.listdir(retrieval_directory):
+        gather_files()
         
 for f in range(len(file_list)):
     its_dict[file_list[f]] = its[f]
+
 
 #all functions call on a list of .csv files in the folder
 #do not go over 10 files + associated gene data .csv files
@@ -74,22 +102,28 @@ def nums(fs, keep_inbreds, itera=None):
     else:
         plotend = " " + str(itera) + ".png"
     plt.bar(results_tot.keys(), results_tot.values())
-    plt.xlabel("# of total agents, inbreds kept = " +
-           str(keep_inbreds))
+    plt.xlabel("# of total agents")
     plt.ylabel("# of agents")
-    plt.savefig("# agents total, inbreds kept " + str(keep_inbreds) + plotend)
+    if save_directory == "":
+        plt.savefig("# agents total " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                 ("# agents total " + plotend)))
     plt.clf()
     for f in fs:
         plt.plot(list(results_gen[f[leading_remove:]].keys()),
                  list(results_gen[f[leading_remove:]].values()),
                  label=f[leading_remove:-4])
     plt.xticks(np.arange(0, gen_limit + 1, 5))
-    plt.xlabel("# of total agents by gen, inbreds kept = " +
-           str(keep_inbreds))
+    plt.xlabel("# of total agents by gen")
     plt.ylabel("# of agents")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("# agents by gen, inbreds kept " + str(keep_inbreds) + plotend)
+    if save_directory == "":
+        plt.savefig("# agents by gen " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("# agents total " + plotend)))
     plt.clf()
     if compare_all_its:
         if cont:
@@ -139,13 +173,15 @@ def lifespan(fs, keep_inbreds, itera=None):
                  label=f[leading_remove:-4])
     plt.xticks(np.arange(0, gen_limit + 1, 5))
     plt.yticks(np.arange(0, 130000, 10000))
-    plt.xlabel("Avg age at death by gen, inbreds kept = " +
-               str(keep_inbreds))
+    plt.xlabel("Avg age at death by gen")
     plt.ylabel("Avg age at death")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Average age at death, inbreds kept " + str(keep_inbreds)
-                + plotend)
+    if save_directory == "":
+        plt.savefig("Average age at death " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Average age at death " + plotend)))
     plt.clf()
     if compare_all_its:
         if cont:
@@ -194,13 +230,15 @@ def mas(fs, keep_inbreds, itera=None):
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
                  label=f[leading_remove:-4])
     plt.xticks(np.arange(0, gen_limit + 1, 5))
-    plt.xlabel("Avg # mating attempts by gen, inbreds kept = " +
-               str(keep_inbreds))
+    plt.xlabel("Avg # mating attempts by gen")
     plt.ylabel("Avg # mating attempts")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Average mating attempts, inbreds kept " + str(keep_inbreds)
-                + plotend)
+    if save_directory == "":
+        plt.savefig("Average mating attempts " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Average mating attempts " + plotend)))
     plt.clf()
     if compare_all_its:
         if cont:
@@ -250,13 +288,15 @@ def disorders(fs, keep_inbreds, itera=None):
                  label=f[leading_remove:-4])
     plt.xticks(np.arange(0, gen_limit + 1, 5))
     plt.yticks(np.arange(0, 1.3, 0.1))
-    plt.xlabel("Avg # disorders by gen, inbreds kept = " +
-               str(keep_inbreds))
+    plt.xlabel("Avg # disorders by gen")
     plt.ylabel("Avg # disorders")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Average # disorders, inbreds kept " + str(keep_inbreds)
-                + plotend)
+    if save_directory == "":
+        plt.savefig("Average # disorders " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Average # disorders " + plotend)))
     plt.clf()
     if compare_all_its:
         if cont:
@@ -311,14 +351,17 @@ def surv(fs, keep_inbreds, thresh=500, itera=None):
         plt.plot(np.arange(0, gen_limit+1, 1), results[f[leading_remove:]],
                  label=f[leading_remove:-4])
     plt.xticks(np.arange(0, gen_limit + 1, 5))
-    plt.xlabel("Survival to age " + str(thresh) +
-               " by gen, inbreds kept = " + str(keep_inbreds))
+    plt.xlabel("Survival to age " + str(thresh) + " by gen")
     plt.yticks(np.arange(0, 1.01, .1))
     plt.ylabel("Percent survived to age " + str(thresh))
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Percent survival to " + str(thresh) + " ticks, inbreds kept "
-                + str(keep_inbreds) + plotend)
+    if save_directory == "":
+        plt.savefig("Percent survival to " + str(thresh) + " ticks " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Percent survival to " + str(thresh) +
+                                   " ticks " + plotend)))
     plt.clf()
     if compare_all_its:
         if cont:
@@ -381,27 +424,34 @@ def parent_overlaps(fs, keep_inbreds, itera=None):
     else:
         plotend = " " + str(itera) + ".png"
     plt.xticks(np.arange(0, gen_limit + 1, 5))
-    plt.xlabel("Genetic overlap by gen, inbreds kept = " + str(keep_inbreds))
+    plt.xlabel("Genetic overlap by gen")
     plt.yticks(np.arange(0, 1.01, .1))
     plt.ylabel("Avg % genetic overlap")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Average parent genoverlap, inbreds kept " + str(keep_inbreds)
-                + plotend)
+    if save_directory == "":
+        plt.savefig("Average parent genoverlap " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Average parent genoverlap " +
+                                   plotend)))
     plt.clf()
     for f in fs:
         plt.plot(np.arange(0, gen_limit+1, 1),
                  result_degrees[f[leading_remove:]],
                  label=f[leading_remove:-4])
     plt.xticks(np.arange(0, gen_limit + 1, 5))
-    plt.xlabel("Parental degree of relatedness by gen, inbreds kept = " +
-               str(keep_inbreds))
+    plt.xlabel("Parental degree of relatedness by gen")
     plt.yticks(np.arange(0, 1.01, .1))
     plt.ylabel("Avg degree relatedness")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Average parent degree relatedness, inbreds kept " + str(keep_inbreds)
-                + plotend)
+    if save_directory == "":
+        plt.savefig("Average parent degree relatedness " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Average parent degree relatedness " +
+                                   plotend)))
     plt.clf()
     if compare_all_its:
         if cont:
@@ -488,14 +538,16 @@ def nei_diversity(fs, keep_inbreds, itera=None):
                  list(results[f[leading_remove:]].values()),
                  label=f[leading_remove:-4])
     plt.xticks(np.arange(0, gen_limit + 1, 5))
-    plt.xlabel("Nei's genetic diversity by gen, inbreds kept = " +
-               str(keep_inbreds))
+    plt.xlabel("Nei's genetic diversity by gen")
     plt.yticks(np.arange(0, 1.01, .1))
     plt.ylabel("Nei's diversity")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Nei's genetic diversity, inbreds kept " + str(keep_inbreds)
-                + plotend)
+    if save_directory == "":
+        plt.savefig("Nei's genetic diversity " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Nei's genetic diversity " + plotend)))
     plt.clf()
     if compare_all_its:
         if cont:
@@ -619,15 +671,18 @@ def preferences(fs, keep_inbreds, itera=None):
             count += 1
     plt.xticks(np.arange(0, gen_limit + 1, 5))
     plt.yticks(np.arange(-1, 1.1, .2))
-    plt.xlabel("Preferences by gen, inbreds kept = " +
-               str(keep_inbreds))
+    plt.xlabel("Preferences by gen")
     plt.ylabel("Preference")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
     #default is too small resolution to see much
     fig = plt.gcf()
     fig.set_size_inches(18, 12)
-    plt.savefig("Preference, inbreds kept " + str(keep_inbreds) + plotend)
+    if save_directory == "":
+        plt.savefig("Preference " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Preference " + plotend)))
     plt.clf()
     count=0
     #next averages
@@ -648,25 +703,27 @@ def preferences(fs, keep_inbreds, itera=None):
             count += 1
     plt.xticks(np.arange(0, gen_limit + 1, 5))
     plt.yticks(np.arange(-1, 1.1, .2))
-    plt.xlabel("Avg. preference by gen, inbreds kept = " +
-               str(keep_inbreds))
+    plt.xlabel("Avg. preference by gen")
     plt.ylabel("Avg. preference")
     plt.legend(facecolor="white", edgecolor="black",
                framealpha=1, frameon=True)
-    plt.savefig("Average preference, inbreds kept " + str(keep_inbreds)
-                + plotend)
+    if save_directory == "":
+        plt.savefig("Average preference " + plotend)
+    else:
+        plt.savefig(os.path.join(save_directory,
+                                  ("Average preference " + plotend)))
     plt.clf()
     if compare_all_its:
         if cont:
             preferences(fs, keep_inbreds, itera+1)
 
             
-nums(file_list, True)
-lifespan(file_list, True)
-mas(file_list, True)
-disorders(file_list, True)
-surv(file_list, True)
-parent_overlaps(file_list, False)
-nei_diversity(file_list, True)
-preferences(file_list, True)
+nums(file_list, keep_inbred_agents)
+lifespan(file_list, keep_inbred_agents)
+mas(file_list, keep_inbred_agents)
+disorders(file_list, keep_inbred_agents)
+surv(file_list, keep_inbred_agents)
+parent_overlaps(file_list, keep_inbred_agents)
+nei_diversity(file_list, keep_inbred_agents)
+preferences(file_list, keep_inbred_agents)
 print("Finished producing graphs")
