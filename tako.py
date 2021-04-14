@@ -285,7 +285,7 @@ class Tako(Widget):
         parents.append(filenamea[:-4])
         weightsa = Tako.input_genes(filenamea)
         if gen_type == "Diverse":
-            filenameb = random.randint(1, 26)
+            filenameb = random.randint(1, 41)
             filenameb = os.path.join("Default Genetics", str(filenameb) +
                                      ".csv")
             parents.append(filenameb[:-4])
@@ -295,6 +295,8 @@ class Tako(Widget):
             #import the first strand again
             #slightly faster than a deepcopy
             weightsb = Tako.input_genes(filenamea)
+        elif gen_type == "Haploid":
+            weightsb = []
         return weightsa, weightsb, parents
 
     #helper function for create_weight_genes
