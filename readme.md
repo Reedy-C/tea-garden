@@ -6,7 +6,7 @@ Garden is a research-focused artificial life simulator, designed and created by 
 
 Garden requires PyCaffe, PyGame, and the separate [DGEANN module](https://github.com/Reedy-C/dgeann), which runs the neural networks.
 
-The main file is garden\_experiment.py. While the program can be used by manually setting parameters with the run\_experiment() function, it is easier to set them with a text file (described below) and use run\_from\_file(f), which is run automatically, default to using parameters from 'run params example.txt', when garden\_experiment.py is run. Note: it may take a few seconds for the program to start up.
+The main file is garden\_experiment.py. While the program can be used by manually setting parameters with the run\_experiment() function, it is easier to set them with a text file (described below) and use run\_from\_file(f). When garden\_experiment.py is run, it automatically runs run\_from\_file(f), with f by default set to the file 'run params example.txt'. Note: it may take a few seconds for the program to start up.
 
 Garden can be run with or without visualization; it is off by default. The agents are always trying to perform some action, even if it looks like they are sitting there when visualization is turned on. In visual mode, the simulation runs at 10 steps/second, but this can be changed by changing the number in 'self.clock.tick(10)' in the MainLoop function of garden_experiment.py, or turned off to run as fast as possible by commenting out that line. If the simulation area is larger than can be displayed in the given window size, it may be scrolled around using the arrow keys. If two environments are being used, currently only one is displayed at a time, but they can be switched between using the 's' key.
 
@@ -20,9 +20,11 @@ The creature also takes its last action as input to its 'STM' (short-term memory
 
 The output of the creature's neural network is an array of six numbers. The member of the array that is highest is taken as the creature's action. The corresponding list of actions can be seen at the bottom of garden.py. For example, if the output is [3.456, -1.135, 1.789, 0.597, 4.015], then the fifth action will be used, which is 'attempt to play with whatever is in front of me'. Each object defines the outcome of that action on the creature's drives.
 
-The neural network of a creature is defined by its genome. This is by default diploid, with either identical or different starting chromosomes, but can also be haploid. By default, starting chromosomes are drawn from the 'Default Genetics' folder to make populations more successful, but random starting genetics can be used if desired. Agents are able to mate with recombination and make further agents, which may have mutations from their parents. Agent information such as generation number or age at death can be exported to a csv data file; full genomes can also be exported to a csv file listing all genes. These files appear in the 'Data' folder.
+The neural network of a creature is defined by its genome. This is by default diploid with identical starting chromosomes, but can also be set to either diploid with different starting chromosomes or to haploid genetics. Random starting genetics can be used if desired, but by default, starting chromosomes are drawn from the 'Default Genetics' folder to make populations more successful. Agents are able to mate with recombination and make further agents, which may have mutations from their parents. Agent information such as generation number or age at death can be exported to a csv data file; full genomes can also be exported to a csv file listing all genes. These files appear in the 'Data' folder.
 
-Agents have an age-related chance of dying naturally. Higher amounts of accumulated pain will increase the agent's age for the purpose of this calculation, while negative amounts will decrease it. Agents will always die at 130000 time-steps.
+Agents have an age-related chance of dying naturally. Higher amounts of accumulated pain will increase the agent's age for the purpose of this calculation, while negative amounts will decrease it. Agents will always die at an age of 130000 time-steps.
+
+Graphs of different run statistics can be made with the file generate\_graphs.py. By default, it looks for data files in the Plots folder and saves the graphs there, but this can be changed in a setting at the top of the file.
 
 ## Parameters
 
