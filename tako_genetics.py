@@ -12,11 +12,11 @@ health_mut_probs = (0.80, 0.20)
 phen_mut_probs = (0.80, 0.20)
 
 #extends DGEANN diploid genome to deal with a third 'health' chromosome
-class health_genome(dgeann.genome):
+class health_genome(dgeann.Genome):
     
     def __init__(self, layerchr_a, layerchr_b, weightchr_a, weightchr_b,
                  healthchr_a, healthchr_b, outs, mut_record):
-        dgeann.genome.__init__(self, layerchr_a, layerchr_b, weightchr_a,
+        dgeann.Genome.__init__(self, layerchr_a, layerchr_b, weightchr_a,
                                weightchr_b)
         self.healthchr_a = healthchr_a
         self.healthchr_b = healthchr_b
@@ -87,7 +87,7 @@ class health_genome(dgeann.genome):
                 gene.dom = 1
                 gene.ident = "*B"
 
-class health_gene(dgeann.gene):
+class health_gene(dgeann.Gene):
 
     def __init__(self, dom, can_mut, can_dup, mut_rate, ident):
         super().__init__(dom, can_mut, False, mut_rate, ident)
@@ -144,7 +144,7 @@ class binary_gene(health_gene):
 
 #extends DGEANN diploid genome to allow for an evolving phenotype matching
 #preference gene
-class phen_genome(dgeann.genome):
+class phen_genome(dgeann.Genome):
 
     def __init__(self, layerchr_a, layerchr_b, weightchr_a, weightchr_b,
                  phen_gene_a, phen_gene_b, outs, mut_record):
@@ -205,7 +205,7 @@ class phen_genome(dgeann.genome):
                                self.phen_gene_b.weight)/2, 2)
         return super().build(delete)        
 
-class phen_gene(dgeann.gene):
+class phen_gene(dgeann.Gene):
 
     def __init__(self, dom, can_mut, can_dup, mut_rate, weight, ident):
         super().__init__(dom, can_mut, False, mut_rate, ident)

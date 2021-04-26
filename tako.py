@@ -187,15 +187,15 @@ class Tako(Widget):
             phen_gene_b = tg.phen_gene(random.randint(1, 5), True, False,
                                        0.01, b, str(b))
         #now all the genes for the network structure
-        data = dgeann.layer_gene(5, False, False, 0, "data",
+        data = dgeann.LayerGene(5, False, False, 0, "data",
                                         [], 12, "input")
-        stm_input = dgeann.layer_gene(5, False, False, 0, "stm_input",
+        stm_input = dgeann.LayerGene(5, False, False, 0, "stm_input",
                                              [], 6, "input")
-        stm = dgeann.layer_gene(5, False, False, 0, "STM",
+        stm = dgeann.LayerGene(5, False, False, 0, "STM",
                                        ["stm_input"], 6, "STMlayer")
-        evo = dgeann.layer_gene(3, False, False, 0.1, "evo",
+        evo = dgeann.LayerGene(3, False, False, 0.1, "evo",
                                 ["data", "STM"], 5, "IP")
-        action = dgeann.layer_gene(5, False, False, 0, "action",
+        action = dgeann.LayerGene(5, False, False, 0, "action",
                                           ["evo"], 6, "IP")
         layersa = [data, stm_input, stm, evo, action]
         layersb = [data, stm_input, stm, evo, action]
@@ -224,12 +224,12 @@ class Tako(Widget):
                                                       healtha, healthb, None,
                                                       [])
                 else:
-                    default_genome = dgeann.genome(layersa, layersb,
+                    default_genome = dgeann.Genome(layersa, layersb,
                                                    weightsa, weightsb)
             else:
-                default_genome = dgeann.haploid_genome(layersa, weightsa)
+                default_genome = dgeann.HaploidGenome(layersa, weightsa)
         else:
-            default_genome = dgeann.genome(layersa, layersb, [], [])
+            default_genome = dgeann.Genome(layersa, layersb, [], [])
             parents = ["random", "random"]
         solver = default_genome.build(delete=dele)
         tak = Tako(direction, display_on, x, y, default_genome,
@@ -307,7 +307,7 @@ class Tako(Widget):
             r = csv.DictReader(file, fieldnames = fields)
             for row in r:
                 in_node = int(row['in_node'])
-                w = dgeann.weight_gene(int(row['dom']),
+                w = dgeann.WeightGene(int(row['dom']),
                                        bool(row['can_mut']),
                                        bool(row['can_dup']),
                                        float(row['mut_rate']),
@@ -589,6 +589,7 @@ class Tako(Widget):
     #TODO currently just doing weight genes b/c still working on layer genes
     #+then they would all look a little related
     #also currently assumes everyone has the same-sized genome on both strands
+    #TODO doesn't work with haploids at the moment
     def genoverlap(self, tak):
         overlap = 0
         tot = 0
