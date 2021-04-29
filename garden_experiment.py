@@ -1,17 +1,17 @@
-from garden import Garden
-import garden
-from dgeann import dgeann
-import garden_task as gt
-import tako
-from widget import *
+from collections import deque
+import csv
+import os
+import random
 import time
-import os, sys
+
 import pygame
 from pygame.locals import *
-import csv
-from collections import deque
+from garden import Garden
+import garden_task as gt
+import tako
 import tako_genetics as tg
-import random
+from widget import Dirt
+
 
 class garden_game:
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
@@ -19,15 +19,15 @@ class garden_game:
                  filename, export_all, family_mod, family_detection,
                  two_envs, diff_envs, migration_rate, seed=None):
         pygame.init()
-        global scroll
+
         if display_on:
-            scroll = True
+            self.scroll = True
 
             self.width = (garden_size * 50)
             self.height = (garden_size * 50)
             if self.width <= max_width and self.height <= max_height:
                 self.screen = pygame.display.set_mode((self.width, self.height))
-                scroll = False
+                self.scroll = False
             elif self.width > max_width and self.height <= max_height:
                 self.screen = pygame.display.set_mode((max_width, self.height))
             elif self.width <= max_width and self.height > max_height:
@@ -35,15 +35,13 @@ class garden_game:
             else:
                 self.screen = pygame.display.set_mode((max_width, max_height))
 
-            global spr_height
-            spr_height = self.screen.get_size()[1] / 50
-            global spr_width
-            spr_width = self.screen.get_size()[0] / 50
+            self.spr_height = self.screen.get_size()[1] / 50
+            self.spr_width = self.screen.get_size()[0] / 50
         
             pygame.display.set_caption('Garden')
             self.background = pygame.Surface(self.screen.get_size()).convert()
         else:
-            scroll = False
+            self.scroll = False
         
         self.clock = pygame.time.Clock()
         self.two_envs = two_envs
@@ -83,12 +81,12 @@ class garden_game:
         self.filename = filename
         self.export_all = export_all
         self.stepid = 0
+        self.current_env = 0
 
     def main_loop(self, max_steps, max_gen, display_on, collect_data,
                   garden_mode, i):
         if display_on:
             self.make_background()
-        self.current_env = 0
         self.load_sprites()
         if display_on:
             pygame.display.flip()
@@ -102,8 +100,8 @@ class garden_game:
                 if self.stepid > max_steps:
                     if collect_data or self.export_all:
                         for env in self.env_list:
-                            for tako in env.tako_list:
-                                dead_tako.append([tako, self.stepid,
+                            for tak in env.tako_list:
+                                dead_tako.append([tak, self.stepid,
                                                   env.env_id])
                             if self.export_all:
                                 export(dead_tako, self.filename)
@@ -115,10 +113,10 @@ class garden_game:
                 for env in self.env_list:
                     if env.highest_gen > max_gen:
                         end = True
-                        for env in self.env_list:
-                            for tako in env.tako_list:
-                                dead_tako.append([tako, self.stepid,
-                                                  env.env_id])
+                        for en in self.env_list:
+                            for tak in en.tako_list:
+                                dead_tako.append([tak, self.stepid,
+                                                  en.env_id])
             #if we have not met the predefined end conditions, begin main loop
             if display_on:
                 for event in pygame.event.get():
@@ -132,7 +130,7 @@ class garden_game:
                                 else:
                                     self.current_env = 0
                                 self.load_sprites()
-                        if scroll:
+                        if self.scroll:
                             #TODO this glitchy with two envs and switching
                             #TODO... also seems to be some problems with agents
                             #walking through items :/
@@ -143,7 +141,7 @@ class garden_game:
                                         spr.move_rect(1, 0)
                             elif event.key == K_RIGHT:
                                 if self.cam[0] < (self.env_list[0].size -
-                                                  spr_width):
+                                                  self.spr_width):
                                     self.cam[0] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(-1, 0)
@@ -154,7 +152,7 @@ class garden_game:
                                         spr.move_rect(0, 1)
                             elif event.key == K_DOWN:
                                 if self.cam[1] < (self.env_list[0].size -
-                                                  spr_height):
+                                                  self.spr_height):
                                     self.cam[1] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, -1)
@@ -184,14 +182,14 @@ class garden_game:
                         env.switch_nutrition()
             #see if any are dead
             for env in self.env_list:
-                for tako in env.tako_list:
-                    if tako.dead == True:
-                        env.garden_map[tako.y][tako.x] = Dirt(display_on,
-                                                              tako.x, tako.y)
-                        env.tako_list.remove(tako)
+                for tak in env.tako_list:
+                    if tak.dead == True:
+                        env.garden_map[tak.y][tak.x] = Dirt(display_on,
+                                                            tak.x, tak.y)
+                        env.tako_list.remove(tak)
                         if collect_data or self.export_all:
-                            dead_tako.append([tako, self.stepid, env.env_id])
-                        tako.kill()
+                            dead_tako.append([tak, self.stepid, env.env_id])
+                        tak.kill()
             #then check for migration
             if self.two_envs:
                 if self.migration_rate > 0 and self.stepid > 0:
@@ -209,10 +207,10 @@ class garden_game:
                     self.get_new(env)
             self.widget_sprites.update()
             for env in self.env_list:
-                for tako in env.tako_list:
-                    tako.update()
+                for tak in env.tako_list:
+                    tak.update()
             if display_on:
-                self.graphics_loop(scroll, font)
+                self.graphics_loop(font)
             self.stepid += 1
             
     #initializes pygame sprite groups at beginning of experiment
@@ -245,13 +243,13 @@ class garden_game:
     def make_background(self):
         for x in range(self.env_list[0].size):
             for y in range(self.env_list[0].size):
-                img, rect = load_image("dirt.png")
+                img = load_image("dirt.png")[0]
                 self.background.blit(img, (x*50, y*50))
 
     #control loop for drawing all graphics & text when graphics are on
-    def graphics_loop(self, scroll, font):
+    def graphics_loop(self, font):
         self.screen.blit(self.background, (0, 0))
-        if not scroll:
+        if not self.scroll:
             self.all_sprites.draw(self.screen)
         else:
             self.draw_onscreen()
@@ -268,8 +266,9 @@ class garden_game:
     #draws graphics when they are turned on
     def draw_onscreen(self):
         for spr in self.all_sprites:
-            if spr.x >= self.cam[0] and spr.x <= (self.cam[0] + spr_width):
-                if spr.y >= self.cam[1] and spr.y <= (self.cam[1] + spr_height):
+            if spr.x >= self.cam[0] and spr.x <= (self.cam[0] + self.spr_width):
+                if spr.y >= self.cam[1] and spr.y <= (self.cam[1]
+                                                      + self.spr_height):
                     self.screen.blit(spr.image, spr.rect)
 
     #migrates agents between the two environments
@@ -310,45 +309,45 @@ def load_image(name, colorkey=None):
 #   with entries in the format of a list: [agent, step_id, env_id]
 def write_csv(filename, i, q):  
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
-            writ = csv.writer(csvfile)
-            j = 0
-            k = len(q)
-            while j < k:
-                l = q.popleft()
-                tak = l[0]
-                #puts most important/salient points of info for health/phenotype
-                #genomes - ident for health genes, weight for phenotype genes -
-                #into lists for output
-                healthchr_a = []
-                healthchr_b = []
-                if isinstance(tak.genome, tg.health_genome):
-                    for a in tak.genome.healthchr_a:
-                        healthchr_a.append(a.ident)
-                    for b in tak.genome.healthchr_b:
-                        healthchr_b.append(b.ident)
-                pref = None
-                if isinstance(tak.genome, tg.phen_genome):
-                    pref = [tak.genome.phen_gene_a.weight,
-                            tak.genome.phen_gene_b.weight,
-                            tak.pref]
-                #first generation has 'str' parents rather than agent parents
-                #TODO - smoother way to handle this?
-                if type(tak.parents[0]) != str:
-                    parents0 = tak.parents[0].ident
-                    parents1 = tak.parents[1].ident
-                else:
-                    parents0 = tak.parents[0]
-                    parents1 = tak.parents[1]
-                writ.writerow([i, l[2], tak.ident, parents0, parents1,
-                               tak.age, tak.gen, len(tak.children),
-                               tak.mating_attempts, tak.accum_pain, tak.cod,
-                               l[1], tak.genome.mut_record, tak.parent_degree,
-                               tak.parent_genoverlap,
-                               (tak.genome.disorder_count if \
-                                isinstance(tak.genome, tg.health_genome)\
-                                else ""),
-                               healthchr_a, healthchr_b, pref])
-                j += 1   
+        writ = csv.writer(csvfile)
+        j = 0
+        k = len(q)
+        while j < k:
+            l = q.popleft()
+            tak = l[0]
+            #puts most important/salient points of info for health/phenotype
+            #genomes - ident for health genes, weight for phenotype genes -
+            #into lists for output
+            healthchr_a = []
+            healthchr_b = []
+            if isinstance(tak.genome, tg.health_genome):
+                for a in tak.genome.healthchr_a:
+                    healthchr_a.append(a.ident)
+                for b in tak.genome.healthchr_b:
+                    healthchr_b.append(b.ident)
+            pref = None
+            if isinstance(tak.genome, tg.phen_genome):
+                pref = [tak.genome.phen_gene_a.weight,
+                        tak.genome.phen_gene_b.weight,
+                        tak.pref]
+            #first generation has 'str' parents rather than agent parents
+            #TODO - smoother way to handle this?
+            if type(tak.parents[0]) != str:
+                parents0 = tak.parents[0].ident
+                parents1 = tak.parents[1].ident
+            else:
+                parents0 = tak.parents[0]
+                parents1 = tak.parents[1]
+            writ.writerow([i, l[2], tak.ident, parents0, parents1,
+                           tak.age, tak.gen, len(tak.children),
+                           tak.mating_attempts, tak.accum_pain, tak.cod,
+                           l[1], tak.genome.mut_record, tak.parent_degree,
+                           tak.parent_genoverlap,
+                           (tak.genome.disorder_count if \
+                            isinstance(tak.genome, tg.health_genome)\
+                            else ""),
+                           healthchr_a, healthchr_b, pref])
+            j += 1   
             
 #exports condensed version of weight genes to a collective csv file in \Data
 #one line for haploid agents, two for diploid
@@ -567,7 +566,7 @@ def run_from_file(f):
     rand_nets=False;max_gen=0;genetic_mode="Plain";learning_on=False
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
     record_inbreeding=True;inbreed_lim=1.1;filename="default file"
-    hla_genes=0;binary_health=0;carrier_percentage=40;two_envs=False;
+    hla_genes=0;binary_health=0;carrier_percentage=40;two_envs=False
     diff_envs=False;migration_rate=0;phen_pref=False
 
     

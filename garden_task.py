@@ -1,10 +1,3 @@
-from garden import Garden
-from numpy import floor
-from tako import Tako, family_detection
-from widget import *
-import numpy
-
-
 family_detection = None
 phen_pref = False
 

@@ -1,16 +1,17 @@
-from widget import Widget
-import scipy
-import math
-import caffe
-import random
-from pygame import sprite, Color, Rect
-import os
-from textwrap import dedent
-import sys
 import csv
+import random
+import os
+import sys
+from textwrap import dedent
+
+import caffe
+import math
+from pygame import sprite, Color, Rect
+import scipy
 sys.path.append('..')
 from dgeann import dgeann
 import tako_genetics as tg
+from widget import Widget
 
 rand_nets = False
 dele = True
@@ -352,7 +353,7 @@ class Tako(Widget):
 
     def update_sprite(self):
         if self.last_action == 1 or self.last_action == 2:
-            self.image, temp = self.load_image(self.dir_map[self.direction], -1)
+            self.image = self.load_image(self.dir_map[self.direction], -1)[0]
         
     def update_drives(self, drive, modifier):
         if drive == "fullness":
@@ -445,8 +446,8 @@ class Tako(Widget):
             else:
                 return ("amuse", -1)
         else:
-            return ("amuse", -1)
             Tako.mated_opcost(self)
+            return ("amuse", -1)
 
     #creates the opportunity cost of mating
     #occurs if top-down incest avoidance is turned on and an agent

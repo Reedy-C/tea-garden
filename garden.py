@@ -1,5 +1,5 @@
 import random
-from widget import *
+from widget import Dirt, Grass, Grass2, Rock, Ball
 import tako
 from pygame import sprite
 
@@ -131,10 +131,10 @@ class Garden:
         return obj.node
     
     def perform_action(self, index, tak):
-        result = function_array[index](self, tak, tak.last_obj)
+        result = function_array[index](self, tak)
         return result
 
-    def forward(self, tak, obj=None):
+    def forward(self, tak):
         #get target square
         target = self.get_target(tak)
         targ = self.garden_map[target[1]][target[0]]
@@ -151,7 +151,7 @@ class Garden:
             tak.x = target[0]
         return result
     
-    def turn_left(self, tak, obj):
+    def turn_left(self, tak):
         newdir = tak.direction
         newdir -= 1
         if newdir < 0:
@@ -159,7 +159,7 @@ class Garden:
         tak.direction = newdir
         return None
 
-    def turn_right(self, tak, obj):
+    def turn_right(self, tak):
         newdir = tak.direction
         newdir += 1
         if newdir > 3:
@@ -169,7 +169,7 @@ class Garden:
 
     #for now take eaten object out if grass
     #TODO; changed for now
-    def eat(self, tak, obj):
+    def eat(self, tak):
         target = self.get_target(tak)
         tak.last_obj = self.garden_map[target[1]][target[0]]
         x = tak.last_obj
@@ -184,10 +184,10 @@ class Garden:
 
     #for now take played-with object out
     #TODO; changed for now
-    def play(self, tako, obj):
-        target = self.get_target(tako)
-        tako.last_obj = self.garden_map[target[1]][target[0]]
-        x = tako.last_obj
+    def play(self, tak):
+        target = self.get_target(tak)
+        tak.last_obj = self.garden_map[target[1]][target[0]]
+        x = tak.last_obj
         result = x.played()
 ##        if isinstance(tako.last_obj, Ball):
 ##            tako.last_obj.kill()
@@ -197,7 +197,7 @@ class Garden:
 ##            self.add_item(Ball())
         return result
 
-    def mate(self, tak, obj):
+    def mate(self, tak):
         target = self.get_target(tak)
         tak.last_obj = self.garden_map[target[1]][target[0]]
         v = tak.last_obj

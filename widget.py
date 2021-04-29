@@ -10,7 +10,7 @@ class Widget(sprite.Sprite):
     def __init__(self, display_on, x=None, y=None):
         sprite.Sprite.__init__(self)
         if display_on:
-            self.image, self.rect = self.load_image(self.display, display_on,
+            self.image, self.rect = self.load_image(self.display,
                                                     Color('#FF00FF'))
         self.x = x
         self.y = y
@@ -31,11 +31,10 @@ class Widget(sprite.Sprite):
     def intersected(self):
         return ("amuse", -1)
 
-    def mated(self, tako):
+    def mated(self, tak):
         return ("amuse", -1)
 
-    #display_on (bool): whether images are being displayed
-    def load_image(self, name, display_on, colorkey=None):
+    def load_image(self, name, colorkey=None):
         fullname = os.path.join('img', name)
         img = image.load(fullname)
         img = img.convert()
