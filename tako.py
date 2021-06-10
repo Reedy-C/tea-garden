@@ -528,9 +528,6 @@ class Tako(Widget):
             baby.auncles.append(tak)
             for cous in tak.children:
                 #second degree: double cousins
-                #TODO - is there a better way to do this?
-                #TODO - do I need to do this on both sides?
-                #seems like I shouldn't
                 for par in cous.parents:
                     if par != tak:
                         if par in other_parent.siblings:
@@ -590,20 +587,25 @@ class Tako(Widget):
     #TODO currently just doing weight genes b/c still working on layer genes
     #+then they would all look a little related
     #also currently assumes everyone has the same-sized genome on both strands
-    #TODO doesn't work with haploids at the moment
+    #works with haploids
     def genoverlap(self, tak):
         overlap = 0
         tot = 0
         ident_list = []
         for g in range(len(tak.genome.weightchr_a)):
-            gens = [round(self.genome.weightchr_a[g].weight, 2),
-                    round(self.genome.weightchr_b[g].weight, 2)]
+            #if diploid
+            if len(tak.genome.weightchr_b) != 0:
+                gens = [round(self.genome.weightchr_a[g].weight, 2),
+                        round(self.genome.weightchr_b[g].weight, 2)]
+                if round(tak.genome.weightchr_b[g].weight, 2) in gens:
+                    overlap += 1
+                    gens.remove(round(tak.genome.weightchr_b[g].weight, 2))
+                tot += 2
+            else:
+                gens = [round(self.genome.weightchr_a[g].weight, 2)]
+                tot += 1
             if round(tak.genome.weightchr_a[g].weight, 2) in gens:
-                gens.remove(round(tak.genome.weightchr_a[g].weight, 2))
                 overlap += 1
-            if round(tak.genome.weightchr_b[g].weight, 2) in gens:
-                overlap += 1
-            tot += 2
         return (overlap/tot)
 
     #helper function for mated when phenotype matching preferences is True

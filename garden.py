@@ -167,8 +167,6 @@ class Garden:
         tak.direction = newdir
         return None
 
-    #for now take eaten object out if grass
-    #TODO; changed for now
     def eat(self, tak):
         target = self.get_target(tak)
         tak.last_obj = self.garden_map[target[1]][target[0]]
@@ -182,8 +180,6 @@ class Garden:
         #    self.garden_map[target[1]][target[0]] = new
         return result
 
-    #for now take played-with object out
-    #TODO; changed for now
     def play(self, tak):
         target = self.get_target(tak)
         tak.last_obj = self.garden_map[target[1]][target[0]]

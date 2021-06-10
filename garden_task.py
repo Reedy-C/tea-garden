@@ -12,7 +12,7 @@ class garden_task:
         result = self.env.perform_action(action, tako)
         tako.modify(result)
 
-    #TODO learning-related
+    #this function is learning-related
     def get_reward(self, tako):
         reward = 0
         full_diff = tako.fullness - tako.last_fullness

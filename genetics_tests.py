@@ -108,10 +108,6 @@ class testGenetics(unittest.TestCase):
                           [tak_1.ident, tak_3.ident], 1)
         self.assertAlmostEqual(tak_4.genoverlap(tak_1), 0.5, 1)
         self.assertAlmostEqual(tak_4.genoverlap(tak_3), 0.5, 1)
-        tak_1.desire = 150
-        tak_3.desire = 150
-        tako.random.random()
-        tako.random.random()
         gen_5 = tak_1.genome.recombine(tak_3.genome)
         tak_5 = tako.Tako(0, False, 0, 0, gen_5, "tak_5", None,
                           [tak_1.ident, tak_3.ident], 1)
@@ -121,7 +117,22 @@ class testGenetics(unittest.TestCase):
         gen_6 = tak_5.genome.recombine(tak_4.genome)
         tak_6 = tako.Tako(0, False, 0, 0, gen_6, "tak_6", None,
                           [tak_4.ident, tak_5.ident], 1)
-        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.54, 2)
+        self.assertAlmostEqual(tak_6.genoverlap(tak_4), 0.5, 1)
+
+    def test_haploid_genoverlap(self):
+        tako.family_detection = "Genoverlap"
+        tako.family_mod = 1
+        tak_1 = tako.Tako.default_tako(0, False, 0, 0, "Haploid", False)
+        tak_2 = copy.copy(tak_1)
+        self.assertEqual(tak_1.genoverlap(tak_2), 1.0)
+        tak_3 = tako.Tako.default_tako(0, False, 0, 0, "Haploid", False)
+        self.assertEqual(tak_1.genoverlap(tak_3), tak_3.genoverlap(tak_1))
+        gen_4 = tak_1.genome.recombine(tak_3.genome)
+        gen_4 = tak_1.genome.recombine(tak_3.genome)
+        tak_4 = tako.Tako(0, False, 0, 0, gen_4, "tak_4", None,
+                          [tak_1.ident, tak_3.ident], 1)
+        self.assertEqual(tak_4.genoverlap(tak_3), 0.65)
+        self.assertEqual(tak_3.genoverlap(tak_4), 0.65)
 
     def test_degree_setting(self):
         tako.family_detection = "Degree"

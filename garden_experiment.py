@@ -331,8 +331,7 @@ def write_csv(filename, i, q):
                         tak.genome.phen_gene_b.weight,
                         tak.pref]
             #first generation has 'str' parents rather than agent parents
-            #TODO - smoother way to handle this?
-            if type(tak.parents[0]) != str:
+            if tak.gen != 0:
                 parents0 = tak.parents[0].ident
                 parents1 = tak.parents[1].ident
             else:
@@ -658,7 +657,6 @@ def run_from_file(f):
                         val = None
                     else:
                         val = line[1]
-                #TODO: may not like colons? broke on 1W~oJoQFVXCk@yPIe{;:
                 elif line[0] == "seeds":
                     val = line[1].split(" ")
                 atr_dict[line[0]] = val
