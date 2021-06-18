@@ -22,6 +22,7 @@ class garden_game:
         pygame.init()
 
         if display_on:
+            self.cam_pos = [0, 0]
             self.scroll = True
             self.max_fps = max_fps
 
@@ -92,7 +93,6 @@ class garden_game:
         self.load_sprites()
         if display_on:
             pygame.display.flip()
-            self.cam = [0,0]
             font = pygame.font.Font(None, 18)
         if collect_data or self.export_all:
             dead_tako = deque()
@@ -133,27 +133,26 @@ class garden_game:
                                     self.current_env = 0
                                 self.load_sprites()
                         if self.scroll:
-                            #TODO this is glitchy with two envs and switching
                             if event.key == K_LEFT:
-                                if self.cam[0] > 0:
-                                    self.cam[0] -= 1
+                                if self.cam_pos[0] > 0:
+                                    self.cam_pos[0] -= 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(1, 0)
                             elif event.key == K_RIGHT:
-                                if self.cam[0] < (self.env_list[0].size -
+                                if self.cam_pos[0] < (self.env_list[0].size -
                                                   self.spr_width):
-                                    self.cam[0] += 1
+                                    self.cam_pos[0] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(-1, 0)
                             elif event.key == K_UP:
-                                if self.cam[1] > 0:
-                                    self.cam[1] -= 1
+                                if self.cam_pos[1] > 0:
+                                    self.cam_pos[1] -= 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, 1)
                             elif event.key == K_DOWN:
-                                if self.cam[1] < (self.env_list[0].size -
+                                if self.cam_pos[1] < (self.env_list[0].size -
                                                   self.spr_height):
-                                    self.cam[1] += 1
+                                    self.cam_pos[1] += 1
                                     for spr in self.all_sprites:
                                         spr.move_rect(0, -1)
             #see if all are dead
@@ -214,6 +213,7 @@ class garden_game:
             self.stepid += 1
             
     #initializes pygame sprite groups at beginning of experiment
+    #or when env is switched
     def load_sprites(self):
         self.widget_sprites = pygame.sprite.Group()
         env = self.env_list[self.current_env]
@@ -228,6 +228,10 @@ class garden_game:
             self.all_sprites.add(tak)
         for sprite in self.widget_sprites:
             self.all_sprites.add(sprite)
+        if self.cam_pos != [0, 0]:
+           for spr in self.all_sprites:
+                spr.update_rect()
+                spr.move_rect(-self.cam_pos[0], -self.cam_pos[1])
 
     #adds new sprites/objects to groups when environments make them
     def get_new(self, env):
@@ -266,8 +270,9 @@ class garden_game:
     #draws graphics when they are turned on
     def draw_onscreen(self):
         for spr in self.all_sprites:
-            if spr.x >= self.cam[0] and spr.x <= (self.cam[0] + self.spr_width):
-                if spr.y >= self.cam[1] and spr.y <= (self.cam[1]
+            if spr.x >= self.cam_pos[0] and spr.x <= (self.cam_pos[0] +
+                                                      self.spr_width):
+                if spr.y >= self.cam_pos[1] and spr.y <= (self.cam_pos[1]
                                                       + self.spr_height):
                     self.screen.blit(spr.image, spr.rect)
 
