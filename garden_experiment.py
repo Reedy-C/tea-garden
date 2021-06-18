@@ -70,7 +70,7 @@ class garden_game:
                               rand_nets, seed, display_on, garden_mode, food=1)
             else:
                 env1 = Garden(garden_size, tako_number, pop_max, genetic_mode,
-                              rand_nets, seed, display_on, garden_mode, food=1)
+                              rand_nets, seed, display_on, garden_mode)
             env1.env_id = 1
             self.env_list.append(env1)
 
@@ -133,9 +133,7 @@ class garden_game:
                                     self.current_env = 0
                                 self.load_sprites()
                         if self.scroll:
-                            #TODO this glitchy with two envs and switching
-                            #TODO... also seems to be some problems with agents
-                            #walking through items :/
+                            #TODO this is glitchy with two envs and switching
                             if event.key == K_LEFT:
                                 if self.cam[0] > 0:
                                     self.cam[0] -= 1
