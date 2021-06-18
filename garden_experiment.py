@@ -15,13 +15,15 @@ from widget import Dirt
 
 class garden_game:
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
-                 display_on, learning_on, genetic_mode, rand_nets, garden_mode,
-                 filename, export_all, family_mod, family_detection,
-                 two_envs, diff_envs, migration_rate, seed=None):
+                 display_on, max_fps, learning_on, genetic_mode, rand_nets,
+                 garden_mode, filename, export_all, family_mod,
+                 family_detection,two_envs, diff_envs, migration_rate,
+                 seed=None):
         pygame.init()
 
         if display_on:
             self.scroll = True
+            self.max_fps = max_fps
 
             self.width = (garden_size * 50)
             self.height = (garden_size * 50)
@@ -261,7 +263,7 @@ class garden_game:
             self.screen.blit(text, textpos)
         pygame.display.flip()
         #cap at x fps
-        self.clock.tick(10)
+        self.clock.tick(self.max_fps)
 
     #draws graphics when they are turned on
     def draw_onscreen(self):
@@ -457,11 +459,11 @@ def make_headers():
 #                       rate b/w the two environments (done every 50k steps)
 #phen_pref (bool): when True, gives agents evolving phenotype
 #                       match preference
-def run_experiment(x_loops=15, max_steps=0, display_on=True, garden_size=8,
-                   tako_number=1, pop_max=30, max_width=1800, max_height=900,
-                   collect_data=True, export_all=False, rand_nets=False,
-                   max_gen = 505, genetic_mode="Plain", learning_on=False,
-                   seeds=None, garden_mode="Diverse Static",
+def run_experiment(x_loops=15, max_steps=0, display_on=True, max_fps=10,
+                   garden_size=8, tako_number=1, pop_max=30, max_width=1800,
+                   max_height=900, collect_data=True, export_all=False,
+                   rand_nets=False, max_gen = 505, genetic_mode="Plain",
+                   learning_on=False, seeds=None, garden_mode="Diverse Static",
                    family_detection=None, family_mod=0, record_inbreeding=True,
                    inbreed_lim = 1.1, hla_genes=0, binary_health=0,
                    carrier_percentage=40, two_envs=False, diff_envs=False,
@@ -541,8 +543,8 @@ def run_experiment(x_loops=15, max_steps=0, display_on=True, garden_size=8,
         if seeds[0] != None:
             tako.set_seed(seeds[i])
         g = garden_game(garden_size, tako_number, pop_max, max_width,
-                        max_height, display_on, learning_on, genetic_mode,
-                        rand_nets, garden_mode, filename,
+                        max_height, display_on, max_fps, learning_on,
+                        genetic_mode, rand_nets, garden_mode, filename,
                         export_all, family_mod, family_detection,
                         two_envs, diff_envs, migration_rate,
                         seeds[i])
@@ -560,7 +562,7 @@ def run_experiment(x_loops=15, max_steps=0, display_on=True, garden_size=8,
 #defined by f
 def run_from_file(f):
     #set defaults
-    x_loops=1;max_steps=0;display_on=True;garden_size=13;tako_number=20
+    x_loops=1;max_steps=0;display_on=True;max_fps=10;garden_size=13;tako_number=20
     pop_max=40;max_width=1800;max_height=900;collect_data=True;export_all=False
     rand_nets=False;max_gen=0;genetic_mode="Plain";learning_on=False
     seeds=None;garden_mode="Diverse Static";family_detection=None;family_mod=0
@@ -570,7 +572,8 @@ def run_from_file(f):
 
     
     atr_dict = {"x_loops": x_loops, "max_steps": max_steps,
-                "display_on": display_on, "garden_size": garden_size,
+                "display_on": display_on, "max_fps": max_fps,
+                "garden_size": garden_size,
                 "tako_number": tako_number, "pop_max": pop_max,
                 "max_width": max_width, "max_height": max_height,
                 "collect_data": collect_data, "export_all": export_all,
@@ -587,7 +590,7 @@ def run_from_file(f):
     
     ints = ["x_loops", "max_steps", "garden_size", "tako_number", "pop_max",
             "max_width", "max_height", "max_gen", "hla_genes",
-            "binary_health", "carrier_percentage"]
+            "binary_health", "carrier_percentage", "max_fps"]
     floats = ["family_mod", "inbreed_lim", "migration_rate"]
     strs = ["genetic_mode", "garden_mode", "filename"]
     bools = ["display_on", "collect_data", "export_all", "rand_nets",
@@ -604,7 +607,8 @@ def run_from_file(f):
             #to read the file for a new set of parameters
             elif line == "\n":
                 run_experiment(atr_dict["x_loops"], atr_dict["max_steps"],
-                               atr_dict["display_on"], atr_dict["garden_size"],
+                               atr_dict["display_on"], atr_dict["max_fps"],
+                               atr_dict["garden_size"],
                                atr_dict["tako_number"], atr_dict["pop_max"],
                                atr_dict["max_width"], atr_dict["max_height"],
                                atr_dict["collect_data"], atr_dict["export_all"],
@@ -625,7 +629,8 @@ def run_from_file(f):
                                atr_dict["phen_pref"])
                 #reset defaults
                 atr_dict = {"x_loops": x_loops, "max_steps": max_steps,
-                    "display_on": display_on, "garden_size": garden_size,
+                    "display_on": display_on, "max_fps": max_fps,
+                    "garden_size": garden_size,
                     "tako_number": tako_number, "pop_max": pop_max,
                     "max_width": max_width, "max_height": max_height,
                     "collect_data": collect_data, "export_all": export_all,
@@ -662,7 +667,8 @@ def run_from_file(f):
                 atr_dict[line[0]] = val
     #run the last one in the file
     run_experiment(atr_dict["x_loops"], atr_dict["max_steps"],
-                   atr_dict["display_on"], atr_dict["garden_size"],
+                   atr_dict["display_on"], atr_dict["max_fps"],
+                   atr_dict["garden_size"],
                    atr_dict["tako_number"], atr_dict["pop_max"],
                    atr_dict["max_width"], atr_dict["max_height"],
                    atr_dict["collect_data"], atr_dict["export_all"],

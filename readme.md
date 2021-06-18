@@ -8,7 +8,7 @@ Garden requires PyCaffe, PyGame, and the separate [DGEANN module](https://github
 
 The main file is garden\_experiment.py. While the program can be used by manually setting parameters with the run\_experiment() function, it is easier to set them with a text file (described below) and use run\_from\_file(f). When garden\_experiment.py is run, it automatically runs run\_from\_file(f), with f by default set to the file 'run params example.txt'. Note: it may take a few seconds for the program to start up.
 
-Garden can be run with or without visualization; it is off by default. The agents are always trying to perform some action, even if it looks like they are sitting there when visualization is turned on. In visual mode, the simulation runs at 10 steps/second, but this can be changed by changing the number in 'self.clock.tick(10)' in the MainLoop function of garden_experiment.py, or turned off to run as fast as possible by commenting out that line. If the simulation area is larger than can be displayed in the given window size, it may be scrolled around using the arrow keys. If two environments are being used, currently only one is displayed at a time, but they can be switched between using the 's' key.
+Garden can be run with or without visualization; it is off by default. The agents are always trying to perform some action, even if it looks like they are sitting there when visualization is turned on. In visual mode, the simulation runs by default at 10 time-steps/second, though this can be changed in the preferences. If the simulation area is larger than can be displayed in the given window size, it may be scrolled around using the arrow keys. If two environments are being used, currently only one is displayed at a time, but they can be switched between using the 's' key.
 
 During each time step, the creatures are given an array of twelve numbers as input. The first six numbers represent what the creature sees. The creatures can only see what is directly in front of them, and they are told by the simulation exactly what kind of object they are looking at. Each type of object corresponds to a position in the array - this is what the 'node' property of each Widget sub-class refers to. For example, the Dirt objects, which have node set to 0, correspond to the first space of the input array.
 
@@ -32,6 +32,7 @@ The main parameters are (defaults show in parentheses):
 * x\_loops (1): How many times the simulation will be re-run
 * max\_steps (100000): Maximum number of time-steps the simulation will be allowed to run
 * display\_on (True): If False, no visualization is used (much faster)
+* max\_fps (10): If display is on, the maximum frames/time-steps per second of the visualization
 * garden\_size (13): Sets the size of the simulation area as X by X squares
 * tako\_number (20): Initial number of agents
 * pop\_max (25): Maximum population size; at this limit, breeding will no longer produce more agents until some die

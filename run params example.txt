@@ -6,6 +6,7 @@
 x_loops: 1
 max_steps: 0
 display_on: True
+max_fps: 10
 garden_size: 13
 tako_number: 20
 pop_max: 25
