@@ -25,6 +25,10 @@ class health_genome(dgeann.Genome):
         self.mut_record = mut_record
         
     def recombine(self, other_genome):
+        """Return a new child genome from two parent genomes.
+
+        Overrides recombine from base genome class. 
+        """
         c = super().recombine(other_genome)
         healthchr_a = self.health_cross()
         healthchr_b = other_genome.health_cross()
@@ -34,7 +38,10 @@ class health_genome(dgeann.Genome):
         child.mutate()
         return child
 
+    #helper function for recombine
     def health_cross(self):
+        """Return crossover of health chromosomes.
+        """
         l = len(self.healthchr_a) - 1
         cross = random.randint(0, l)
         new_health_a = []
@@ -48,6 +55,10 @@ class health_genome(dgeann.Genome):
         return random.choice((new_health_a, new_health_b))
 
     def build(self, delete=True):
+        """Return the solver for the PyCaffe network from the Genome.
+
+        Overrides build from base genome class.
+        """
         for i in range(len(self.healthchr_a)):
             res = self.healthchr_a[i].read(None, self.healthchr_b[i], None)
             if res == False:
@@ -55,6 +66,8 @@ class health_genome(dgeann.Genome):
         return super().build(delete)
 
     def mutate(self):
+        """Mutate health chromosome genes.
+        """
         #super has already done mutations, so just the health chromosomes
         for g in self.healthchr_a:
             result = g.mutate()
@@ -67,6 +80,8 @@ class health_genome(dgeann.Genome):
 
     #helper function for mutate that implements gene changes from mutations                
     def handle_mutation(self, result, gene, c, chro):
+        """Handle changing a health gene that have been mutated.
+        """
         if dgeann.record_muts:
             self.mut_record.append([c, gene.ident, result])
         val = result[(result.index(",") + 2)::]
@@ -99,6 +114,11 @@ class hla_gene(health_gene):
         super().__init__(dom, can_mut, False, mut_rate, ident)
 
     def read(self, active_list, other_gene, read_file):
+        """ Return which of a pair of genes is used to create the final
+        health outcome.
+        
+        Overrides read from base gene class. 
+        """
         if self.ident == other_gene.ident:
             return False
         else:
@@ -110,12 +130,21 @@ class binary_gene(health_gene):
         super().__init__(dom, can_mut, False, mut_rate, ident)
 
     def read(self, active_list, other_gene, read_file):
+        """ Return which of a pair of genes is used to create the final
+        health outcome.
+        
+        Overrides read from base gene class. 
+        """
         if self.dom == 1 and other_gene.dom == 1:
             return False
         else:
             return True
 
     def mutate(self):
+        """Return a string with whether and how the gene mutates.
+
+        Overrides mutate from base gene class.
+        """
         if not self.can_mut:
             return ""
         else:
@@ -127,6 +156,9 @@ class binary_gene(health_gene):
                 return result
 
     def determine_mutation(self):
+        """Return the result of a mutation event.
+
+        """
         roll = random.random()
         if roll < health_mut_probs[0]:
             #flip allele
@@ -155,6 +187,10 @@ class phen_genome(dgeann.Genome):
         self.phen_gene_b = phen_gene_b
 
     def recombine(self, other_genome):
+        """Return a new child genome from two parent genomes.
+
+        Overrides recombine from base genome class. 
+        """
         c = super().recombine(other_genome)
         a = random.choice([self.phen_gene_a, self.phen_gene_b])
         b = random.choice([other_genome.phen_gene_a, other_genome.phen_gene_b])
@@ -165,6 +201,8 @@ class phen_genome(dgeann.Genome):
         return child
 
     def mutate(self):
+        """Mutate preference chromosome genes.
+        """
         resulta = self.phen_gene_a.mutate()
         resultb = self.phen_gene_b.mutate()
         if resulta != "":
@@ -173,6 +211,8 @@ class phen_genome(dgeann.Genome):
             phen_genome.handle_mutation(self, resultb, "B", self.phen_gene_b)
 
     def handle_mutation(self, result, c, gene):
+        """Handle changing a health gene that has been mutated.
+        """
         if dgeann.record_muts:
             self.mut_record.append([c, gene.ident, result])
         val = result[(result.index(",") + 2)::]
@@ -196,6 +236,10 @@ class phen_genome(dgeann.Genome):
             gene.ident = str(gene.weight)
 
     def build(self, delete=True):
+        """Return the solver for the PyCaffe network from the Genome.
+
+        Overrides build from base genome class.
+        """
         if self.phen_gene_a.dom > self.phen_gene_b.dom:
             self.pref = self.phen_gene_a.weight
         elif self.phen_gene_b.dom > self.phen_gene_a.dom:
@@ -212,6 +256,10 @@ class phen_gene(dgeann.Gene):
         self.weight = weight
 
     def mutate(self):
+        """Return a string with whether and how the gene mutates.
+
+        Overrides mutate from base gene class.
+        """
         if not self.can_mut:
             return ""
         else:
@@ -223,6 +271,8 @@ class phen_gene(dgeann.Gene):
                 return result
 
     def determine_mutation(self):
+        """Handle changing a pref gene that has been mutated.
+        """
         roll = random.random()
         if roll < health_mut_probs[0]:
             #change weight
@@ -253,6 +303,10 @@ class health_phen_genome(health_genome, phen_genome):
         self.phen_gene_b = phen_gene_b
 
     def recombine(self, other_genome):
+        """Return a new child genome from two parent genomes.
+
+        Overrides recombine from base genome class. 
+        """
         child = health_genome.recombine(self, other_genome)
         a = random.choice([self.phen_gene_a, self.phen_gene_b])
         b = random.choice([other_genome.phen_gene_a, other_genome.phen_gene_b])
@@ -265,6 +319,10 @@ class health_phen_genome(health_genome, phen_genome):
         return child
 
     def build(self, delete=True):
+        """Return the solver for the PyCaffe network from the Genome.
+
+        Overrides build from base genome class.
+        """
         for i in range(len(self.healthchr_a)):
             res = self.healthchr_a[i].read(None, self.healthchr_b[i], None)
             if res == False:

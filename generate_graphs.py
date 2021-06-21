@@ -44,6 +44,8 @@ its_dict = {}
 file_list = []
 
 def gather_files():
+    """Retrieve all files to work on.
+    """
     if not f.startswith('.'):
         if f[-4:] == ".csv":
             if not f[-13:] == "gene data.csv":
@@ -65,8 +67,10 @@ for f in range(len(file_list)):
 #and have an option to produce graphs with or without agents who died from
 #being too inbred
 
-#agent number in two graphs: total by file and total by generation
 def nums(fs, keep_inbreds, itera=None):
+    """Produces two kids of graphs with agent numbers: total by file and
+    total by generation.
+    """
     if compare_all_its == True:
         cont = False
         if itera == None:
@@ -129,8 +133,9 @@ def nums(fs, keep_inbreds, itera=None):
         if cont:
             nums(fs, keep_inbreds, itera+1)
 
-#avg. lifespan by generation
 def lifespan(fs, keep_inbreds, itera=None):
+    """Produces graphs with average lifespan by generation.
+    """
     if compare_all_its == True:
         cont = False
         if itera == None:
@@ -187,8 +192,9 @@ def lifespan(fs, keep_inbreds, itera=None):
         if cont:
             lifespan(fs, keep_inbreds, itera+1)
 
-#avg. mating attempts by generation
 def mas(fs, keep_inbreds, itera=None):
+    """Produces graphs with average number of mating attempts by generation.
+    """
     if compare_all_its == True:
         cont = False
         if itera == None:
@@ -244,8 +250,9 @@ def mas(fs, keep_inbreds, itera=None):
         if cont:
             mas(fs, keep_inbreds, itera+1)
 
-#avg. # disorders by generation
 def disorders(fs, keep_inbreds, itera=None):
+    """Produces graphs with average number of disorders by generation.
+    """
     if compare_all_its == True:
         cont = False
         if itera == None:
@@ -302,8 +309,10 @@ def disorders(fs, keep_inbreds, itera=None):
         if cont:
             disorders(fs, keep_inbreds, itera+1)
 
-#percent of agents who survived to a threshold value by generation
 def surv(fs, keep_inbreds, thresh=500, itera=None):
+    """Produces graphs with percentage of agents who survived to threhold value
+    time-steps by generation.
+    """
     if compare_all_its == True:
         cont = False
         if itera == None:
@@ -367,8 +376,10 @@ def surv(fs, keep_inbreds, thresh=500, itera=None):
         if cont:
             surv(fs, keep_inbreds, thresh, itera+1)
             
-#avg. parent relatedness in two graphs: genetic overlap and degree of relation
 def parent_overlaps(fs, keep_inbreds, itera=None):
+    """Produces two types of graphs of parental relatedness by generation:
+    by genetic overlap and by degree of relation.
+    """
     if compare_all_its == True:
         cont = False
         if itera == None:
@@ -457,9 +468,10 @@ def parent_overlaps(fs, keep_inbreds, itera=None):
         if cont:
             parent_overlaps(fs, keep_inbreds, itera+1)
             
-#Nei's genetic diversity by generation
 #may take a while to run
 def nei_diversity(fs, keep_inbreds, itera=None):
+    """Produces graphs of Nei's genetic diversity by generation.
+    """
     if compare_all_its == True:
         cont = False
         if itera == None:
@@ -554,8 +566,9 @@ def nei_diversity(fs, keep_inbreds, itera=None):
             nei_diversity(fs, keep_inbreds, itera+1)
 
 #helper function for nei_diversity
-#collects alleles from one chromosome
 def collect_fields(fields, row2, tot, gen):
+    """Return alleles from one chromosome.
+    """
     for key in fields[gen].keys():
         val = round(float(row2[key]), 2)
         if val in fields[gen][key].keys():
@@ -565,9 +578,10 @@ def collect_fields(fields, row2, tot, gen):
     tot[gen] += 1                                         
     return(fields, tot)
 
-#phenotype matching preferences
-#all by gen + average
 def preferences(fs, keep_inbreds, itera=None):
+    """Produces two kinds of grpahs of phenotype matching preference by
+    generation: one with average and one with all individual preferences.
+    """
     if compare_all_its == True:
         cont = False
         if itera == None:

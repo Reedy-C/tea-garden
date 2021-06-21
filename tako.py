@@ -63,6 +63,8 @@ carrier_percentage = 40
 phen_pref = False
 
 def set_seed(seed):
+    """Sets random seed for module."
+    """
     random.seed(seed)
     dgeann.random.seed(seed)
 
@@ -164,18 +166,20 @@ class Tako(Widget):
             self.data = self.solver.net.blobs['data'].data
             self.stm_input = self.solver.net.blobs['stm_input'].data
 
-    #create the initial generation of agents
-    #direction: (int) 0~3, indicates which direction agent faces
-    #display_on: (bool) indicates whether graphics are on or not
-    #x, y: (int) position of agent
-    #gen_type: (str) can be "Diverse", "Plain", or "Haploid"
-    #           Diverse = diploid, two chromosomes are different
-    #           Plain = diploid, two chromosomes are the same
-    #rand_net: (bool) overrides gen_type
-    #           and creates a genome from a random starting network
-    #           in the 'plain' style
     @staticmethod
     def default_tako(direction, display_on, x, y, gen_type, rand_net):
+        """Return one Tako for the initial generation.
+
+        direction: (int) 0~3. Indicates which direction agent faces.
+        display_on: (bool) Indicates whether graphics are on or not.
+        x, y: (int) Position of agent.
+        gen_type: (str) Can be "Diverse", "Plain", or "Haploid"
+        Diverse = diploid, two chromosomes are different
+        Plain = diploid, two chromosomes are the same
+        rand_net: (bool) Overrides gen_type and creates a genome in the 'plain'
+        style from a random starting network.
+        """
+
         #do health genes if necessary
         if hla_genes > 0 or binary_health > 0:
             healtha, healthb = Tako.create_health_genes()
@@ -238,8 +242,10 @@ class Tako(Widget):
         return tak
 
     #helper function for default_genome
-    #creates the array of health genes, assuming a diploid genome
+    #assumes a diploid genome
     def create_health_genes():
+        """Return two arrays of health genes.
+        """
         healtha = []
         healthb = []
         #currently going with six alleles for HLA
@@ -278,8 +284,10 @@ class Tako(Widget):
         return healtha, healthb
 
     #helper function for default_genome
-    #creates the two strands of weight genes
     def create_weight_genes(gen_type):
+        """Return two strands of weight genes as well as the 'parent'
+        files.
+        """
         parents = []
         filenamea = random.randint(1, 41)
         filenamea = os.path.join("Default Genetics", str(filenamea) + ".csv")
@@ -301,8 +309,9 @@ class Tako(Widget):
         return weightsa, weightsb, parents
 
     #helper function for create_weight_genes
-    #does the work of turning the file info into a list of weight genes
     def input_genes(filename):
+        """Return a list of weight genes created from a file.
+        """
         weights = []
         with open(filename, newline="") as file:
             r = csv.DictReader(file, fieldnames = fields)
@@ -321,6 +330,8 @@ class Tako(Widget):
     #drives go DOWN over time
     #except for desire, which has a sine wave funtion
     def update(self):
+        """Update agent's age and drives.
+        """
         self.age += 1
         if self.age % 1500 == 0:
             self.check_death()
@@ -352,10 +363,14 @@ class Tako(Widget):
             self.accum_pain -= self.amuse/15
 
     def update_sprite(self):
+        """Update sprite when turning.
+        """
         if self.last_action == 1 or self.last_action == 2:
             self.image = self.load_image(self.dir_map[self.direction], -1)[0]
         
     def update_drives(self, drive, modifier):
+        """Update drives with the result of some action.
+        """
         if drive == "fullness":
             self.fullness += modifier
             if self.fullness > 150:
@@ -370,6 +385,8 @@ class Tako(Widget):
             self.desire += modifier
 
     def modify(self, result):
+        """Parses a result to possibly modify drives.
+        """
         if result is not None:
             for x in range(len(result)):
                 if x%2 == 0:
@@ -379,6 +396,8 @@ class Tako(Widget):
                     self.update_drives(drive, modifier)
 
     def make_solver(self):
+        """Return solver object.
+        """
         ident_file = os.path.join('Gen files', self.ident)
         ident_file = ident_file + '.gen'
         result = dedent('''\
@@ -400,9 +419,14 @@ class Tako(Widget):
         return solver
 
     def played(self):
+        """Return result of being played with (amusing)
+        """
         return ("amuse", 15)
 
     def mated(self, tak):
+        """Return result of being mated with (after check to see if mating is
+        possible)
+        """
         if family_detection != None:
             relation = self.check_relations(tak)
             mate_chance = 1 - family_mod*relation
@@ -449,13 +473,12 @@ class Tako(Widget):
             Tako.mated_opcost(self)
             return ("amuse", -1)
 
-    #creates the opportunity cost of mating
-    #occurs if top-down incest avoidance is turned on and an agent
-    #attempts to mate with a relative, for that agent only;
-    #also occurs under all settings if an agent fails an attempt to mate
-    #with another agent
-    #essentially moves it down the desire function curve
     def mated_opcost(tak):
+        """Modify agent with the opportunity cost of mating if an agent
+        fails an attempt to mate with another agent (both) OR if top-down
+        incest avoidance is on and agent attempts to mate with relative (self).
+        """
+        #essentially moves it down the desire function curve
         if tak.dez < 502:
             tak.dez -= 100
             if tak.dez < 0:
@@ -467,8 +490,9 @@ class Tako(Widget):
                 tak.dez = 698
 
     #helper function for mated
-    #returns a relatedness percentage dependent on detection mode
     def check_relations(self, tak):
+        """Return a relatedness percentage dependent on module detection mode.
+        """
         if tak.ident in self.fam_dict.keys():
             return self.fam_dict[tak.ident]
         else:
@@ -479,8 +503,9 @@ class Tako(Widget):
             return self.fam_dict[tak.ident]
 
     #helper function for check_relationships
-    #simple first/second/third degree relatives
     def degree_detection(self, other_parent):
+        """Return degree of relation relative to first-degree (1, 0.5, 0.25).
+        """
         #first degree
         if (other_parent in self.parents or
             other_parent in self.children or
@@ -507,6 +532,8 @@ class Tako(Widget):
             return 0.0
         
     def degree_setting(self, other_parent, baby):
+        """Find and set all three degress of relatives for baby agent.
+        """
         #first degree: parents already set
         #siblings/half-siblings
         for tak in self.children:
@@ -583,12 +610,13 @@ class Tako(Widget):
         other_parent.children.append(baby)
             
     #helper function for check_relationships
-    #finds percentage of genetic overlap
     #TODO currently just doing weight genes b/c still working on layer genes
     #+then they would all look a little related
     #also currently assumes everyone has the same-sized genome on both strands
     #works with haploids
     def genoverlap(self, tak):
+        """Return percentage of genetic overlap between two agents.
+        """
         overlap = 0
         tot = 0
         ident_list = []
@@ -609,9 +637,10 @@ class Tako(Widget):
         return (overlap/tot)
 
     #helper function for mated when phenotype matching preferences is True
-    #gets all expressions of weight/health/pref
-    #(not the underlying genes!)
     def get_expressed(self):
+        """Adds to self all expressed weights/health (if appliable)/preferences
+        but not the underlying genes.
+        """
         e = []
         #easiest to grab weights directly from net
         for i in range(5):
@@ -632,8 +661,9 @@ class Tako(Widget):
         self.expressed = e
             
     #helper function for mated when phenotype matching preferences is True
-    #simply gets the percentage overlap between the two phenotypes
     def compare_phenotypes(self, tak):
+        """Return the percentage overlap between two phenotypes.
+        """
         if self.expressed == None:
             self.get_expressed()
         if tak.expressed == None:
@@ -660,6 +690,8 @@ class Tako(Widget):
     #across a few species
     #self.g is the count of genetic disorders the agent has * 3
     def check_death(self):
+        """Set if agent is dead from old age or not.
+        """
         if self.age + (self.accum_pain) > (130000/(self.g**2)) or \
            self.age > (130000/(self.g ** 2)):
             self.cod = "old age"
@@ -673,10 +705,11 @@ class Tako(Widget):
                 self.cod = "natural"
                 self.dead = True
                 
-    #generates skew normal distribution
     #adapted slightly from
     #https://stackoverflow.com/questions/36200913/
     def skew_norm_pdf(self, x, e=0, w=1, a=0):
+        """Generate skew normal distribution.
+        """
         t = (x-e) / w
         return 2.0 * scipy.stats.norm.pdf(t) * scipy.stats.norm.cdf(a*t)
 
