@@ -14,6 +14,9 @@ from widget import Dirt
 
 
 class garden_game:
+    """Container and handler for Garden experiments.
+    """
+    
     def __init__(self, garden_size, tako_number, pop_max, max_width, max_height,
                  display_on, max_fps, learning_on, genetic_mode, rand_nets,
                  garden_mode, filename, export_all, family_mod,
@@ -88,6 +91,8 @@ class garden_game:
 
     def main_loop(self, max_steps, max_gen, display_on, collect_data,
                   garden_mode, i):
+        """Runs each time-step of the experiment.
+        """
         if display_on:
             self.make_background()
         self.load_sprites()
@@ -212,9 +217,10 @@ class garden_game:
                 self.graphics_loop(font)
             self.stepid += 1
             
-    #initializes pygame sprite groups at beginning of experiment
-    #or when env is switched
     def load_sprites(self):
+        """Initializes pygame sprite groups at beginning of experiment
+        or when environment is switched.
+        """
         self.widget_sprites = pygame.sprite.Group()
         env = self.env_list[self.current_env]
         for x in range(env.size):
@@ -233,8 +239,9 @@ class garden_game:
                 spr.update_rect()
                 spr.move_rect(-self.cam_pos[0], -self.cam_pos[1])
 
-    #adds new sprites/objects to groups when environments make them
     def get_new(self, env):
+        """Adds new sprites/objects to groups when environments make them.
+        """
         for sprite in env.new_sprites:
             if not isinstance(sprite, Dirt):
                 if not isinstance(sprite, tako.Tako):
@@ -243,21 +250,24 @@ class garden_game:
                     self.all_sprites.add(sprite)
             env.new_sprites.remove(sprite)
 
-    #initializes a tiled background of dirt sprites when graphics are on
     def make_background(self):
+        """Initializes a tiled background of dirt sprites at beginning of
+        experiment when graphics are on.
+        """
         for x in range(self.env_list[0].size):
             for y in range(self.env_list[0].size):
                 img = load_image("dirt.png")[0]
                 self.background.blit(img, (x*50, y*50))
 
-    #control loop for drawing all graphics & text when graphics are on
     def graphics_loop(self, font):
+        """Control loop for drawing all graphics & text when graphics are on.
+        """
         self.screen.blit(self.background, (0, 0))
         if not self.scroll:
             self.all_sprites.draw(self.screen)
         else:
             self.draw_onscreen()
-        #oh, and display which step we're on
+        #display which step we're on
         if pygame.font:
             text = font.render(str(self.stepid), 1, (255, 255, 255))
             textpos = text.get_rect(centerx = int(
@@ -267,8 +277,9 @@ class garden_game:
         #cap at x fps
         self.clock.tick(self.max_fps)
 
-    #draws graphics when they are turned on
     def draw_onscreen(self):
+        """Draws graphics to screen when they are turned on
+        """
         for spr in self.all_sprites:
             if spr.x >= self.cam_pos[0] and spr.x <= (self.cam_pos[0] +
                                                       self.spr_width):
@@ -276,9 +287,10 @@ class garden_game:
                                                       + self.spr_height):
                     self.screen.blit(spr.image, spr.rect)
 
-    #migrates agents between the two environments
-    #runs every 50k time-steps
     def migrate(self, display_on):
+        """Migrates agents between the two environments. Runs every 50k
+        time-steps when migration is turned on.
+        """
         from_0 = random.sample(self.env_list[0].tako_list,
                                int(self.migration_rate * len(
                                    self.env_list[0].tako_list)))
@@ -296,8 +308,9 @@ class garden_game:
                                                               t.x, t.y)
             self.env_list[0].add_creature(t)
 
-#pygame function to load pngs from the img folder
 def load_image(name, colorkey=None):
+    """Pygame function to load pngs from the img folder
+    """
     fullname = os.path.join('img', name)
     image = pygame.image.load(fullname)
     image = image.convert()
@@ -307,12 +320,13 @@ def load_image(name, colorkey=None):
         image.set_colorkey(colorkey, RLEACCEL)
     return image, image.get_rect()
 
-#records data about an agent to a csv file on the agent's death
-#filename: (str) previously defined filename for output
-#i: (int) current iteration
-#q: (queue) queue of agents to write to csv
-#   with entries in the format of a list: [agent, step_id, env_id]
-def write_csv(filename, i, q):  
+def write_csv(filename, i, q):
+    """Records data about an agent to a csv file on the agent's death
+    filename: (str) previously defined filename for output
+    i: (int) current iteration
+    q: (queue) queue of agents to write to csv
+    With entries in the format of a list: [agent, step_id, env_id]
+    """
     with open(os.path.join("Data", filename), 'a', newline='') as csvfile:
         writ = csv.writer(csvfile)
         j = 0
@@ -353,11 +367,12 @@ def write_csv(filename, i, q):
                            healthchr_a, healthchr_b, pref])
             j += 1   
             
-#exports condensed version of weight genes to a collective csv file in \Data
-#one line for haploid agents, two for diploid
-#each row contains the variable info for each of the agent's weight genes
-#n.b. expects a standard genome layer layout to work properly
 def export(tako_list, filename):
+    """Exports a condensed version of weight genes to a collective csv
+    file in \Data, with one line for haploid agents and two for diploids.
+    Each row contains the variable info for each of the agent's weight genes.
+    Currently expects a standard genome layer layout to work properly.
+    """
     for tak in tako_list:
         tak = tak[0]
         l1 = [tak.ident, "a"]
@@ -379,9 +394,10 @@ def export(tako_list, filename):
                     l2.append(gen.dom)   
                 writ.writerow(l2)
 
-#helper function for export, run from __init__
-#makes the headers for each gene in the genome for the gene export CSV file
 def make_headers():
+    """Creates the headers for each gene in the standard genome
+    for the gene export CSV file
+    """
     headers = ["agent_ident", "chro"]
     for i in range(10):
         for j in range(5):
@@ -471,6 +487,9 @@ def run_experiment(x_loops=15, max_steps=0, display_on=True, max_fps=10,
                    inbreed_lim = 1.1, hla_genes=0, binary_health=0,
                    carrier_percentage=40, two_envs=False, diff_envs=False,
                    migration_rate=0, phen_pref=False, filename=""):
+    """Initializes Garden experiment settings and creates each necessary
+    garden_game experiment.
+    """    
     #round width/height down to nearest multiple of 50 if need be
     if max_width % 50 != 0:
         max_width = max_width - (max_width % 50)
@@ -561,9 +580,9 @@ def run_experiment(x_loops=15, max_steps=0, display_on=True, max_fps=10,
         loop_limit -= 1
         i += 1
 
-#takes a filename (f), uses it to set user settings, and runs the experiments
-#defined by f
 def run_from_file(f):
+    """Runs the experiments defined by the filename f.
+    """
     #set defaults
     x_loops=1;max_steps=0;display_on=True;max_fps=10;garden_size=13;tako_number=20
     pop_max=40;max_width=1800;max_height=900;collect_data=True;export_all=False

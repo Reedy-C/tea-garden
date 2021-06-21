@@ -21,9 +21,11 @@ class Garden:
             random.seed(seed)
         self.display_on = display_on
         self.garden_mode = garden_mode
-        self.reset(food)
+        self.create_garden(food)
  
-    def reset(self, food):
+    def create_garden(self, food):
+        """Creates Garden structure and places all objects in it.
+        """
         self.garden_map = [[Dirt(self.display_on) for x in range(self.size)]
                            for x in range(self.size)]
         self.tako_list = []
@@ -69,6 +71,8 @@ class Garden:
                     Dirt.x = x
         
     def add_item(self, item):
+        """Adds one item object to the Garden structure in a legal place.
+        """
         while True:
             x = random.randrange(0, self.size)
             y = random.randrange(0, self.size)
@@ -82,6 +86,8 @@ class Garden:
         self.new_sprites.add(item)
 
     def add_creature(self, t=None):
+        """Adds one Tako object to the Garden structure in a legal place.
+        """
         while True:
             x = random.randrange(0, (self.size))
             y = random.randrange(0, (self.size))
@@ -98,6 +104,9 @@ class Garden:
         self.tako_list.append(Tak)
 
     def switch_nutrition(self):
+        """If garden_mode is set to 'Nutrition', switch nutrition value
+        of each grass object for both grass types.
+        """
         for y in range(self.size):
             for x in range(self.size):
                 if isinstance(self.garden_map[y][x], Grass):
@@ -112,6 +121,9 @@ class Garden:
                         self.garden_map[y][x].poison = True
 
     def switch_grasses(self):
+        """If garden_mode is set to 'Changing', switch each grass object to
+        the other grass object type.
+        """
         for y in range(self.size):
             for x in range(self.size):
                 if isinstance(self.garden_map[y][x], Grass):
@@ -126,15 +138,21 @@ class Garden:
                     self.new_sprites.add(g)
         
     def get_sensors(self, tak):
+        """Finds what a given Tako can sense in front of it.
+        """
         target = self.get_target(tak)
         obj = self.garden_map[target[1]][target[0]]
         return obj.node
     
     def perform_action(self, index, tak):
+        """Returns the result of a Tako's action on some object
+        """
         result = function_array[index](self, tak)
         return result
 
     def forward(self, tak):
+        """Moves Tako forward in some direction if the move is legal.
+        """
         #get target square
         target = self.get_target(tak)
         targ = self.garden_map[target[1]][target[0]]
@@ -152,6 +170,8 @@ class Garden:
         return result
     
     def turn_left(self, tak):
+        """Turns a Tako leftwards.
+        """
         newdir = tak.direction
         newdir -= 1
         if newdir < 0:
@@ -160,6 +180,8 @@ class Garden:
         return None
 
     def turn_right(self, tak):
+        """Turns a Tako rightwards.
+        """
         newdir = tak.direction
         newdir += 1
         if newdir > 3:
@@ -168,6 +190,8 @@ class Garden:
         return None
 
     def eat(self, tak):
+        """Returns the result of trying to eat the object in front of a Tako.
+        """
         target = self.get_target(tak)
         tak.last_obj = self.garden_map[target[1]][target[0]]
         x = tak.last_obj
@@ -181,6 +205,9 @@ class Garden:
         return result
 
     def play(self, tak):
+        """Returns the result of trying to play with the object in front
+        of a Tako.
+        """
         target = self.get_target(tak)
         tak.last_obj = self.garden_map[target[1]][target[0]]
         x = tak.last_obj
@@ -194,6 +221,9 @@ class Garden:
         return result
 
     def mate(self, tak):
+        """Returns the result of trying to mate with the object in front of
+        a Tako (incl. new baby Tako if necessary).
+        """
         target = self.get_target(tak)
         tak.last_obj = self.garden_map[target[1]][target[0]]
         v = tak.last_obj
@@ -231,6 +261,8 @@ class Garden:
         return result
 
     def get_target(self, tak):
+        """Returns x, y location is in front of a given Tako. Environment wraps.
+        """
         target = [tak.x, tak.y]
         # looking north
         if tak.direction == 0:

@@ -22,19 +22,28 @@ class Widget(sprite.Sprite):
     # functions should be implemented in subclasses
     # if they are relevant to that widget type
     def eaten(self):
+        """Return result of object being eaten.
+        """
         return ("amuse", -1)
 
     def played(self):
+        """Return result of object being played with.
+        """
         return ("amuse", -1)
 
-    # if creature tries to walk into widget,
     def intersected(self):
+        """Return result of object being intersected.
+        """
         return ("amuse", -1)
 
     def mated(self, tak):
+        """Return result of object being mated with.
+        """
         return ("amuse", -1)
 
     def load_image(self, name, colorkey=None):
+        """Return object's image and rect.
+        """
         fullname = os.path.join('img', name)
         img = image.load(fullname)
         img = img.convert()
@@ -45,9 +54,13 @@ class Widget(sprite.Sprite):
         return img, img.get_rect()
 
     def update_rect(self):
+        """Reset rect to object's location.
+        """
         self.rect = Rect(self.x*50, self.y*50, 50, 50)
 
     def move_rect(self, x, y):
+        """Move rect by x, y.
+        """
         self.rect = self.rect.move(x*50, y*50)
 
 class Dirt(Widget):
@@ -57,6 +70,8 @@ class Dirt(Widget):
     #things can grow here eventually
     #creatures can walk on it
     def intersected(self):
+        """Return result of Dirt being intersected (None, walkable).
+        """
         return None
 
 
@@ -69,6 +84,8 @@ class Grass(Widget):
         self.poison = poison
         
     def eaten(self):
+        """Return result of Grass being eaten (fills fullness).
+        """
         if self.poison:
             return ("fullness", 10)
         else:
@@ -79,9 +96,13 @@ class Rock(Widget):
     node = 3
     display = "rock.png"
     def played(self):
+        """Return result of Rock being played with (not amusing).
+        """
         return ("amuse", -10)
 
     def eaten(self):
+        """Return result of Rock being eaten (painful).
+        """
         return ("pain", 30)
     
 
@@ -90,6 +111,8 @@ class Ball(Widget):
     display = "toy.png"
     #should move eventually
     def played(self):
+        """Return result of Ball being played with (amusing).
+        """
         return ("amuse", 30)
 
 class Grass2(Widget):
@@ -101,6 +124,8 @@ class Grass2(Widget):
         self.poison = poison
 
     def eaten(self):
+        """Return result of Grass2 being eaten (fills fullness).
+        """       
         if self.poison:
             return ("fullness", 10)
         else:
